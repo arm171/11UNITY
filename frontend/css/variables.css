@@ -1,0 +1,143 @@
+/* ==============================================
+   DESIGN SYSTEM - Переменные дизайна
+   ============================================== */
+
+:root {
+    /* ========== ЦВЕТА ========== */
+    
+    /* Основные цвета */
+    --color-primary: #2ecc71;           /* Зелёный (футбольное поле) */
+    --color-primary-dark: #27ae60;      /* Тёмный зелёный */
+    --color-primary-light: #3be682;     /* Светлый зелёный */
+    
+    /* Фоновые цвета */
+    --color-bg-dark: #1a1a1a;           /* Тёмный фон */
+    --color-bg-darker: #0f0f0f;         /* Очень тёмный фон */
+    --color-bg-card: rgba(0, 0, 0, 0.7); /* Прозрачные карточки */
+    --color-bg-modal: rgba(0, 0, 0, 0.9); /* Фон модалок */
+    
+    /* Текст */
+    --color-text-primary: #ffffff;      /* Белый текст */
+    --color-text-secondary: #b0b0b0;    /* Серый текст */
+    --color-text-muted: #6b6b6b;        /* Приглушённый текст */
+    
+    /* Акцентные цвета */
+    --color-success: #2ecc71;           /* Успех (зелёный) */
+    --color-error: #e74c3c;             /* Ошибка (красный) */
+    --color-warning: #f39c12;           /* Предупреждение (жёлтый) */
+    --color-info: #3498db;              /* Информация (синий) */
+    
+    /* Статусы турниров */
+    --color-status-upcoming: #3498db;   /* Предстоящий */
+    --color-status-active: #2ecc71;     /* Активный */
+    --color-status-finished: #95a5a6;   /* Завершённый */
+    
+    /* ========== ТИПОГРАФИКА ========== */
+    
+    --font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    
+    /* Размеры шрифтов */
+    --font-size-xs: 12px;
+    --font-size-sm: 14px;
+    --font-size-base: 16px;
+    --font-size-lg: 18px;
+    --font-size-xl: 24px;
+    --font-size-2xl: 32px;
+    --font-size-3xl: 48px;
+    
+    /* Веса шрифтов */
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    
+    /* ========== ОТСТУПЫ ========== */
+    
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+    
+    /* ========== РАДИУСЫ ========== */
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-full: 9999px;
+    
+    /* ========== ТЕНИ ========== */
+    
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.4);
+    
+    /* Тени с цветом primary */
+    --shadow-primary: 0 4px 16px rgba(46, 204, 113, 0.3);
+    --shadow-primary-lg: 0 8px 32px rgba(46, 204, 113, 0.4);
+    
+    /* Тёмно-зелёное свечение для hover */
+    --shadow-primary-glow: 0 0 30px rgba(46, 204, 113, 0.6), 
+                           0 0 60px rgba(46, 204, 113, 0.3),
+                           0 0 90px rgba(46, 204, 113, 0.1);
+    
+    /* ========== АНИМАЦИИ ========== */
+    
+    --transition-fast: 0.15s ease;
+    --transition-base: 0.3s ease;
+    --transition-slow: 0.5s ease;
+    
+    /* ========== Z-INDEX ========== */
+    
+    --z-dropdown: 1000;
+    --z-sticky: 1100;
+    --z-modal-overlay: 9000;
+    --z-modal: 9999;
+    --z-notification: 10000;
+    
+    /* ========== РАЗМЕРЫ ========== */
+    
+    --container-max-width: 1200px;
+    --header-height: 80px;
+}
+
+/* ========== Тёмная тема (уже есть) ========== */
+body {
+    background-color: var(--color-bg-dark);
+    color: var(--color-text-primary);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+}
+
+/* ========== КАСТОМНЫЙ СКРОЛЛБАР ========== */
+
+/* Webkit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--color-primary), var(--color-primary-dark));
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--color-primary-light), var(--color-primary));
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary) rgba(255, 255, 255, 0.05);
+}

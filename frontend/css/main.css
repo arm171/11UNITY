@@ -1,0 +1,411 @@
+/* ==============================================
+   MAIN STYLES - Основные стили сайта
+   ============================================== */
+
+/* ========== BODY & BACKGROUND ========== */
+
+body {
+    background-image: url('../img/grass-texture.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* Лёгкое затемнение для читаемости */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4); /* 40% затемнения */
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* ========== CONTAINER ========== */
+
+.container {
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+    padding: 0 var(--space-xl);
+}
+
+/* ========== HEADER & NAVIGATION ========== */
+
+.header {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    z-index: var(--z-sticky);
+    padding: var(--space-lg) 0;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.logo img {
+    width: 70px;
+    height: 70px;
+    filter: brightness(0) invert(1); /* Делает БЕЛЫМ */
+    transition: all var(--transition-base);
+}
+
+/* При наведении на ВЕСЬ логотип */
+.logo:hover img {
+    /* Делаем картинку ЗЕЛЁНОЙ */
+    filter: brightness(0) saturate(100%) invert(64%) sepia(98%) saturate(370%) hue-rotate(95deg) brightness(98%) contrast(86%);
+}
+
+.logo:hover span {
+    /* Делаем текст "11UNITY" ЗЕЛЁНЫМ */
+    color: var(--color-primary);
+}
+
+.nav-list {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xl);
+}
+
+.nav-link {
+    position: relative;
+    font-size: var(--font-size-lg); /* Увеличили с 16px до 18px */
+    font-weight: var(--font-weight-bold); /* Сделали жирным (700) */
+    color: var(--color-text-secondary);
+    transition: color var(--transition-base);
+    cursor: pointer;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--color-primary);
+    transition: width var(--transition-base);
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--color-primary);
+}
+
+.nav-link.active::after,
+.nav-link:hover::after {
+    width: 100%;
+}
+
+.nav-actions {
+    display: flex;
+    gap: var(--space-md);
+}
+
+/* Кнопка профиля - ТОЛЬКО ИКОНКА */
+.profile-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+}
+
+.profile-btn:hover {
+    border-color: var(--color-primary);
+}
+
+.profile-btn i {
+    margin: 0;
+    font-size: 20px;
+}
+
+.profile-btn #profile-name {
+    display: none;
+}
+
+.profile-btn.show {
+    display: flex;
+}
+
+.get-started-btn {
+    display: none;
+}
+
+.get-started-btn.show {
+    display: inline-flex;
+}
+
+/* ========== MAIN CONTENT ========== */
+
+.main {
+    padding: var(--space-3xl) 0;
+}
+
+/* ========== SECTIONS ========== */
+
+section {
+    background: var(--color-bg-card);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-xl);
+    padding: var(--space-3xl);
+    margin-bottom: var(--space-3xl);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+section h2 {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-2xl);
+    text-align: center;
+}
+
+/* ========== HERO SECTION ========== */
+
+.hero {
+    text-align: center;
+    padding: var(--space-3xl);
+}
+
+.hero h1 {
+    font-size: 64px;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xl);
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.hero p {
+    font-size: var(--font-size-xl);
+    color: var(--color-text-secondary);
+    max-width: 800px;
+    margin: 0 auto var(--space-2xl);
+    line-height: 1.6;
+}
+
+/* ========== STATISTICS (УМЕНЬШЕННЫЕ) ========== */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--space-xl);
+    margin-bottom: var(--space-2xl);
+}
+
+.stat-card {
+    background: rgba(46, 204, 113, 0.1);
+    border: 2px solid rgba(46, 204, 113, 0.3);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    text-align: center;
+    transition: all var(--transition-base);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--color-primary);
+    background: rgba(46, 204, 113, 0.2);
+    box-shadow: var(--shadow-primary);
+}
+
+.stat-number {
+    display: block;
+    font-size: 36px; /* УМЕНЬШЕНО с 56px */
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.stat-label {
+    font-size: var(--font-size-base); /* УМЕНЬШЕНО с lg */
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* ========== CARDS GRID ========== */
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: var(--space-xl);
+}
+
+/* ========== TOURNAMENT CARD ========== */
+
+.tournament-card {
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+/* НОВЫЙ HOVER ЭФФЕКТ - Тёмно-зелёное свечение */
+.tournament-card:hover {
+    transform: translateY(0); /* Убрали поднятие */
+    box-shadow: var(--shadow-primary-glow); /* Зелёное свечение */
+    border-color: var(--color-primary);
+}
+
+.tournament-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: var(--space-lg);
+}
+
+.tournament-title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+}
+
+.tournament-meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+.tournament-description {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+    margin-bottom: var(--space-lg);
+}
+
+.tournament-footer {
+    padding-top: var(--space-lg);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+}
+
+/* ========== TEAM CARD ========== */
+
+.team-card {
+    cursor: pointer;
+    text-align: center;
+    transition: all var(--transition-base);
+}
+
+/* НОВЫЙ HOVER ЭФФЕКТ - Тёмно-зелёное свечение */
+.team-card:hover {
+    transform: translateY(0); /* Убрали поднятие */
+    box-shadow: var(--shadow-primary-glow); /* Зелёное свечение */
+    border-color: var(--color-primary);
+}
+
+.team-logo {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto var(--space-lg);
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: white;
+    transition: all var(--transition-base);
+}
+
+.team-card:hover .team-logo {
+    transform: scale(1.1);
+}
+
+.team-name {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-lg);
+}
+
+.team-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.team-info-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+/* ========== FONT AWESOME ICONS ========== */
+
+.fas, .far {
+    margin-right: 8px;
+}
+
+section h2 i {
+    color: var(--color-primary);
+    margin-right: 16px;
+}
+
+.empty-icon i {
+    font-size: inherit;
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+    .nav-list {
+        display: none;
+    }
+    
+    .hero h1 {
+        font-size: 40px;
+    }
+    
+    .cards-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-number {
+        font-size: 32px;
+    }
+}

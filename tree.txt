@@ -1,0 +1,41 @@
+11UNITY/
+├─ backend/
+│  ├─ config/
+│  │  └─ database.js
+│  ├─ controllers/
+│  │  ├─ authController.js
+│  │  ├─ teamController.js
+│  │  └─ tournamentController.js
+│  ├─ helpers/
+│  │  └─ fixturesGenerator.js
+│  ├─ middleware/
+│  │  └─ auth.js
+│  ├─ routes/
+│  │  ├─ auth.js
+│  │  ├─ teams.js
+│  │  └─ tournaments.js
+│  ├─ .env
+│  ├─ package-lock.json
+│  ├─ package.json
+│  ├─ schema.sql
+│  └─ server.js
+├─ frontend/
+│  ├─ css/
+│  │  ├─ components.css
+│  │  ├─ main.css
+│  │  ├─ reset.css
+│  │  └─ variables.css
+│  ├─ img/
+│  │  ├─ grass-texture.jpg
+│  │  ├─ logo.png
+│  │  └─ logo.svg
+│  ├─ js/
+│  │  ├─ api.js
+│  │  ├─ auth.js
+│  │  ├─ config.js
+│  │  ├─ main.js
+│  │  ├─ teams.js
+│  │  ├─ tournaments.js
+│  │  └─ ui.js
+│  └─ index.html
+└─ tree.txt

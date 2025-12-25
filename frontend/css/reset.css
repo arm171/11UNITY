@@ -1,0 +1,63 @@
+/* ==============================================
+   RESET CSS - Сброс стандартных стилей браузера
+   ============================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    border: none;
+    box-sizing: border-box;
+}
+
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Убираем стили у ссылок */
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* Убираем стили у списков */
+ul, ol {
+    list-style: none;
+}
+
+/* Убираем стили у кнопок */
+button {
+    cursor: pointer;
+    font-family: inherit;
+    background: none;
+    border: none;
+}
+
+/* Изображения */
+img, picture, video, canvas, svg {
+    display: block;
+    max-width: 100%;
+}
+
+/* Формы */
+input, textarea, select {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/* Убираем стили у таблиц */
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}

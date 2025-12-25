@@ -1,0 +1,26 @@
+# Node modules (մի պահիր, շատ մեծ է)
+node_modules/
+
+# Environment variables (passwords են)
+.env
+_env
+
+# Database files (local է)
+*.sql
+
+# OS files (geriakarutyun che)
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE settings (personal preferences)
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build files
+dist/
+build/

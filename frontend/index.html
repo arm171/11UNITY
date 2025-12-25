@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="11UNITY - Football Tournament Management System">
+    <title>11UNITY - Football Tournament Manager</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="./css/reset.css">
+    <link rel="stylesheet" href="./css/variables.css">
+    <link rel="stylesheet" href="./css/components.css">
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+    
+    <!-- ========== HEADER & NAVIGATION ========== -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <!-- Logo -->
+                <div class="logo">
+                    <img src="./img/logo.png" alt="11UNITY Logo">
+                    <span>11UNITY</span>
+                </div>  
+                
+                <!-- Navigation Links -->
+                <ul class="nav-list">
+                    <li><a href="#home" class="nav-link active">Home</a></li>
+                    <li><a href="#tournaments" class="nav-link">Tournaments</a></li>
+                    <li><a href="#teams" class="nav-link">Teams</a></li>
+                    <li><a href="#matches" class="nav-link">Matches</a></li>
+                    <li><a href="#statistics" class="nav-link">Statistics</a></li>
+                </ul>
+                
+                <!-- Actions -->
+                <div class="nav-actions">
+                    <!-- Get Started Button (for guests) -->
+                    <button class="btn btn-primary get-started-btn" id="get-started-btn">
+                        Get Started
+                    </button>
+                    
+                    <!-- Profile Button (for logged users) -->
+                    <button class="btn btn-secondary profile-btn" id="profile-btn">
+                        <i class="fas fa-user"></i>
+                        <span id="profile-name"></span>
+                    </button>
+                </div>
+            </nav>
+        </div>
+    </header>
+    
+    <!-- ========== MAIN CONTENT ========== -->
+    <main class="main">
+        <div class="container">
+            
+            <!-- ========== HERO SECTION ========== -->
+            <section class="hero" id="home">
+                <h1>Welcome to 11UNITY</h1>
+                <p>
+                    The ultimate platform for managing football tournaments. 
+                    Create teams, organize tournaments, track matches, and analyze statistics.
+                </p>
+                <button class="btn btn-primary btn-lg" id="hero-cta">
+                    Start Your Tournament
+                </button>
+            </section>
+            
+            <!-- ========== TOURNAMENTS SECTION ========== -->
+            <section id="tournaments">
+                <h2><i class="fas fa-trophy"></i> Tournaments</h2>
+                
+                <!-- Statistics -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number" id="total-tournaments">0</span>
+                        <span class="stat-label">Total</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="active-tournaments">0</span>
+                        <span class="stat-label">Active</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="finished-tournaments">0</span>
+                        <span class="stat-label">Finished</span>
+                    </div>
+                </div>
+                
+                <!-- Create Tournament Button (only for organizers) -->
+                <div style="text-align: center; margin-bottom: 32px;">
+                    <button class="btn btn-primary" id="create-tournament-btn" style="display: none;">
+                        <i class="fas fa-plus"></i> Create Tournament
+                    </button>
+                </div>
+                
+                <!-- Tournaments Grid -->
+                <div class="cards-grid" id="tournaments-list">
+                    <!-- Loading indicator -->
+                    <div class="loading-indicator">
+                        <div class="spinner"></div>
+                        <p>Loading tournaments...</p>
+                    </div>
+                </div>
+                
+                <!-- Empty State -->
+                <div class="empty-state" id="tournaments-empty" style="display: none;">
+                    <div class="empty-icon"><i class="fas fa-trophy"></i></div>
+                    <h3 class="empty-title">No tournaments yet</h3>
+                    <p class="empty-subtitle">Be the first to create a tournament!</p>
+                </div>
+            </section>
+            
+            <!-- ========== TEAMS SECTION ========== -->
+            <section id="teams">
+                <h2><i class="fas fa-users"></i> Teams</h2>
+                
+                <!-- Statistics -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number" id="total-teams">0</span>
+                        <span class="stat-label">Total Teams</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="total-players">0</span>
+                        <span class="stat-label">Players</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="total-coaches">0</span>
+                        <span class="stat-label">Coaches</span>
+                    </div>
+                </div>
+                
+                <!-- Create Team Button (only for coaches) -->
+                <div style="text-align: center; margin-bottom: 32px;">
+                    <button class="btn btn-primary" id="create-team-btn" style="display: none;">
+                        <i class="fas fa-plus"></i> Create Team
+                    </button>
+                </div>
+                
+                <!-- Teams Grid -->
+                <div class="cards-grid" id="teams-list">
+                    <!-- Loading indicator -->
+                    <div class="loading-indicator">
+                        <div class="spinner"></div>
+                        <p>Loading teams...</p>
+                    </div>
+                </div>
+                
+                <!-- Empty State -->
+                <div class="empty-state" id="teams-empty" style="display: none;">
+                    <div class="empty-icon"><i class="fas fa-futbol"></i></div>
+                    <h3 class="empty-title">No teams yet</h3>
+                    <p class="empty-subtitle">Create your team and start playing!</p>
+                </div>
+            </section>
+            
+            <!-- ========== MATCHES SECTION ========== -->
+            <section id="matches">
+                <h2><i class="fas fa-calendar-alt"></i> Matches</h2>
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-calendar-alt"></i></div>
+                    <h3 class="empty-title">Coming Soon</h3>
+                    <p class="empty-subtitle">Match calendar will be available soon!</p>
+                </div>
+            </section>
+            
+            <!-- ========== STATISTICS SECTION ========== -->
+            <section id="statistics">
+                <h2><i class="fas fa-chart-bar"></i> Statistics</h2>
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-chart-bar"></i></div>
+                    <h3 class="empty-title">Coming Soon</h3>
+                    <p class="empty-subtitle">Statistics will be available once matches are played!</p>
+                </div>
+            </section>
+            
+        </div>
+    </main>
+    
+    <!-- ========== MODALS ========== -->
+    <!-- Модалки создаются динамически через JavaScript -->
+    
+    <!-- ========== JAVASCRIPT ========== -->
+    <script src="./js/config.js"></script>
+    <script src="./js/api.js"></script>
+    <script src="./js/auth.js"></script>
+    <script src="./js/ui.js"></script>
+    <script src="./js/tournaments.js"></script>
+    <script src="./js/teams.js"></script>
+    <script src="./js/main.js"></script>
+    
+</body>
+</html>
