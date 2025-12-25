@@ -273,6 +273,11 @@ const API = {
     async getMatches() {
         return await this.request(CONFIG.ENDPOINTS.MATCHES);
     },
+
+    async getTournamentMatches(tournamentId) {
+    const endpoint = `/tournaments/${tournamentId}/matches`;
+    return await this.request(endpoint);
+    },
     
 };
 

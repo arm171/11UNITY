@@ -5,7 +5,7 @@
 const Tournaments = {
     
     tournaments: [],
-    currentTournament: null, // ՆՈՐ - fixtures generation-ի համար
+    currentTournament: null,
     
     // ========== ԻՆԻՑԻԱԼԻԶԱՑԻԱ ==========
     
@@ -169,15 +169,24 @@ const Tournaments = {
                         </button>
                     </div>
                     
-                    <div class="empty-state">
-                        <div class="empty-icon"><i class="fas fa-trophy"></i></div>
-                        <h3 class="empty-title">Tournament Details</h3>
-                        <p class="empty-subtitle">More details coming soon!</p>
+                    <!-- Fixtures List -->
+                    <div id="tournament-fixtures-container" style="display: none;">
+                        <h3 style="color: white; margin-bottom: 16px;">
+                            <i class="fas fa-calendar-alt"></i> Fixtures
+                        </h3>
+                        <div id="tournament-fixtures-list"></div>
+                    </div>
+
+                    <!-- Empty State - եթե fixtures չկա -->
+                    <div class="empty-state" id="tournament-no-fixtures">
+                        <div class="empty-icon"><i class="fas fa-calendar-alt"></i></div>
+                        <h3 class="empty-title">No Fixtures Yet</h3>
+                        <p class="empty-subtitle">Generate fixtures to see the match schedule!</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Fixtures Settings Modal - ՆՈՐ MODAL -->
+            <!-- Fixtures Settings Modal -->
             <div class="modal" id="fixtures-settings-modal">
                 <div class="modal-overlay"></div>
                 <div class="modal-content">
@@ -467,6 +476,9 @@ const Tournaments = {
         // Generate Fixtures կոճակի տրամաբանություն (async)
         await this.updateGenerateFixturesButton(tournament);
         
+        // Load fixtures
+        await this.loadTournamentFixtures(tournament.id);
+        
         UI.openModal('tournament-details-modal');
     },
     
@@ -653,6 +665,138 @@ const Tournaments = {
         } finally {
             UI.hideButtonLoading(submitBtn);
         }
+    },
+    
+    // ========== LOAD TOURNAMENT FIXTURES ==========
+    
+    async loadTournamentFixtures(tournamentId) {
+        const fixturesContainer = document.getElementById('tournament-fixtures-container');
+        const fixturesList = document.getElementById('tournament-fixtures-list');
+        const noFixtures = document.getElementById('tournament-no-fixtures');
+        
+        try {
+            const response = await API.getTournamentMatches(tournamentId);
+            const matches = response.matches || [];
+            
+            if (matches.length === 0) {
+                fixturesContainer.style.display = 'none';
+                noFixtures.style.display = 'flex';
+                return;
+            }
+            
+            // Խմբավորել matches-ները round-ով
+            const rounds = {};
+            matches.forEach(match => {
+                if (!rounds[match.round]) {
+                    rounds[match.round] = [];
+                }
+                rounds[match.round].push(match);
+            });
+            
+            // Ցուցադրել
+            fixturesList.innerHTML = '';
+            
+            Object.keys(rounds).sort((a, b) => a - b).forEach(roundNum => {
+                const roundMatches = rounds[roundNum];
+                
+                const roundDiv = document.createElement('div');
+                roundDiv.style.marginBottom = '24px';
+                
+                roundDiv.innerHTML = `
+                    <h4 style="color: #2ecc71; margin-bottom: 12px;">
+                        Round ${roundNum}
+                    </h4>
+                    <div style="display: grid; gap: 12px;">
+                        ${roundMatches.map(match => this.createFixtureCard(match)).join('')}
+                    </div>
+                `;
+                
+                fixturesList.appendChild(roundDiv);
+            });
+            
+            fixturesContainer.style.display = 'block';
+            noFixtures.style.display = 'none';
+            
+            console.log('✅ Loaded', matches.length, 'fixtures');
+            
+        } catch (error) {
+            console.error('❌ Failed to load fixtures:', error);
+            fixturesContainer.style.display = 'none';
+            noFixtures.style.display = 'flex';
+        }
+    },
+    
+    // ========== CREATE FIXTURE CARD ==========
+    
+    createFixtureCard(match) {
+        const matchDate = new Date(match.match_date);
+        const dateStr = matchDate.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            year: 'numeric'
+        });
+        const timeStr = matchDate.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        
+        return `
+            <div style="
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                padding: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            ">
+                <!-- Team A -->
+                <div style="flex: 1; display: flex; align-items: center; gap: 12px;">
+                    <div style="
+                        width: 40px;
+                        height: 40px;
+                        background: ${match.team_a_color};
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: bold;
+                        color: white;
+                        font-size: 14px;
+                    ">
+                        ${match.team_a_logo}
+                    </div>
+                    <span style="color: white; font-weight: 600;">${match.team_a_name}</span>
+                </div>
+                
+                <!-- VS + Info -->
+                <div style="text-align: center; padding: 0 24px;">
+                    <div style="color: #2ecc71; font-weight: bold; font-size: 18px;">VS</div>
+                    <div style="color: #b0b0b0; font-size: 12px; margin-top: 4px;">${dateStr}</div>
+                    <div style="color: #b0b0b0; font-size: 12px;">${timeStr}</div>
+                    ${match.venue !== 'TBD' ? `<div style="color: #b0b0b0; font-size: 11px;"><i class="fas fa-map-marker-alt"></i> ${match.venue}</div>` : ''}
+                </div>
+                
+                <!-- Team B -->
+                <div style="flex: 1; display: flex; align-items: center; gap: 12px; justify-content: flex-end;">
+                    <span style="color: white; font-weight: 600;">${match.team_b_name}</span>
+                    <div style="
+                        width: 40px;
+                        height: 40px;
+                        background: ${match.team_b_color};
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: bold;
+                        color: white;
+                        font-size: 14px;
+                    ">
+                        ${match.team_b_logo}
+                    </div>
+                </div>
+            </div>
+        `;
     },
     
     // ========== СОЗДАНИЕ ТУРНИРА ==========

@@ -52,4 +52,10 @@ router.get(
     tournamentController.checkUserJoined
 );
 
+// Get tournament matches (public)
+router.get(
+    '/:id/matches',
+    tournamentController.getTournamentMatches
+);
+
 module.exports = router;

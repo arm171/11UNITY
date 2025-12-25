@@ -1,54 +1,91 @@
 /* ==============================================
    FIXTURES GENERATOR - Խաղացանկի ալգորիթմ
+   FINAL FIX: Round-Robin + Ամսաթվերի ճիշտ հաշվարկ
    ============================================== */
 
 /**
  * Round-Robin Double (յուրաքանչյուր թիմ խաղում է բոլորի հետ 2 անգամ)
  */
 function generateRoundRobinDouble(teams) {
-    const fixtures = [];
     const n = teams.length;
     
     if (n < 2) {
         throw new Error('Նվազագույնը 2 թիմ է պետք');
     }
     
-    // Առաջին շրջան (First Leg)
-    const firstLeg = generateSingleRound(teams);
+    // Առաջին շրջան (First Leg) - array of rounds
+    const firstLegRounds = generateSingleRound(teams);
     
     // Երկրորդ շրջան (Second Leg - հակառակը)
-    const secondLeg = firstLeg.map(match => ({
-        teamA: match.teamB,
-        teamB: match.teamA
-    }));
+    const secondLegRounds = firstLegRounds.map(round => {
+        return round.map(match => ({
+            teamA: match.teamB,
+            teamB: match.teamA
+        }));
+    });
     
-    return [...firstLeg, ...secondLeg];
+    // Միացնում ենք երկու leg-երը
+    return [...firstLegRounds, ...secondLegRounds];
 }
 
 /**
  * Մեկ շրջան (յուրաքանչյուր թիմ խաղում է բոլորի հետ 1 անգամ)
+ * Օգտագործում է Round-Robin Scheduling Algorithm
+ * Յուրաքանչյուր round-ում յուրաքանչյուր թիմ խաղում է ՄԵԿ անգամ
+ * 
+ * Օրինակ 4 թիմ (A, B, C, D):
+ * Round 1: A vs B, C vs D
+ * Round 2: A vs C, B vs D
+ * Round 3: A vs D, B vs C
  */
 function generateSingleRound(teams) {
-    const fixtures = [];
     const n = teams.length;
+    const rounds = [];
     
-    // Յուրաքանչյուր թիմի հետ
-    for (let i = 0; i < n; i++) {
-        for (let j = i + 1; j < n; j++) {
-            fixtures.push({
-                teamA: teams[i],
-                teamB: teams[j]
-            });
-        }
+    // Եթե կենտ թիմ կա, ավելացնում ենք dummy "BYE"
+    let teamList = [...teams];
+    if (n % 2 !== 0) {
+        teamList.push({ id: null, name: 'BYE' });
     }
     
-    return fixtures;
+    const totalTeams = teamList.length;
+    const totalRounds = totalTeams - 1;
+    const matchesPerRound = totalTeams / 2;
+    
+    for (let round = 0; round < totalRounds; round++) {
+        const roundMatches = [];
+        
+        for (let match = 0; match < matchesPerRound; match++) {
+            const home = (round + match) % (totalTeams - 1);
+            const away = (totalTeams - 1 - match + round) % (totalTeams - 1);
+            
+            // Վերջին թիմը միշտ ֆիքս է
+            const homeTeam = match === 0 ? teamList[totalTeams - 1] : teamList[home];
+            const awayTeam = teamList[away];
+            
+            // Բաց թողնում ենք BYE խաղերը
+            if (homeTeam.id !== null && awayTeam.id !== null) {
+                roundMatches.push({
+                    teamA: homeTeam,
+                    teamB: awayTeam
+                });
+            }
+        }
+        
+        rounds.push(roundMatches);
+    }
+    
+    // Վերադարձնում ենք որպես array of rounds
+    return rounds;
 }
 
 /**
  * Ավելացնել ամսաթվեր և մանրամասներ
+ * rounds-ը հիմա array of rounds է, ոչ թե flat array
+ * 
+ * ՖԻՔՍ: Յուրաքանչյուր round-ը ՊԱՐՏԱԴԻՐ տարբեր օր է
  */
-function scheduleMatches(fixtures, settings) {
+function scheduleMatches(rounds, settings) {
     const {
         startDate,
         matchDays,         // [1, 3, 5] = Երկ, Չրք, Ուրբ
@@ -60,41 +97,48 @@ function scheduleMatches(fixtures, settings) {
     
     const scheduledMatches = [];
     let currentDate = new Date(startDate);
-    let matchIndex = 0;
-    let round = 1;
+    let roundNumber = 1;
     
-    while (matchIndex < fixtures.length) {
-        // Ստուգել՝ այս օրը matchDay է՞
-        const dayOfWeek = currentDate.getDay(); // 0=Sun, 1=Mon, 2=Tue...
+    // Յուրաքանչյուր round-ի համար
+    for (const round of rounds) {
+        let matchesScheduledInRound = 0;
         
-        if (matchDays.includes(dayOfWeek)) {
-            // Այս օրը խաղեր ունենք
-            const matchesForThisDay = Math.min(matchesPerDay, fixtures.length - matchIndex);
-            
-            for (let i = 0; i < matchesForThisDay; i++) {
-                const fixture = fixtures[matchIndex];
-                
-                scheduledMatches.push({
-                    round: round,
-                    teamAId: fixture.teamA.id,
-                    teamBId: fixture.teamB.id,
-                    matchDate: formatDateTime(currentDate, matchTime),
-                    venue: venue || 'TBD'
-                });
-                
-                matchIndex++;
+        // Round-ի մեջ յուրաքանչյուր match
+        for (const match of round) {
+            // Գտնում ենք հաջորդ match day-ը
+            while (!matchDays.includes(currentDate.getDay())) {
+                currentDate.setDate(currentDate.getDate() + 1);
             }
             
-            round++;
+            scheduledMatches.push({
+                round: roundNumber,
+                teamAId: match.teamA.id,
+                teamBId: match.teamB.id,
+                matchDate: formatDateTime(currentDate, matchTime),
+                venue: venue || 'TBD'
+            });
             
-            // Հանգստի օրեր rounds-ի միջև
-            if (daysBetweenRounds > 0 && matchIndex < fixtures.length) {
-                currentDate.setDate(currentDate.getDate() + daysBetweenRounds);
+            matchesScheduledInRound++;
+            
+            // Եթե օրվա limit-ը լրացել է ԵՎ դեռ matches-ներ կան այս round-ում
+            if (matchesScheduledInRound % matchesPerDay === 0 && matchesScheduledInRound < round.length) {
+                // Անցնում ենք հաջորդ match day-ին
+                do {
+                    currentDate.setDate(currentDate.getDate() + 1);
+                } while (!matchDays.includes(currentDate.getDay()));
             }
         }
         
-        // Հաջորդ օրը
+        // Round-ը ավարտվեց
+        // ՖԻՔՍ: Անցնում ենք հաջորդ օրը (ՊԱՐՏԱԴԻՐ)
         currentDate.setDate(currentDate.getDate() + 1);
+        
+        // Ավելացնում ենք rest days (եթե կա)
+        if (daysBetweenRounds > 0) {
+            currentDate.setDate(currentDate.getDate() + daysBetweenRounds);
+        }
+        
+        roundNumber++;
     }
     
     return scheduledMatches;
@@ -113,26 +157,44 @@ function formatDateTime(date, time) {
 
 /**
  * Հաշվել վերջնական ամսաթիվը
+ * 
+ * ՖԻՔՍ: Յուրաքանչյուր round-ը ՊԱՐՏԱԴԻՐ տարբեր օր է
  */
-function calculateEndDate(startDate, matchDays, matchesPerDay, totalMatches, daysBetweenRounds) {
-    let currentDate = new Date(startDate);
-    let matchIndex = 0;
-    let roundsScheduled = 0;
+function calculateEndDate(rounds, settings) {
+    const {
+        startDate,
+        matchDays,
+        matchesPerDay,
+        daysBetweenRounds
+    } = settings;
     
-    while (matchIndex < totalMatches) {
-        const dayOfWeek = currentDate.getDay();
+    let currentDate = new Date(startDate);
+    
+    for (const round of rounds) {
+        let matchesScheduledInRound = 0;
         
-        if (matchDays.includes(dayOfWeek)) {
-            const matchesForThisDay = Math.min(matchesPerDay, totalMatches - matchIndex);
-            matchIndex += matchesForThisDay;
-            roundsScheduled++;
+        for (const match of round) {
+            while (!matchDays.includes(currentDate.getDay())) {
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
             
-            if (daysBetweenRounds > 0 && matchIndex < totalMatches) {
-                currentDate.setDate(currentDate.getDate() + daysBetweenRounds);
+            matchesScheduledInRound++;
+            
+            if (matchesScheduledInRound % matchesPerDay === 0 && matchesScheduledInRound < round.length) {
+                do {
+                    currentDate.setDate(currentDate.getDate() + 1);
+                } while (!matchDays.includes(currentDate.getDay()));
             }
         }
         
+        // Round-ը ավարտվեց
+        // ՖԻՔՍ: Անցնում ենք հաջորդ օրը (ՊԱՐՏԱԴԻՐ)
         currentDate.setDate(currentDate.getDate() + 1);
+        
+        // Ավելացնում ենք rest days (եթե կա)
+        if (daysBetweenRounds > 0) {
+            currentDate.setDate(currentDate.getDate() + daysBetweenRounds);
+        }
     }
     
     return currentDate.toISOString().split('T')[0];

@@ -428,19 +428,19 @@ const previewFixtures = async (req, res) => {
             });
         }
         
-        const fixtures = fixturesGenerator.generateRoundRobinDouble(teams);
-        const scheduledMatches = fixturesGenerator.scheduleMatches(fixtures, {
-            startDate,
-            matchDays,
-            matchTime,
-            matchesPerDay,
-            daysBetweenRounds: daysBetweenRounds || 0,
-            venue: venue || 'TBD'
-        });
+        const rounds = fixturesGenerator.generateRoundRobinDouble(teams);
+        const settings = {
+        startDate,
+        matchDays,
+        matchTime,
+        matchesPerDay,
+        daysBetweenRounds: daysBetweenRounds || 0,
+        venue: venue || 'TBD'
+    };
+
+        const scheduledMatches = fixturesGenerator.scheduleMatches(rounds, settings);
         
-        const estimatedEndDate = fixturesGenerator.calculateEndDate(
-            startDate, matchDays, matchesPerDay, fixtures.length, daysBetweenRounds || 0
-        );
+        const estimatedEndDate = fixturesGenerator.calculateEndDate(rounds, settings);
         
         const schedule = [];
         const roundsMap = {};
@@ -526,15 +526,17 @@ const generateFixtures = async (req, res) => {
             });
         }
         
-        const fixtures = fixturesGenerator.generateRoundRobinDouble(teams);
-        const scheduledMatches = fixturesGenerator.scheduleMatches(fixtures, {
-            startDate,
-            matchDays,
-            matchTime,
-            matchesPerDay,
-            daysBetweenRounds: daysBetweenRounds || 0,
-            venue: venue || 'TBD'
-        });
+        const rounds = fixturesGenerator.generateRoundRobinDouble(teams);
+        const settings = {
+        startDate,
+        matchDays,
+        matchTime,
+        matchesPerDay,
+        daysBetweenRounds: daysBetweenRounds || 0,
+        venue: venue || 'TBD'
+        };
+
+        const scheduledMatches = fixturesGenerator.scheduleMatches(rounds, settings);
         
         for (const match of scheduledMatches) {
             await db.promise().query(
@@ -571,6 +573,45 @@ const generateFixtures = async (req, res) => {
     }
 };
 
+// ========== GET TOURNAMENT MATCHES ==========
+
+const getTournamentMatches = async (req, res) => {
+    try {
+        const tournamentId = req.params.id;
+        
+        const [matches] = await db.promise().query(`
+            SELECT 
+                m.*,
+                ta.name as team_a_name,
+                ta.logo as team_a_logo,
+                ta.logo_color as team_a_color,
+                tb.name as team_b_name,
+                tb.logo as team_b_logo,
+                tb.logo_color as team_b_color
+            FROM matches m
+            INNER JOIN teams ta ON m.team_a_id = ta.id
+            INNER JOIN teams tb ON m.team_b_id = tb.id
+            WHERE m.tournament_id = ?
+            ORDER BY m.round, m.match_date
+        `, [tournamentId]);
+        
+        console.log('✅ Fetched', matches.length, 'matches for tournament', tournamentId);
+        
+        res.json({
+            success: true,
+            matches
+        });
+        
+    } catch (error) {
+        console.error('❌ Get tournament matches error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch matches',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getTournaments,
     getTournamentById,
@@ -579,6 +620,7 @@ module.exports = {
     deleteTournament,
     joinTournament,
     checkUserJoined,
-    previewFixtures, 
-    generateFixtures 
+    previewFixtures,
+    generateFixtures,
+    getTournamentMatches  
 };
