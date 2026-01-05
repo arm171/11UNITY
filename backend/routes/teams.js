@@ -34,4 +34,27 @@ router.delete('/:id',
     teamController.deleteTeam
 );
 
+// ========== PLAYERS MANAGEMENT ROUTES (ՆՈՐ) ==========
+
+// GET /api/teams/:teamId/players/search?email=xxx - Փնտրել խաղացողներ email-ով (coach only)
+router.get('/:teamId/players/search',
+    verifyToken,
+    checkRole('coach'),
+    teamController.searchPlayers
+);
+
+// POST /api/teams/:teamId/players - Ավելացնել խաղացող թիմին (coach only)
+router.post('/:teamId/players',
+    verifyToken,
+    checkRole('coach'),
+    teamController.addPlayerToTeam
+);
+
+// DELETE /api/teams/:teamId/players/:playerId - Հեռացնել խաղացող թիմից (coach only)
+router.delete('/:teamId/players/:playerId',
+    verifyToken,
+    checkRole('coach'),
+    teamController.removePlayerFromTeam
+);
+
 module.exports = router;

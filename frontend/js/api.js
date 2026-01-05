@@ -265,6 +265,37 @@ const API = {
         });
     },
     
+    // ========== PLAYER MANAGEMENT ENDPOINTS (ՆՈՐ) ==========
+    
+    /**
+     * Փնտրել խաղացողներ email-ով
+     */
+    async searchPlayers(teamId, email) {
+        const endpoint = `/teams/${teamId}/players/search?email=${encodeURIComponent(email)}`;
+        return await this.request(endpoint);
+    },
+    
+    /**
+     * Ավելացնել խաղացող թիմին
+     */
+    async addPlayerToTeam(teamId, playerData) {
+        const endpoint = `/teams/${teamId}/players`;
+        return await this.request(endpoint, {
+            method: 'POST',
+            body: JSON.stringify(playerData),
+        });
+    },
+    
+    /**
+     * Հեռացնել խաղացող թիմից
+     */
+    async removePlayerFromTeam(teamId, playerId) {
+        const endpoint = `/teams/${teamId}/players/${playerId}`;
+        return await this.request(endpoint, {
+            method: 'DELETE',
+        });
+    },
+    
     // ========== MATCH ENDPOINTS (будем добавлять позже) ==========
     
     /**
@@ -275,8 +306,8 @@ const API = {
     },
 
     async getTournamentMatches(tournamentId) {
-    const endpoint = `/tournaments/${tournamentId}/matches`;
-    return await this.request(endpoint);
+        const endpoint = `/tournaments/${tournamentId}/matches`;
+        return await this.request(endpoint);
     },
     
 };

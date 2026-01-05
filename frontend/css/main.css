@@ -373,9 +373,9 @@ section h2 {
 
 /* ========== FONT AWESOME ICONS ========== */
 
-.fas, .far {
+/* .fas, .far {
     margin-right: 8px;
-}
+} */
 
 section h2 i {
     color: var(--color-primary);
