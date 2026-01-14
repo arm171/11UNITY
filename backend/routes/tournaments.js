@@ -8,6 +8,18 @@ const { verifyToken, checkRole } = require('../middleware/auth');
 // Get all tournaments
 router.get('/', tournamentController.getTournaments);
 
+// Get tournament matches (public)
+router.get(
+    '/:id/matches',
+    tournamentController.getTournamentMatches
+);
+
+// Get match details (public)
+router.get(
+    '/:tournamentId/matches/:matchId',
+    tournamentController.getMatchDetails
+);
+
 // ========== ORGANIZER ROUTES ==========
 
 // Create tournament (organizer only)
@@ -34,6 +46,22 @@ router.post(
     tournamentController.generateFixtures
 );
 
+// Update match result (organizer only) - ՆՈՐ
+router.put(
+    '/:tournamentId/matches/:matchId',
+    verifyToken,
+    checkRole(['organizer']),
+    tournamentController.updateMatchResult
+);
+
+// Add match event (organizer only) - ՆՈՐ
+router.post(
+    '/:tournamentId/matches/:matchId/events',
+    verifyToken,
+    checkRole(['organizer']),
+    tournamentController.addMatchEvent
+);
+
 // ========== COACH ROUTES ==========
 
 // Join tournament (coach only)
@@ -50,12 +78,6 @@ router.get(
     verifyToken,
     checkRole(['coach']),
     tournamentController.checkUserJoined
-);
-
-// Get tournament matches (public)
-router.get(
-    '/:id/matches',
-    tournamentController.getTournamentMatches
 );
 
 module.exports = router;

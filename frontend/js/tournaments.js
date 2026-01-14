@@ -6,6 +6,7 @@ const Tournaments = {
     
     tournaments: [],
     currentTournament: null,
+    currentMatch: null,  // ՆՈՐ - ընթացիկ match-ը
     
     // ========== ԻՆԻՑԻԱԼԻԶԱՑԻԱ ==========
     
@@ -261,6 +262,133 @@ const Tournaments = {
                     </form>
                 </div>
             </div>
+
+            <!-- Match Results Modal (ՆՈՐ) -->
+            <div class="modal" id="match-results-modal">
+                <div class="modal-overlay"></div>
+                <div class="modal-content modal-content-large">
+                    <button class="modal-close" id="close-match-results">&times;</button>
+                    
+                    <h2 style="margin-bottom: 24px; text-align: center; color: white;">
+                        <i class="fas fa-futbol"></i> Enter Match Results
+                    </h2>
+                    
+                    <!-- Match Info -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 12px;">
+                        <div style="flex: 1; text-align: center;">
+                            <div style="font-size: 32px; margin-bottom: 8px;" id="match-home-logo">H</div>
+                            <div style="font-size: 18px; font-weight: bold; color: white;" id="match-home-name">Home Team</div>
+                        </div>
+                        <div style="font-size: 28px; font-weight: bold; color: #2ecc71;">VS</div>
+                        <div style="flex: 1; text-align: center;">
+                            <div style="font-size: 32px; margin-bottom: 8px;" id="match-away-logo">A</div>
+                            <div style="font-size: 18px; font-weight: bold; color: white;" id="match-away-name">Away Team</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Update Score Form -->
+                    <div style="margin-bottom: 32px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 12px;">
+                        <h3 style="color: white; margin-bottom: 16px;">
+                            <i class="fas fa-star"></i> Final Score
+                        </h3>
+                        <form id="update-score-form">
+                            <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: end;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label">Home Score</label>
+                                    <input type="number" class="form-input" id="home-score" min="0" value="0" required>
+                                </div>
+                                <div style="font-size: 24px; font-weight: bold; color: #b0b0b0; padding-bottom: 12px;">-</div>
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label">Away Score</label>
+                                    <input type="number" class="form-input" id="away-score" min="0" value="0" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
+                                <span class="btn-text">Update Score</span>
+                                <div class="spinner" style="display: none;"></div>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Add Goal Form -->
+                    <div style="margin-bottom: 32px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 12px;">
+                        <h3 style="color: white; margin-bottom: 16px;">
+                            <i class="fas fa-futbol"></i> Add Goal
+                        </h3>
+                        <form id="add-goal-form">
+                            <div class="form-group">
+                                <label class="form-label">Team</label>
+                                <select class="form-select" id="goal-team" required>
+                                    <option value="">Select team</option>
+                                    <option value="home">Home Team</option>
+                                    <option value="away">Away Team</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Player (email)</label>
+                                <input type="email" class="form-input" id="goal-player-email" placeholder="player@example.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Minute</label>
+                                <input type="number" class="form-input" id="goal-minute" min="1" max="120" placeholder="45" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Assist (optional - email)</label>
+                                <input type="email" class="form-input" id="goal-assist-email" placeholder="assistant@example.com">
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                <span class="btn-text"><i class="fas fa-plus"></i> Add Goal</span>
+                                <div class="spinner" style="display: none;"></div>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Add Card Form -->
+                    <div style="margin-bottom: 32px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 12px;">
+                        <h3 style="color: white; margin-bottom: 16px;">
+                            <i class="fas fa-square"></i> Add Card
+                        </h3>
+                        <form id="add-card-form">
+                            <div class="form-group">
+                                <label class="form-label">Team</label>
+                                <select class="form-select" id="card-team" required>
+                                    <option value="">Select team</option>
+                                    <option value="home">Home Team</option>
+                                    <option value="away">Away Team</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Player (email)</label>
+                                <input type="email" class="form-input" id="card-player-email" placeholder="player@example.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Card Type</label>
+                                <select class="form-select" id="card-type" required>
+                                    <option value="">Select type</option>
+                                    <option value="yellow_card">Yellow Card</option>
+                                    <option value="red_card">Red Card</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Minute</label>
+                                <input type="number" class="form-input" id="card-minute" min="1" max="120" placeholder="67" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                <span class="btn-text"><i class="fas fa-plus"></i> Add Card</span>
+                                <div class="spinner" style="display: none;"></div>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Match Events List -->
+                    <div style="padding: 20px; background: rgba(255,255,255,0.05); border-radius: 12px;">
+                        <h3 style="color: white; margin-bottom: 16px;">
+                            <i class="fas fa-list"></i> Match Events
+                        </h3>
+                        <div id="match-events-list"></div>
+                    </div>
+                </div>
+            </div>
         `;
         
         document.body.insertAdjacentHTML('beforeend', modalsHTML);
@@ -279,15 +407,20 @@ const Tournaments = {
         document.getElementById('close-create-tournament')?.addEventListener('click', () => this.closeCreateModal());
         document.getElementById('close-tournament-details')?.addEventListener('click', () => this.closeDetailsModal());
         document.getElementById('close-fixtures-settings')?.addEventListener('click', () => this.closeFixturesSettingsModal());
+        document.getElementById('close-match-results')?.addEventListener('click', () => this.closeMatchResultsModal());
         
         // Close on overlay
         document.querySelector('#create-tournament-modal .modal-overlay')?.addEventListener('click', () => this.closeCreateModal());
         document.querySelector('#tournament-details-modal .modal-overlay')?.addEventListener('click', () => this.closeDetailsModal());
         document.querySelector('#fixtures-settings-modal .modal-overlay')?.addEventListener('click', () => this.closeFixturesSettingsModal());
+        document.querySelector('#match-results-modal .modal-overlay')?.addEventListener('click', () => this.closeMatchResultsModal());
         
-        // Form submit
+        // Form submits
         document.getElementById('create-tournament-form')?.addEventListener('submit', (e) => this.handleCreate(e));
         document.getElementById('fixtures-settings-form')?.addEventListener('submit', (e) => this.handleGenerateFixtures(e));
+        document.getElementById('update-score-form')?.addEventListener('submit', (e) => this.handleUpdateScore(e));
+        document.getElementById('add-goal-form')?.addEventListener('submit', (e) => this.handleAddGoal(e));
+        document.getElementById('add-card-form')?.addEventListener('submit', (e) => this.handleAddCard(e));
     },
     
     // ========== ЗАГРУЗКА ТУРНИРОВ ==========
@@ -489,6 +622,14 @@ const Tournaments = {
     closeFixturesSettingsModal() {
         UI.closeModal('fixtures-settings-modal');
         document.getElementById('fixtures-settings-form').reset();
+    },
+    
+    closeMatchResultsModal() {
+        UI.closeModal('match-results-modal');
+        this.currentMatch = null;
+        document.getElementById('update-score-form').reset();
+        document.getElementById('add-goal-form').reset();
+        document.getElementById('add-card-form').reset();
     },
     
     // ========== ՄԻԱՆԱԼ ԿՈՃԱԿԻ ԹԱՐՄԱՑՈՒՄ ==========
@@ -707,7 +848,7 @@ const Tournaments = {
                         Round ${roundNum}
                     </h4>
                     <div style="display: grid; gap: 12px;">
-                        ${roundMatches.map(match => this.createFixtureCard(match)).join('')}
+                        ${roundMatches.map(match => this.createFixtureCard(match, tournamentId)).join('')}
                     </div>
                 `;
                 
@@ -726,9 +867,9 @@ const Tournaments = {
         }
     },
     
-    // ========== CREATE FIXTURE CARD ==========
+    // ========== CREATE FIXTURE CARD (ԹԱՐՄԱՑՎԱԾ) ==========
     
-    createFixtureCard(match) {
+    createFixtureCard(match, tournamentId) {
         const matchDate = new Date(match.match_date);
         const dateStr = matchDate.toLocaleDateString('en-US', { 
             month: 'short', 
@@ -740,63 +881,335 @@ const Tournaments = {
             minute: '2-digit' 
         });
         
+        // Ստուգել՝ organizer է՞
+        const user = API.getUser();
+        const isOrganizer = user && user.role === 'organizer' && match.organizer_id === user.id;
+        
         return `
             <div style="
                 background: rgba(255, 255, 255, 0.05);
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 border-radius: 12px;
                 padding: 16px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
             ">
-                <!-- Team A -->
-                <div style="flex: 1; display: flex; align-items: center; gap: 12px;">
-                    <div style="
-                        width: 40px;
-                        height: 40px;
-                        background: ${match.team_a_color};
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-weight: bold;
-                        color: white;
-                        font-size: 14px;
-                    ">
-                        ${match.team_a_logo}
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <!-- Team A -->
+                    <div style="flex: 1; display: flex; align-items: center; gap: 12px;">
+                        <div style="
+                            width: 40px;
+                            height: 40px;
+                            background: ${match.home_team_color};
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-weight: bold;
+                            color: white;
+                            font-size: 14px;
+                        ">
+                            ${match.home_team_logo}
+                        </div>
+                        <span style="color: white; font-weight: 600;">${match.home_team_name}</span>
                     </div>
-                    <span style="color: white; font-weight: 600;">${match.team_a_name}</span>
+                    
+                    <!-- Score OR VS -->
+                    <div style="text-align: center; padding: 0 24px;">
+                        ${match.status === 'finished' ? `
+                            <div style="color: #2ecc71; font-weight: bold; font-size: 24px;">
+                                ${match.home_score} - ${match.away_score}
+                            </div>
+                        ` : `
+                            <div style="color: #2ecc71; font-weight: bold; font-size: 18px;">VS</div>
+                        `}
+                        <div style="color: #b0b0b0; font-size: 12px; margin-top: 4px;">${dateStr}</div>
+                        <div style="color: #b0b0b0; font-size: 12px;">${timeStr}</div>
+                        ${match.venue !== 'TBD' ? `<div style="color: #b0b0b0; font-size: 11px;"><i class="fas fa-map-marker-alt"></i> ${match.venue}</div>` : ''}
+                    </div>
+                    
+                    <!-- Team B -->
+                    <div style="flex: 1; display: flex; align-items: center; gap: 12px; justify-content: flex-end;">
+                        <span style="color: white; font-weight: 600;">${match.away_team_name}</span>
+                        <div style="
+                            width: 40px;
+                            height: 40px;
+                            background: ${match.away_team_color};
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-weight: bold;
+                            color: white;
+                            font-size: 14px;
+                        ">
+                            ${match.away_team_logo}
+                        </div>
+                    </div>
                 </div>
                 
-                <!-- VS + Info -->
-                <div style="text-align: center; padding: 0 24px;">
-                    <div style="color: #2ecc71; font-weight: bold; font-size: 18px;">VS</div>
-                    <div style="color: #b0b0b0; font-size: 12px; margin-top: 4px;">${dateStr}</div>
-                    <div style="color: #b0b0b0; font-size: 12px;">${timeStr}</div>
-                    ${match.venue !== 'TBD' ? `<div style="color: #b0b0b0; font-size: 11px;"><i class="fas fa-map-marker-alt"></i> ${match.venue}</div>` : ''}
-                </div>
-                
-                <!-- Team B -->
-                <div style="flex: 1; display: flex; align-items: center; gap: 12px; justify-content: flex-end;">
-                    <span style="color: white; font-weight: 600;">${match.team_b_name}</span>
-                    <div style="
-                        width: 40px;
-                        height: 40px;
-                        background: ${match.team_b_color};
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-weight: bold;
-                        color: white;
-                        font-size: 14px;
-                    ">
-                        ${match.team_b_logo}
+                <!-- Enter Results Button (ՆՈՐ) -->
+                ${isOrganizer && match.status !== 'finished' ? `
+                    <div style="margin-top: 16px; text-align: center;">
+                        <button 
+                            class="btn btn-primary btn-sm"
+                            onclick="Tournaments.openMatchResultsModal(${tournamentId}, ${match.id}); event.stopPropagation();"
+                        >
+                            <i class="fas fa-edit"></i> Enter Results
+                        </button>
                     </div>
-                </div>
+                ` : ''}
             </div>
         `;
+    },
+    
+    // ========== OPEN MATCH RESULTS MODAL (ՆՈՐ) ==========
+    
+    async openMatchResultsModal(tournamentId, matchId) {
+        try {
+            console.log('🎯 Opening match results modal:', tournamentId, matchId);
+            
+            // Load match details
+            const response = await API.getMatchDetails(tournamentId, matchId);
+            this.currentMatch = response.match;
+            
+            // Populate match info
+            document.getElementById('match-home-logo').textContent = this.currentMatch.home_team_logo;
+            document.getElementById('match-home-logo').style.color = this.currentMatch.home_team_color;
+            document.getElementById('match-home-name').textContent = this.currentMatch.home_team_name;
+            
+            document.getElementById('match-away-logo').textContent = this.currentMatch.away_team_logo;
+            document.getElementById('match-away-logo').style.color = this.currentMatch.away_team_color;
+            document.getElementById('match-away-name').textContent = this.currentMatch.away_team_name;
+            
+            // Set current scores
+            document.getElementById('home-score').value = this.currentMatch.home_score || 0;
+            document.getElementById('away-score').value = this.currentMatch.away_score || 0;
+            
+            // Load events
+            this.loadMatchEvents();
+            
+            // Close details modal and open results modal
+            this.closeDetailsModal();
+            UI.openModal('match-results-modal');
+            
+        } catch (error) {
+            console.error('❌ Failed to open match results:', error);
+            UI.showNotification('Failed to load match details', 'error');
+        }
+    },
+    
+    // ========== LOAD MATCH EVENTS (ՆՈՐ) ==========
+    
+    loadMatchEvents() {
+        const eventsList = document.getElementById('match-events-list');
+        
+        if (!this.currentMatch || !this.currentMatch.events || this.currentMatch.events.length === 0) {
+            eventsList.innerHTML = '<p style="color: #b0b0b0; text-align: center;">No events yet</p>';
+            return;
+        }
+        
+        eventsList.innerHTML = this.currentMatch.events.map(event => {
+            const iconMap = {
+                'goal': 'fa-futbol',
+                'yellow_card': 'fa-square',
+                'red_card': 'fa-square',
+                'substitution': 'fa-exchange-alt'
+            };
+            
+            const colorMap = {
+                'goal': '#2ecc71',
+                'yellow_card': '#f39c12',
+                'red_card': '#e74c3c',
+                'substitution': '#3498db'
+            };
+            
+            return `
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 12px;
+                    margin-bottom: 8px;
+                    background: rgba(255,255,255,0.03);
+                    border-radius: 8px;
+                ">
+                    <div style="
+                        width: 40px;
+                        height: 40px;
+                        background: ${colorMap[event.event_type]};
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
+                    ">
+                        <i class="fas ${iconMap[event.event_type]}"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="color: white; font-weight: 600;">${event.player_name}</div>
+                        <div style="color: #b0b0b0; font-size: 14px;">${event.team_name}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="color: #2ecc71; font-weight: bold; font-size: 18px;">${event.minute}'</div>
+                        <div style="color: #b0b0b0; font-size: 12px; text-transform: capitalize;">
+                            ${event.event_type.replace('_', ' ')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+    
+    // ========== HANDLE UPDATE SCORE (ՆՈՐ) ==========
+    
+    async handleUpdateScore(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        UI.showButtonLoading(submitBtn);
+        
+        try {
+            const homeScore = parseInt(document.getElementById('home-score').value);
+            const awayScore = parseInt(document.getElementById('away-score').value);
+            
+            console.log('⚽ Updating score:', homeScore, '-', awayScore);
+            
+            await API.updateMatchResult(
+                this.currentMatch.tournament_id,
+                this.currentMatch.id,
+                {
+                    homeScore,
+                    awayScore,
+                    status: 'finished'
+                }
+            );
+            
+            // Update local match object
+            this.currentMatch.home_score = homeScore;
+            this.currentMatch.away_score = awayScore;
+            this.currentMatch.status = 'finished';
+            
+            UI.showNotification('Score updated successfully!', 'success');
+            
+        } catch (error) {
+            console.error('❌ Update score error:', error);
+            UI.showNotification(error.message || 'Failed to update score', 'error');
+        } finally {
+            UI.hideButtonLoading(submitBtn);
+        }
+    },
+    
+    // ========== HANDLE ADD GOAL (ՆՈՐ) ==========
+    
+    async handleAddGoal(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        UI.showButtonLoading(submitBtn);
+        
+        try {
+            const teamType = document.getElementById('goal-team').value;
+            const playerEmail = document.getElementById('goal-player-email').value;
+            const minute = parseInt(document.getElementById('goal-minute').value);
+            const assistEmail = document.getElementById('goal-assist-email').value;
+            
+            if (!teamType || !playerEmail) {
+                throw new Error('Team and player are required');
+            }
+            
+            // Get team ID
+            const teamId = teamType === 'home' ? this.currentMatch.home_team_id : this.currentMatch.away_team_id;
+            
+            // Get player ID by email (simplified - in production you'd query this)
+            // For now we'll send email and backend will resolve it
+            const eventData = {
+                teamId,
+                playerEmail,
+                eventType: 'goal',
+                minute,
+                description: assistEmail ? `Assist by ${assistEmail}` : null
+            };
+            
+            console.log('⚽ Adding goal:', eventData);
+            
+            await API.addMatchEvent(
+                this.currentMatch.tournament_id,
+                this.currentMatch.id,
+                eventData
+            );
+            
+            UI.showNotification('Goal added successfully!', 'success');
+            
+            // Reload match details to show new event
+            const response = await API.getMatchDetails(this.currentMatch.tournament_id, this.currentMatch.id);
+            this.currentMatch = response.match;
+            this.loadMatchEvents();
+            
+            // Reset form
+            form.reset();
+            
+        } catch (error) {
+            console.error('❌ Add goal error:', error);
+            UI.showNotification(error.message || 'Failed to add goal', 'error');
+        } finally {
+            UI.hideButtonLoading(submitBtn);
+        }
+    },
+    
+    // ========== HANDLE ADD CARD (ՆՈՐ) ==========
+    
+    async handleAddCard(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        UI.showButtonLoading(submitBtn);
+        
+        try {
+            const teamType = document.getElementById('card-team').value;
+            const playerEmail = document.getElementById('card-player-email').value;
+            const cardType = document.getElementById('card-type').value;
+            const minute = parseInt(document.getElementById('card-minute').value);
+            
+            if (!teamType || !playerEmail || !cardType) {
+                throw new Error('All fields are required');
+            }
+            
+            // Get team ID
+            const teamId = teamType === 'home' ? this.currentMatch.home_team_id : this.currentMatch.away_team_id;
+            
+            const eventData = {
+                teamId,
+                playerEmail,
+                eventType: cardType,
+                minute
+            };
+            
+            console.log('🟨 Adding card:', eventData);
+            
+            await API.addMatchEvent(
+                this.currentMatch.tournament_id,
+                this.currentMatch.id,
+                eventData
+            );
+            
+            UI.showNotification('Card added successfully!', 'success');
+            
+            // Reload match details to show new event
+            const response = await API.getMatchDetails(this.currentMatch.tournament_id, this.currentMatch.id);
+            this.currentMatch = response.match;
+            this.loadMatchEvents();
+            
+            // Reset form
+            form.reset();
+            
+        } catch (error) {
+            console.error('❌ Add card error:', error);
+            UI.showNotification(error.message || 'Failed to add card', 'error');
+        } finally {
+            UI.hideButtonLoading(submitBtn);
+        }
     },
     
     // ========== СОЗДАНИЕ ТУРНИРА ==========

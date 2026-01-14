@@ -265,7 +265,7 @@ const API = {
         });
     },
     
-    // ========== PLAYER MANAGEMENT ENDPOINTS (ՆՈՐ) ==========
+    // ========== PLAYER MANAGEMENT ENDPOINTS ==========
     
     /**
      * Փնտրել խաղացողներ email-ով
@@ -296,7 +296,7 @@ const API = {
         });
     },
     
-    // ========== MATCH ENDPOINTS (будем добавлять позже) ==========
+    // ========== MATCH ENDPOINTS ==========
     
     /**
      * Получить все матчи
@@ -305,9 +305,42 @@ const API = {
         return await this.request(CONFIG.ENDPOINTS.MATCHES);
     },
 
+    /**
+     * Получить матчи турнира
+     */
     async getTournamentMatches(tournamentId) {
         const endpoint = `/tournaments/${tournamentId}/matches`;
         return await this.request(endpoint);
+    },
+    
+    /**
+     * Получить детали матча (ՆՈՐ)
+     */
+    async getMatchDetails(tournamentId, matchId) {
+        const endpoint = `/tournaments/${tournamentId}/matches/${matchId}`;
+        return await this.request(endpoint);
+    },
+    
+    /**
+     * Թարմացնել խաղի արդյունքը (ՆՈՐ)
+     */
+    async updateMatchResult(tournamentId, matchId, data) {
+        const endpoint = `/tournaments/${tournamentId}/matches/${matchId}`;
+        return await this.request(endpoint, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    },
+    
+    /**
+     * Ավելացնել խաղի իրադարձություն (ՆՈՐ)
+     */
+    async addMatchEvent(tournamentId, matchId, eventData) {
+        const endpoint = `/tournaments/${tournamentId}/matches/${matchId}/events`;
+        return await this.request(endpoint, {
+            method: 'POST',
+            body: JSON.stringify(eventData),
+        });
     },
     
 };

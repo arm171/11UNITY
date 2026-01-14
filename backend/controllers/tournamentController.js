@@ -430,13 +430,13 @@ const previewFixtures = async (req, res) => {
         
         const rounds = fixturesGenerator.generateRoundRobinDouble(teams);
         const settings = {
-        startDate,
-        matchDays,
-        matchTime,
-        matchesPerDay,
-        daysBetweenRounds: daysBetweenRounds || 0,
-        venue: venue || 'TBD'
-    };
+            startDate,
+            matchDays,
+            matchTime,
+            matchesPerDay,
+            daysBetweenRounds: daysBetweenRounds || 0,
+            venue: venue || 'TBD'
+        };
 
         const scheduledMatches = fixturesGenerator.scheduleMatches(rounds, settings);
         
@@ -468,7 +468,7 @@ const previewFixtures = async (req, res) => {
         res.json({
             success: true,
             preview: {
-                totalMatches: fixtures.length,
+                totalMatches: scheduledMatches.length,
                 totalRounds: schedule.length,
                 estimatedEndDate,
                 schedule
@@ -528,12 +528,12 @@ const generateFixtures = async (req, res) => {
         
         const rounds = fixturesGenerator.generateRoundRobinDouble(teams);
         const settings = {
-        startDate,
-        matchDays,
-        matchTime,
-        matchesPerDay,
-        daysBetweenRounds: daysBetweenRounds || 0,
-        venue: venue || 'TBD'
+            startDate,
+            matchDays,
+            matchTime,
+            matchesPerDay,
+            daysBetweenRounds: daysBetweenRounds || 0,
+            venue: venue || 'TBD'
         };
 
         const scheduledMatches = fixturesGenerator.scheduleMatches(rounds, settings);
@@ -541,17 +541,17 @@ const generateFixtures = async (req, res) => {
         for (const match of scheduledMatches) {
             await db.promise().query(
                 `INSERT INTO matches 
-                (tournament_id, round, team_a_id, team_b_id, match_date, venue, status)
+                (tournament_id, round, home_team_id, away_team_id, match_date, venue, status)
                 VALUES (?, ?, ?, ?, ?, ?, 'scheduled')`,
                 [tournamentId, match.round, match.teamAId, match.teamBId, match.matchDate, match.venue]
             );
         }
         
         const [savedMatches] = await db.promise().query(`
-            SELECT m.*, ta.name as team_a_name, tb.name as team_b_name
+            SELECT m.*, ta.name as home_team_name, tb.name as away_team_name
             FROM matches m
-            INNER JOIN teams ta ON m.team_a_id = ta.id
-            INNER JOIN teams tb ON m.team_b_id = tb.id
+            INNER JOIN teams ta ON m.home_team_id = ta.id
+            INNER JOIN teams tb ON m.away_team_id = tb.id
             WHERE m.tournament_id = ?
             ORDER BY m.round, m.match_date
         `, [tournamentId]);
@@ -579,23 +579,27 @@ const getTournamentMatches = async (req, res) => {
     try {
         const tournamentId = req.params.id;
         
-        const [matches] = await db.promise().query(`
+        const query = `
             SELECT 
                 m.*,
-                ta.name as team_a_name,
-                ta.logo as team_a_logo,
-                ta.logo_color as team_a_color,
-                tb.name as team_b_name,
-                tb.logo as team_b_logo,
-                tb.logo_color as team_b_color
+                t.organizer_id,
+                th.name as home_team_name,
+                th.logo as home_team_logo,
+                th.logo_color as home_team_color,
+                ta.name as away_team_name,
+                ta.logo as away_team_logo,
+                ta.logo_color as away_team_color
             FROM matches m
-            INNER JOIN teams ta ON m.team_a_id = ta.id
-            INNER JOIN teams tb ON m.team_b_id = tb.id
+            INNER JOIN tournaments t ON m.tournament_id = t.id
+            INNER JOIN teams th ON m.home_team_id = th.id
+            INNER JOIN teams ta ON m.away_team_id = ta.id
             WHERE m.tournament_id = ?
             ORDER BY m.round, m.match_date
-        `, [tournamentId]);
+        `;
         
-        console.log('✅ Fetched', matches.length, 'matches for tournament', tournamentId);
+        const [matches] = await db.promise().query(query, [tournamentId]);
+        
+        console.log(`✅ Fetched ${matches.length} matches for tournament ${tournamentId}`);
         
         res.json({
             success: true,
@@ -612,6 +616,227 @@ const getTournamentMatches = async (req, res) => {
     }
 };
 
+// ========== GET MATCH DETAILS (ՆՈՐ) ==========
+
+const getMatchDetails = async (req, res) => {
+    try {
+        const { tournamentId, matchId } = req.params;
+        
+        // Get match info
+        const [matches] = await db.promise().query(`
+            SELECT 
+                m.*,
+                t.organizer_id,
+                ta.name as home_team_name,
+                ta.logo as home_team_logo,
+                ta.logo_color as home_team_color,
+                tb.name as away_team_name,
+                tb.logo as away_team_logo,
+                tb.logo_color as away_team_color
+            FROM matches m
+            INNER JOIN tournaments t ON m.tournament_id = t.id
+            INNER JOIN teams ta ON m.home_team_id = ta.id
+            INNER JOIN teams tb ON m.away_team_id = tb.id
+            WHERE m.tournament_id = ? AND m.id = ?
+        `, [tournamentId, matchId]);
+        
+        if (matches.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Match not found'
+            });
+        }
+        
+        const match = matches[0];
+        
+        // Get match events
+        const [events] = await db.promise().query(`
+            SELECT 
+                me.*,
+                u.name as player_name,
+                t.name as team_name
+            FROM match_events me
+            INNER JOIN users u ON me.player_id = u.id
+            INNER JOIN teams t ON me.team_id = t.id
+            WHERE me.match_id = ?
+            ORDER BY me.minute ASC
+        `, [matchId]);
+        
+        match.events = events;
+        
+        console.log('✅ Fetched match details:', matchId);
+        
+        res.json({
+            success: true,
+            match
+        });
+        
+    } catch (error) {
+        console.error('❌ Get match details error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch match details',
+            error: error.message
+        });
+    }
+};
+
+// ========== UPDATE MATCH RESULT (ՆՈՐ) ==========
+
+const updateMatchResult = async (req, res) => {
+    try {
+        const { tournamentId, matchId } = req.params;
+        const { homeScore, awayScore, status } = req.body;
+        const userId = req.user.id;
+        
+        // Validate scores
+        if (homeScore === undefined || awayScore === undefined) {
+            return res.status(400).json({
+                success: false,
+                message: 'Home score and away score are required'
+            });
+        }
+        
+        if (homeScore < 0 || awayScore < 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Scores cannot be negative'
+            });
+        }
+        
+        // Check if match exists and user is organizer
+        const [matches] = await db.promise().query(`
+            SELECT m.*, t.organizer_id
+            FROM matches m
+            INNER JOIN tournaments t ON m.tournament_id = t.id
+            WHERE m.tournament_id = ? AND m.id = ?
+        `, [tournamentId, matchId]);
+        
+        if (matches.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Match not found'
+            });
+        }
+        
+        if (matches[0].organizer_id !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only the tournament organizer can update match results'
+            });
+        }
+        
+        // Update match
+        await db.promise().query(
+            `UPDATE matches 
+            SET home_score = ?, away_score = ?, status = ?
+            WHERE id = ?`,
+            [homeScore, awayScore, status || 'finished', matchId]
+        );
+        
+        console.log('✅ Match result updated:', matchId, `(${homeScore} - ${awayScore})`);
+        
+        res.json({
+            success: true,
+            message: 'Match result updated successfully'
+        });
+        
+    } catch (error) {
+        console.error('❌ Update match result error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update match result',
+            error: error.message
+        });
+    }
+};
+
+// ========== ADD MATCH EVENT (ՆՈՐ) ==========
+
+const addMatchEvent = async (req, res) => {
+    try {
+        const { tournamentId, matchId } = req.params;
+        const { playerId, teamId, eventType, minute, description } = req.body;
+        const userId = req.user.id;
+        
+        // Validate
+        if (!playerId || !teamId || !eventType || minute === undefined) {
+            return res.status(400).json({
+                success: false,
+                message: 'Player, team, event type, and minute are required'
+            });
+        }
+        
+        // Validate event type
+        const validTypes = ['goal', 'yellow_card', 'red_card', 'substitution'];
+        if (!validTypes.includes(eventType)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid event type'
+            });
+        }
+        
+        // Check if match exists and user is organizer
+        const [matches] = await db.promise().query(`
+            SELECT m.*, t.organizer_id
+            FROM matches m
+            INNER JOIN tournaments t ON m.tournament_id = t.id
+            WHERE m.tournament_id = ? AND m.id = ?
+        `, [tournamentId, matchId]);
+        
+        if (matches.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Match not found'
+            });
+        }
+        
+        if (matches[0].organizer_id !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only the tournament organizer can add match events'
+            });
+        }
+        
+        // Verify player exists and is in the team
+        const [players] = await db.promise().query(`
+            SELECT tp.id
+            FROM team_players tp
+            WHERE tp.team_id = ? AND tp.player_id = ?
+        `, [teamId, playerId]);
+        
+        if (players.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Player is not in the specified team'
+            });
+        }
+        
+        // Add event
+        await db.promise().query(
+            `INSERT INTO match_events 
+            (match_id, player_id, team_id, event_type, minute, description)
+            VALUES (?, ?, ?, ?, ?, ?)`,
+            [matchId, playerId, teamId, eventType, minute, description || null]
+        );
+        
+        console.log('✅ Match event added:', eventType, 'Player:', playerId, 'Minute:', minute);
+        
+        res.status(201).json({
+            success: true,
+            message: 'Match event added successfully'
+        });
+        
+    } catch (error) {
+        console.error('❌ Add match event error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to add match event',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getTournaments,
     getTournamentById,
@@ -622,5 +847,8 @@ module.exports = {
     checkUserJoined,
     previewFixtures,
     generateFixtures,
-    getTournamentMatches  
+    getTournamentMatches,
+    getMatchDetails,      // ՆՈՐ
+    updateMatchResult,    // ՆՈՐ
+    addMatchEvent         // ՆՈՐ
 };
