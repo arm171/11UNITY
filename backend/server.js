@@ -1,6 +1,7 @@
-/* ==============================================
-   SERVER - Главный файл Express сервера
-   ============================================== */
+/**
+ * 11UNITY BACKEND SERVER
+ * Main Express server configuration
+ */
 
 require('dotenv').config();
 const express = require('express');
@@ -9,36 +10,42 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ========== MIDDLEWARE ==========
+/**
+ * MIDDLEWARE CONFIGURATION
+ */
 
-// CORS - разрешаем запросы с frontend
+// Enable CORS for frontend requests
 app.use(cors());
 
-// JSON parser
+// Parse JSON and URL-encoded bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Логирование запросов
+// Request logging middleware
 app.use((req, res, next) => {
-    console.log(`📡 ${req.method} ${req.url}`);
+    console.log(`${req.method} ${req.url}`);
     next();
 });
 
-// ========== DATABASE CONNECTION ==========
+/**
+ * DATABASE CONNECTION
+ */
 
 const db = require('./config/database');
 
-// Проверка подключения к БД
+// Verify database connection on startup
 db.getConnection((err, connection) => {
     if (err) {
-        console.error('❌ Database connection failed:', err.message);
+        console.error('Database connection failed:', err.message);
         process.exit(1);
     }
-    console.log('✅ Database connected successfully!');
+    console.log('Database connected successfully');
     connection.release();
 });
 
-// ========== ROUTES ==========
+/**
+ * API ROUTES
+ */
 
 const authRoutes = require('./routes/auth');
 const tournamentRoutes = require('./routes/tournaments');
@@ -48,11 +55,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/teams', teamRoutes);
 
-// ========== ROOT ENDPOINT ==========
-
+/**
+ * Root endpoint
+ */
 app.get('/', (req, res) => {
     res.json({
-        message: '⚽ Welcome to 11UNITY API!',
+        message: 'Welcome to 11UNITY API',
         version: '1.0.0',
         endpoints: {
             auth: '/api/auth',
@@ -62,8 +70,9 @@ app.get('/', (req, res) => {
     });
 });
 
-// ========== 404 HANDLER ==========
-
+/**
+ * 404 Error Handler
+ */
 app.use((req, res) => {
     res.status(404).json({
         success: false,
@@ -71,10 +80,11 @@ app.use((req, res) => {
     });
 });
 
-// ========== ERROR HANDLER ==========
-
+/**
+ * Global Error Handler
+ */
 app.use((err, req, res, next) => {
-    console.error('🚨 Error:', err.stack);
+    console.error('Error:', err.stack);
     res.status(500).json({
         success: false,
         message: 'Internal server error',
@@ -82,24 +92,26 @@ app.use((err, req, res, next) => {
     });
 });
 
-// ========== START SERVER ==========
-
+/**
+ * START SERVER
+ */
 app.listen(PORT, () => {
-    console.log('═══════════════════════════════════════');
-    console.log('🚀 11UNITY Backend Server');
-    console.log('═══════════════════════════════════════');
-    console.log(`📍 Server running on: http://localhost:${PORT}`);
-    console.log(`🗄️  Database: ${process.env.DB_NAME}`);
-    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log('═══════════════════════════════════════');
+    console.log('=======================================');
+    console.log('11UNITY Backend Server');
+    console.log('=======================================');
+    console.log(`Server running on: http://localhost:${PORT}`);
+    console.log(`Database: ${process.env.DB_NAME}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log('=======================================');
 });
 
-// ========== GRACEFUL SHUTDOWN ==========
-
+/**
+ * GRACEFUL SHUTDOWN
+ */
 process.on('SIGTERM', () => {
-    console.log('👋 SIGTERM received. Closing server...');
+    console.log('SIGTERM received. Closing server...');
     db.end(() => {
-        console.log('✅ Database connection closed');
+        console.log('Database connection closed');
         process.exit(0);
     });
 });

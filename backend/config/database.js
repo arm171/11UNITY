@@ -1,10 +1,14 @@
-/* ==============================================
-   DATABASE - Подключение к MySQL
-   ============================================== */
+/**
+ * DATABASE CONFIGURATION
+ * MySQL connection pool setup
+ */
 
 const mysql = require('mysql2');
 
-// Создаём pool соединений
+/**
+ * Create connection pool for database
+ * Using connection pooling for better performance and resource management
+ */
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -17,12 +21,13 @@ const pool = mysql.createPool({
     keepAliveInitialDelay: 0
 });
 
-// Экспортируем pool с promise wrapper
-module.exports = pool;
-
-// Логирование ошибок pool
+/**
+ * Handle pool errors
+ */
 pool.on('error', (err) => {
-    console.error('🚨 Database pool error:', err.message);
+    console.error('Database pool error:', err.message);
 });
 
-console.log('📦 Database pool created');
+console.log('Database pool created');
+
+module.exports = pool;

@@ -1,15 +1,20 @@
-/* ==============================================
-   TOURNAMENT CONTROLLER - Логика турниров
-   ============================================== */
+/**
+ * TOURNAMENT CONTROLLER
+ * Handles all tournament-related operations
+ */
 
 const db = require('../config/database');
 
-// ========== ПОЛУЧИТЬ ВСЕ ТУРНИРЫ ==========
-
+/**
+ * Get all tournaments with team counts
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 const getTournaments = async (req, res) => {
     try {
         const query = `
-            SELECT 
+            SELECT
                 t.*,
                 u.name as organizer_name,
                 COUNT(DISTINCT tt.team_id) as teams_count
@@ -19,18 +24,18 @@ const getTournaments = async (req, res) => {
             GROUP BY t.id
             ORDER BY t.created_at DESC
         `;
-        
+
         const [tournaments] = await db.promise().query(query);
-        
-        console.log(`✅ Fetched ${tournaments.length} tournaments`);
-        
+
+        console.log(`Fetched ${tournaments.length} tournaments`);
+
         res.json({
             success: true,
             tournaments
         });
-        
+
     } catch (error) {
-        console.error('❌ Get tournaments error:', error);
+        console.error('Get tournaments error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch tournaments',
@@ -39,14 +44,18 @@ const getTournaments = async (req, res) => {
     }
 };
 
-// ========== ПОЛУЧИТЬ ТУРНИР ПО ID ==========
-
+/**
+ * Get tournament by ID with team counts
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 const getTournamentById = async (req, res) => {
     try {
         const { id } = req.params;
-        
+
         const query = `
-            SELECT 
+            SELECT
                 t.*,
                 u.name as organizer_name,
                 COUNT(DISTINCT tt.team_id) as teams_count
@@ -56,23 +65,23 @@ const getTournamentById = async (req, res) => {
             WHERE t.id = ?
             GROUP BY t.id
         `;
-        
+
         const [tournaments] = await db.promise().query(query, [id]);
-        
+
         if (tournaments.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: 'Tournament not found'
             });
         }
-        
+
         res.json({
             success: true,
             tournament: tournaments[0]
         });
-        
+
     } catch (error) {
-        console.error('❌ Get tournament error:', error);
+        console.error('Get tournament error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch tournament',
@@ -81,22 +90,27 @@ const getTournamentById = async (req, res) => {
     }
 };
 
-// ========== СОЗДАТЬ ТУРНИР ==========
-
+/**
+ * Create new tournament
+ * Only organizers can create tournaments
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 const createTournament = async (req, res) => {
     try {
         const { name, type, startDate, endDate, location, description, maxTeams } = req.body;
         const organizerId = req.user.id;
-        
-        // Валидация
+
+        // Validate required fields
         if (!name || !type || !startDate || !endDate || !maxTeams) {
             return res.status(400).json({
                 success: false,
                 message: 'Required fields: name, type, startDate, endDate, maxTeams'
             });
         }
-        
-        // Проверка типа турнира
+
+        // Validate tournament type
         const validTypes = ['league', 'playoff', 'group_playoff'];
         if (!validTypes.includes(type)) {
             return res.status(400).json({
@@ -104,19 +118,19 @@ const createTournament = async (req, res) => {
                 message: 'Invalid tournament type'
             });
         }
-        
-        // Проверка дат
+
+        // Validate dates
         const start = new Date(startDate);
         const end = new Date(endDate);
-        
+
         if (start >= end) {
             return res.status(400).json({
                 success: false,
                 message: 'End date must be after start date'
             });
         }
-        
-        // Определяем статус
+
+        // Determine tournament status
         const now = new Date();
         let status = 'upcoming';
         if (now >= start && now <= end) {
@@ -124,19 +138,19 @@ const createTournament = async (req, res) => {
         } else if (now > end) {
             status = 'finished';
         }
-        
-        // Создаём турнир
+
+        // Create tournament
         const [result] = await db.promise().query(
-            `INSERT INTO tournaments 
-            (name, type, start_date, end_date, location, description, max_teams, status, organizer_id) 
+            `INSERT INTO tournaments
+            (name, type, start_date, end_date, location, description, max_teams, status, organizer_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [name, type, startDate, endDate, location, description, maxTeams, status, organizerId]
         );
-        
+
         const tournamentId = result.insertId;
-        
-        console.log('✅ Tournament created:', name, `(ID: ${tournamentId})`);
-        
+
+        console.log('Tournament created:', name, `(ID: ${tournamentId})`);
+
         res.status(201).json({
             success: true,
             message: 'Tournament created successfully',
@@ -153,9 +167,9 @@ const createTournament = async (req, res) => {
                 organizer_id: organizerId
             }
         });
-        
+
     } catch (error) {
-        console.error('❌ Create tournament error:', error);
+        console.error('Create tournament error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to create tournament',
@@ -164,52 +178,57 @@ const createTournament = async (req, res) => {
     }
 };
 
-// ========== ОБНОВИТЬ ТУРНИР ==========
-
+/**
+ * Update tournament
+ * Only tournament organizer can update
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 const updateTournament = async (req, res) => {
     try {
         const { id } = req.params;
         const { name, type, startDate, endDate, location, description, maxTeams, status } = req.body;
         const userId = req.user.id;
-        
-        // Проверяем существует ли турнир и является ли пользователь организатором
+
+        // Verify tournament exists and user is organizer
         const [tournaments] = await db.promise().query(
             'SELECT organizer_id FROM tournaments WHERE id = ?',
             [id]
         );
-        
+
         if (tournaments.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: 'Tournament not found'
             });
         }
-        
+
         if (tournaments[0].organizer_id !== userId) {
             return res.status(403).json({
                 success: false,
                 message: 'Only the organizer can update this tournament'
             });
         }
-        
-        // Обновляем турнир
+
+        // Update tournament
         await db.promise().query(
-            `UPDATE tournaments 
-            SET name = ?, type = ?, start_date = ?, end_date = ?, 
+            `UPDATE tournaments
+            SET name = ?, type = ?, start_date = ?, end_date = ?,
                 location = ?, description = ?, max_teams = ?, status = ?
             WHERE id = ?`,
             [name, type, startDate, endDate, location, description, maxTeams, status, id]
         );
-        
-        console.log('✅ Tournament updated:', id);
-        
+
+        console.log('Tournament updated:', id);
+
         res.json({
             success: true,
             message: 'Tournament updated successfully'
         });
-        
+
     } catch (error) {
-        console.error('❌ Update tournament error:', error);
+        console.error('Update tournament error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to update tournament',
@@ -218,45 +237,50 @@ const updateTournament = async (req, res) => {
     }
 };
 
-// ========== УДАЛИТЬ ТУРНИР ==========
-
+/**
+ * Delete tournament
+ * Only tournament organizer can delete
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 const deleteTournament = async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
-        
-        // Проверяем существует ли турнир и является ли пользователь организатором
+
+        // Verify tournament exists and user is organizer
         const [tournaments] = await db.promise().query(
             'SELECT organizer_id FROM tournaments WHERE id = ?',
             [id]
         );
-        
+
         if (tournaments.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: 'Tournament not found'
             });
         }
-        
+
         if (tournaments[0].organizer_id !== userId) {
             return res.status(403).json({
                 success: false,
                 message: 'Only the organizer can delete this tournament'
             });
         }
-        
-        // Удаляем турнир
+
+        // Delete tournament
         await db.promise().query('DELETE FROM tournaments WHERE id = ?', [id]);
-        
-        console.log('✅ Tournament deleted:', id);
-        
+
+        console.log('Tournament deleted:', id);
+
         res.json({
             success: true,
             message: 'Tournament deleted successfully'
         });
-        
+
     } catch (error) {
-        console.error('❌ Delete tournament error:', error);
+        console.error('Delete tournament error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to delete tournament',
@@ -265,105 +289,115 @@ const deleteTournament = async (req, res) => {
     }
 };
 
-// ========== ԹԻՄԸ ՄԻԱՆՈՒՄ Է ՄՐՑԱՇԱՐԻՆ ==========
-
+/**
+ * Join tournament with coach's team
+ * Only coaches with teams can join
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 const joinTournament = async (req, res) => {
     try {
         const tournamentId = req.params.id;
         const userId = req.user.id;
-        
-        // 1. Գտնել մարզչի թիմը
+
+        // Find coach's team
         const [teams] = await db.promise().query(
             'SELECT id FROM teams WHERE coach_id = ?',
             [userId]
         );
-        
+
         if (teams.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'Դուք չունեք թիմ։ Նախ պետք է ստեղծեք թիմ։'
+                message: 'You do not have a team. Please create a team first.'
             });
         }
-        
+
         const teamId = teams[0].id;
-        
-        // 2. Ստուգել մրցաշարը գոյություն ունի
+
+        // Verify tournament exists
         const [tournaments] = await db.promise().query(
             'SELECT max_teams FROM tournaments WHERE id = ?',
             [tournamentId]
         );
-        
+
         if (tournaments.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Մրցաշարը չի գտնվել'
+                message: 'Tournament not found'
             });
         }
-        
+
         const maxTeams = tournaments[0].max_teams;
-        
-        // 3. Ստուգել արդեն միացե՞լ է
+
+        // Check if already joined
         const [existing] = await db.promise().query(
             'SELECT id FROM tournament_teams WHERE tournament_id = ? AND team_id = ?',
             [tournamentId, teamId]
         );
-        
+
         if (existing.length > 0) {
             return res.status(409).json({
                 success: false,
-                message: 'Ձեր թիմն արդեն միացել է այս մրցաշարին'
+                message: 'Your team has already joined this tournament'
             });
         }
-        
-        // 4. Ստուգել լիքը չէ
+
+        // Check if tournament is full
         const [currentTeams] = await db.promise().query(
             'SELECT COUNT(*) as count FROM tournament_teams WHERE tournament_id = ?',
             [tournamentId]
         );
-        
+
         if (currentTeams[0].count >= maxTeams) {
             return res.status(400).json({
                 success: false,
-                message: 'Մրցաշարը լիքն է։ Ավելի թիմեր չեն կարող միանալ։'
+                message: 'Tournament is full. No more teams can join.'
             });
         }
-        
-        // 5. Միացնել թիմը մրցաշարին
+
+        // Join team to tournament
         await db.promise().query(
             'INSERT INTO tournament_teams (tournament_id, team_id) VALUES (?, ?)',
             [tournamentId, teamId]
         );
-        
-        console.log('✅ Թիմը միացավ մրցաշարին:', teamId, '→', tournamentId);
-        
+
+        console.log('Team joined tournament:', teamId, '->', tournamentId);
+
         res.json({
             success: true,
-            message: 'Թիմը հաջողությամբ միացավ մրցաշարին'
+            message: 'Team successfully joined the tournament'
         });
-        
+
     } catch (error) {
-        console.error('❌ Միանալու սխալ:', error);
+        console.error('Join tournament error:', error);
         res.status(500).json({
             success: false,
-            message: 'Չհաջողվեց միանալ մրցաշարին',
+            message: 'Failed to join tournament',
             error: error.message
         });
     }
 };
 
-// ========== ՍՏՈՒԳԵԼ ՄԻԱՑԵ՞Լ Է ==========
-
+/**
+ * Check if user's team has joined tournament
+ * Returns join status and team availability
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 const checkUserJoined = async (req, res) => {
     try {
         const tournamentId = req.params.id;
         const userId = req.user.id;
-        
-        // Գտնել մարզչի թիմը
+
+        // Find coach's team
         const [teams] = await db.promise().query(
             'SELECT id FROM teams WHERE coach_id = ?',
             [userId]
         );
-        
+
         if (teams.length === 0) {
             return res.json({
                 success: true,
@@ -371,63 +405,68 @@ const checkUserJoined = async (req, res) => {
                 hasTeam: false
             });
         }
-        
+
         const teamId = teams[0].id;
-        
-        // Ստուգել միացե՞լ է
+
+        // Check if joined
         const [joined] = await db.promise().query(
             'SELECT id FROM tournament_teams WHERE tournament_id = ? AND team_id = ?',
             [tournamentId, teamId]
         );
-        
-        console.log('🔍 Check joined:', tournamentId, 'Team:', teamId, 'Joined:', joined.length > 0);
-        
+
+        console.log('Check joined:', tournamentId, 'Team:', teamId, 'Joined:', joined.length > 0);
+
         res.json({
             success: true,
             joined: joined.length > 0,
             hasTeam: true
         });
-        
+
     } catch (error) {
-        console.error('❌ Check joined error:', error);
+        console.error('Check joined error:', error);
         res.status(500).json({
             success: false,
-            message: 'Չհաջողվեց ստուգել',
+            message: 'Failed to check join status',
             error: error.message
         });
     }
 };
 
-// ========== PREVIEW FIXTURES ==========
-
+/**
+ * Preview fixtures before generating
+ * Shows estimated schedule without saving to database
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 const previewFixtures = async (req, res) => {
     try {
         const tournamentId = req.params.id;
         const { startDate, matchDays, matchTime, matchesPerDay, daysBetweenRounds, venue } = req.body;
-        
+
         if (!startDate || !matchDays || !matchTime || !matchesPerDay) {
             return res.status(400).json({
                 success: false,
                 message: 'All required fields must be provided'
             });
         }
-        
+
         const fixturesGenerator = require('../helpers/fixturesGenerator');
-        
+
         const [teams] = await db.promise().query(`
             SELECT t.id, t.name
             FROM teams t
             INNER JOIN tournament_teams tt ON t.id = tt.team_id
             WHERE tt.tournament_id = ?
         `, [tournamentId]);
-        
+
         if (teams.length < 2) {
             return res.status(400).json({
                 success: false,
-                message: 'Նվազագույնը 2 թիմ է պետք մրցաշարում'
+                message: 'Minimum 2 teams required in tournament'
             });
         }
-        
+
         const rounds = fixturesGenerator.generateRoundRobinDouble(teams);
         const settings = {
             startDate,
@@ -439,12 +478,11 @@ const previewFixtures = async (req, res) => {
         };
 
         const scheduledMatches = fixturesGenerator.scheduleMatches(rounds, settings);
-        
         const estimatedEndDate = fixturesGenerator.calculateEndDate(rounds, settings);
-        
+
         const schedule = [];
         const roundsMap = {};
-        
+
         scheduledMatches.forEach(match => {
             if (!roundsMap[match.round]) {
                 roundsMap[match.round] = {
@@ -453,18 +491,18 @@ const previewFixtures = async (req, res) => {
                     matches: []
                 };
             }
-            
+
             const teamA = teams.find(t => t.id === match.teamAId);
             const teamB = teams.find(t => t.id === match.teamBId);
-            
+
             roundsMap[match.round].matches.push({
                 teamA: teamA.name,
                 teamB: teamB.name
             });
         });
-        
+
         Object.values(roundsMap).forEach(round => schedule.push(round));
-        
+
         res.json({
             success: true,
             preview: {
@@ -474,9 +512,9 @@ const previewFixtures = async (req, res) => {
                 schedule
             }
         });
-        
+
     } catch (error) {
-        console.error('❌ Preview fixtures error:', error);
+        console.error('Preview fixtures error:', error);
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to preview fixtures'
@@ -484,48 +522,53 @@ const previewFixtures = async (req, res) => {
     }
 };
 
-// ========== GENERATE FIXTURES ==========
-
+/**
+ * Generate and save fixtures to database
+ * Creates all matches for the tournament
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 const generateFixtures = async (req, res) => {
     try {
         const tournamentId = req.params.id;
         const { startDate, matchDays, matchTime, matchesPerDay, daysBetweenRounds, venue } = req.body;
-        
+
         if (!startDate || !matchDays || !matchTime || !matchesPerDay) {
             return res.status(400).json({
                 success: false,
                 message: 'All required fields must be provided'
             });
         }
-        
+
         const [existingMatches] = await db.promise().query(
             'SELECT id FROM matches WHERE tournament_id = ?',
             [tournamentId]
         );
-        
+
         if (existingMatches.length > 0) {
             return res.status(400).json({
                 success: false,
                 message: 'Fixtures already generated for this tournament'
             });
         }
-        
+
         const fixturesGenerator = require('../helpers/fixturesGenerator');
-        
+
         const [teams] = await db.promise().query(`
             SELECT t.id, t.name
             FROM teams t
             INNER JOIN tournament_teams tt ON t.id = tt.team_id
             WHERE tt.tournament_id = ?
         `, [tournamentId]);
-        
+
         if (teams.length < 2) {
             return res.status(400).json({
                 success: false,
-                message: 'Նվազագույնը 2 թիմ է պետք մրցաշարում'
+                message: 'Minimum 2 teams required in tournament'
             });
         }
-        
+
         const rounds = fixturesGenerator.generateRoundRobinDouble(teams);
         const settings = {
             startDate,
@@ -537,16 +580,16 @@ const generateFixtures = async (req, res) => {
         };
 
         const scheduledMatches = fixturesGenerator.scheduleMatches(rounds, settings);
-        
+
         for (const match of scheduledMatches) {
             await db.promise().query(
-                `INSERT INTO matches 
+                `INSERT INTO matches
                 (tournament_id, round, home_team_id, away_team_id, match_date, venue, status)
                 VALUES (?, ?, ?, ?, ?, ?, 'scheduled')`,
                 [tournamentId, match.round, match.teamAId, match.teamBId, match.matchDate, match.venue]
             );
         }
-        
+
         const [savedMatches] = await db.promise().query(`
             SELECT m.*, ta.name as home_team_name, tb.name as away_team_name
             FROM matches m
@@ -555,17 +598,17 @@ const generateFixtures = async (req, res) => {
             WHERE m.tournament_id = ?
             ORDER BY m.round, m.match_date
         `, [tournamentId]);
-        
-        console.log('✅ Generated', scheduledMatches.length, 'matches');
-        
+
+        console.log('Generated', scheduledMatches.length, 'matches');
+
         res.json({
             success: true,
             message: `${scheduledMatches.length} matches generated successfully`,
             matches: savedMatches
         });
-        
+
     } catch (error) {
-        console.error('❌ Generate fixtures error:', error);
+        console.error('Generate fixtures error:', error);
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to generate fixtures'
@@ -573,14 +616,19 @@ const generateFixtures = async (req, res) => {
     }
 };
 
-// ========== GET TOURNAMENT MATCHES ==========
-
+/**
+ * Get all matches for a tournament
+ * Returns matches with team details
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 const getTournamentMatches = async (req, res) => {
     try {
         const tournamentId = req.params.id;
-        
+
         const query = `
-            SELECT 
+            SELECT
                 m.*,
                 t.organizer_id,
                 th.name as home_team_name,
@@ -596,18 +644,18 @@ const getTournamentMatches = async (req, res) => {
             WHERE m.tournament_id = ?
             ORDER BY m.round, m.match_date
         `;
-        
+
         const [matches] = await db.promise().query(query, [tournamentId]);
-        
-        console.log(`✅ Fetched ${matches.length} matches for tournament ${tournamentId}`);
-        
+
+        console.log(`Fetched ${matches.length} matches for tournament ${tournamentId}`);
+
         res.json({
             success: true,
             matches
         });
-        
+
     } catch (error) {
-        console.error('❌ Get tournament matches error:', error);
+        console.error('Get tournament matches error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch matches',
@@ -616,15 +664,20 @@ const getTournamentMatches = async (req, res) => {
     }
 };
 
-// ========== GET MATCH DETAILS (ՆՈՐ) ==========
-
+/**
+ * Get detailed information about a specific match
+ * Includes match events (goals, cards, etc.)
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 const getMatchDetails = async (req, res) => {
     try {
         const { tournamentId, matchId } = req.params;
-        
+
         // Get match info
         const [matches] = await db.promise().query(`
-            SELECT 
+            SELECT
                 m.*,
                 t.organizer_id,
                 ta.name as home_team_name,
@@ -639,19 +692,19 @@ const getMatchDetails = async (req, res) => {
             INNER JOIN teams tb ON m.away_team_id = tb.id
             WHERE m.tournament_id = ? AND m.id = ?
         `, [tournamentId, matchId]);
-        
+
         if (matches.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: 'Match not found'
             });
         }
-        
+
         const match = matches[0];
-        
+
         // Get match events
         const [events] = await db.promise().query(`
-            SELECT 
+            SELECT
                 me.*,
                 u.name as player_name,
                 t.name as team_name
@@ -661,18 +714,18 @@ const getMatchDetails = async (req, res) => {
             WHERE me.match_id = ?
             ORDER BY me.minute ASC
         `, [matchId]);
-        
+
         match.events = events;
-        
-        console.log('✅ Fetched match details:', matchId);
-        
+
+        console.log('Fetched match details:', matchId);
+
         res.json({
             success: true,
             match
         });
-        
+
     } catch (error) {
-        console.error('❌ Get match details error:', error);
+        console.error('Get match details error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch match details',
@@ -681,14 +734,19 @@ const getMatchDetails = async (req, res) => {
     }
 };
 
-// ========== UPDATE MATCH RESULT (ՆՈՐ) ==========
-
+/**
+ * Update match result (scores and status)
+ * Only tournament organizer can update
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 const updateMatchResult = async (req, res) => {
     try {
         const { tournamentId, matchId } = req.params;
         const { homeScore, awayScore, status } = req.body;
         const userId = req.user.id;
-        
+
         // Validate scores
         if (homeScore === undefined || awayScore === undefined) {
             return res.status(400).json({
@@ -696,14 +754,14 @@ const updateMatchResult = async (req, res) => {
                 message: 'Home score and away score are required'
             });
         }
-        
+
         if (homeScore < 0 || awayScore < 0) {
             return res.status(400).json({
                 success: false,
                 message: 'Scores cannot be negative'
             });
         }
-        
+
         // Check if match exists and user is organizer
         const [matches] = await db.promise().query(`
             SELECT m.*, t.organizer_id
@@ -711,38 +769,38 @@ const updateMatchResult = async (req, res) => {
             INNER JOIN tournaments t ON m.tournament_id = t.id
             WHERE m.tournament_id = ? AND m.id = ?
         `, [tournamentId, matchId]);
-        
+
         if (matches.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: 'Match not found'
             });
         }
-        
+
         if (matches[0].organizer_id !== userId) {
             return res.status(403).json({
                 success: false,
                 message: 'Only the tournament organizer can update match results'
             });
         }
-        
+
         // Update match
         await db.promise().query(
-            `UPDATE matches 
+            `UPDATE matches
             SET home_score = ?, away_score = ?, status = ?
             WHERE id = ?`,
             [homeScore, awayScore, status || 'finished', matchId]
         );
-        
-        console.log('✅ Match result updated:', matchId, `(${homeScore} - ${awayScore})`);
-        
+
+        console.log('Match result updated:', matchId, `(${homeScore} - ${awayScore})`);
+
         res.json({
             success: true,
             message: 'Match result updated successfully'
         });
-        
+
     } catch (error) {
-        console.error('❌ Update match result error:', error);
+        console.error('Update match result error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to update match result',
@@ -751,14 +809,19 @@ const updateMatchResult = async (req, res) => {
     }
 };
 
-// ========== ADD MATCH EVENT (ՆՈՐ) ==========
-
+/**
+ * Add match event (goal, card, substitution)
+ * Only tournament organizer can add events
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
 const addMatchEvent = async (req, res) => {
     try {
         const { tournamentId, matchId } = req.params;
         const { playerId, teamId, eventType, minute, description } = req.body;
         const userId = req.user.id;
-        
+
         // Validate
         if (!playerId || !teamId || !eventType || minute === undefined) {
             return res.status(400).json({
@@ -766,7 +829,7 @@ const addMatchEvent = async (req, res) => {
                 message: 'Player, team, event type, and minute are required'
             });
         }
-        
+
         // Validate event type
         const validTypes = ['goal', 'yellow_card', 'red_card', 'substitution'];
         if (!validTypes.includes(eventType)) {
@@ -775,7 +838,7 @@ const addMatchEvent = async (req, res) => {
                 message: 'Invalid event type'
             });
         }
-        
+
         // Check if match exists and user is organizer
         const [matches] = await db.promise().query(`
             SELECT m.*, t.organizer_id
@@ -783,52 +846,52 @@ const addMatchEvent = async (req, res) => {
             INNER JOIN tournaments t ON m.tournament_id = t.id
             WHERE m.tournament_id = ? AND m.id = ?
         `, [tournamentId, matchId]);
-        
+
         if (matches.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: 'Match not found'
             });
         }
-        
+
         if (matches[0].organizer_id !== userId) {
             return res.status(403).json({
                 success: false,
                 message: 'Only the tournament organizer can add match events'
             });
         }
-        
+
         // Verify player exists and is in the team
         const [players] = await db.promise().query(`
             SELECT tp.id
             FROM team_players tp
             WHERE tp.team_id = ? AND tp.player_id = ?
         `, [teamId, playerId]);
-        
+
         if (players.length === 0) {
             return res.status(400).json({
                 success: false,
                 message: 'Player is not in the specified team'
             });
         }
-        
+
         // Add event
         await db.promise().query(
-            `INSERT INTO match_events 
+            `INSERT INTO match_events
             (match_id, player_id, team_id, event_type, minute, description)
             VALUES (?, ?, ?, ?, ?, ?)`,
             [matchId, playerId, teamId, eventType, minute, description || null]
         );
-        
-        console.log('✅ Match event added:', eventType, 'Player:', playerId, 'Minute:', minute);
-        
+
+        console.log('Match event added:', eventType, 'Player:', playerId, 'Minute:', minute);
+
         res.status(201).json({
             success: true,
             message: 'Match event added successfully'
         });
-        
+
     } catch (error) {
-        console.error('❌ Add match event error:', error);
+        console.error('Add match event error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to add match event',
@@ -848,7 +911,7 @@ module.exports = {
     previewFixtures,
     generateFixtures,
     getTournamentMatches,
-    getMatchDetails,      // ՆՈՐ
-    updateMatchResult,    // ՆՈՐ
-    addMatchEvent         // ՆՈՐ
+    getMatchDetails,
+    updateMatchResult,
+    addMatchEvent
 };

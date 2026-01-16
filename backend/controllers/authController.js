@@ -1,26 +1,28 @@
-/* ==============================================
-   AUTH CONTROLLER - Регистрация и вход
-   ============================================== */
+/**
+ * AUTH CONTROLLER
+ * Handles user registration and login
+ */
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/database');
 
-// ========== РЕГИСТРАЦИЯ ==========
-
+/**
+ * Register a new user
+ */
 const register = async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
-        
-        // Валидация
+
+        // Validate required fields
         if (!name || !email || !password || !role) {
             return res.status(400).json({
                 success: false,
                 message: 'All fields are required'
             });
         }
-        
-        // Проверка валидности email
+
+        // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             return res.status(400).json({
@@ -28,16 +30,16 @@ const register = async (req, res) => {
                 message: 'Invalid email format'
             });
         }
-        
-        // Проверка длины пароля
+
+        // Validate password length
         if (password.length < 6) {
             return res.status(400).json({
                 success: false,
                 message: 'Password must be at least 6 characters'
             });
         }
-        
-        // Проверка валидности роли
+
+        // Validate role
         const validRoles = ['player', 'coach', 'organizer'];
         if (!validRoles.includes(role)) {
             return res.status(400).json({
@@ -45,40 +47,40 @@ const register = async (req, res) => {
                 message: 'Invalid role'
             });
         }
-        
-        // Проверяем существует ли пользователь
+
+        // Check if user already exists
         const [existingUsers] = await db.promise().query(
             'SELECT id FROM users WHERE email = ?',
             [email]
         );
-        
+
         if (existingUsers.length > 0) {
             return res.status(409).json({
                 success: false,
                 message: 'User with this email already exists'
             });
         }
-        
-        // Хешируем пароль
+
+        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
-        
-        // Создаём пользователя
+
+        // Create user
         const [result] = await db.promise().query(
             'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
             [name, email, hashedPassword, role]
         );
-        
+
         const userId = result.insertId;
-        
-        // Генерируем JWT токен
+
+        // Generate JWT token
         const token = jwt.sign(
             { id: userId, email, role },
             process.env.JWT_SECRET,
             { expiresIn: '30d' }
         );
-        
-        console.log('✅ User registered:', email, `(${role})`);
-        
+
+        console.log('User registered:', email, `(${role})`);
+
         res.status(201).json({
             success: true,
             message: 'User registered successfully',
@@ -90,9 +92,9 @@ const register = async (req, res) => {
                 role
             }
         });
-        
+
     } catch (error) {
-        console.error('❌ Registration error:', error);
+        console.error('Registration error:', error);
         res.status(500).json({
             success: false,
             message: 'Registration failed',
@@ -101,54 +103,55 @@ const register = async (req, res) => {
     }
 };
 
-// ========== ВХОД ==========
-
+/**
+ * Login user
+ */
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        
-        // Валидация
+
+        // Validate required fields
         if (!email || !password) {
             return res.status(400).json({
                 success: false,
                 message: 'Email and password are required'
             });
         }
-        
-        // Ищем пользователя
+
+        // Find user by email
         const [users] = await db.promise().query(
             'SELECT * FROM users WHERE email = ?',
             [email]
         );
-        
+
         if (users.length === 0) {
             return res.status(401).json({
                 success: false,
                 message: 'Invalid email or password'
             });
         }
-        
+
         const user = users[0];
-        
-        // Проверяем пароль
+
+        // Verify password
         const isPasswordValid = await bcrypt.compare(password, user.password);
-        
+
         if (!isPasswordValid) {
             return res.status(401).json({
                 success: false,
                 message: 'Invalid email or password'
             });
         }
-        
-        // Генерируем JWT токен
+
+        // Generate JWT token
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '30d' }
         );
-        
-        console.log('✅ User logged in:', email, `(${user.role})`);
-        
+
+        console.log('User logged in:', email, `(${user.role})`);
+
         res.json({
             success: true,
             message: 'Login successful',
@@ -161,9 +164,9 @@ const login = async (req, res) => {
                 created_at: user.created_at
             }
         });
-        
+
     } catch (error) {
-        console.error('❌ Login error:', error);
+        console.error('Login error:', error);
         res.status(500).json({
             success: false,
             message: 'Login failed',
