@@ -164,17 +164,53 @@ const Tournaments = {
                         </button>
                     </div>
 
-                    <div id="tournament-fixtures-container" style="display: none;">
-                        <h3 style="color: white; margin-bottom: 16px;">
+                    <!-- Tabs for Standings, Statistics, Fixtures -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 16px;">
+                        <button class="btn btn-secondary tournament-tab active" data-tab="standings" onclick="Tournaments.switchTab('standings')">
+                            <i class="fas fa-table"></i> Standings
+                        </button>
+                        <button class="btn btn-secondary tournament-tab" data-tab="statistics" onclick="Tournaments.switchTab('statistics')">
+                            <i class="fas fa-chart-bar"></i> Statistics
+                        </button>
+                        <button class="btn btn-secondary tournament-tab" data-tab="fixtures" onclick="Tournaments.switchTab('fixtures')">
                             <i class="fas fa-calendar-alt"></i> Fixtures
-                        </h3>
-                        <div id="tournament-fixtures-list"></div>
+                        </button>
                     </div>
 
-                    <div class="empty-state" id="tournament-no-fixtures">
-                        <div class="empty-icon"><i class="fas fa-calendar-alt"></i></div>
-                        <h3 class="empty-title">No Fixtures Yet</h3>
-                        <p class="empty-subtitle">Generate fixtures to see the match schedule!</p>
+                    <!-- Standings Tab -->
+                    <div id="tournament-standings-tab" class="tournament-tab-content">
+                        <div id="tournament-standings-container" style="display: none;">
+                            <div id="tournament-standings-table"></div>
+                        </div>
+                        <div class="empty-state" id="tournament-no-standings">
+                            <div class="empty-icon"><i class="fas fa-table"></i></div>
+                            <h3 class="empty-title">No Standings Yet</h3>
+                            <p class="empty-subtitle">Standings will appear after matches are played</p>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Tab -->
+                    <div id="tournament-statistics-tab" class="tournament-tab-content" style="display: none;">
+                        <div id="tournament-statistics-container" style="display: none;">
+                            <div id="tournament-statistics-list"></div>
+                        </div>
+                        <div class="empty-state" id="tournament-no-statistics">
+                            <div class="empty-icon"><i class="fas fa-chart-bar"></i></div>
+                            <h3 class="empty-title">No Statistics Yet</h3>
+                            <p class="empty-subtitle">Player statistics will appear after match events are recorded</p>
+                        </div>
+                    </div>
+
+                    <!-- Fixtures Tab -->
+                    <div id="tournament-fixtures-tab" class="tournament-tab-content" style="display: none;">
+                        <div id="tournament-fixtures-container" style="display: none;">
+                            <div id="tournament-fixtures-list"></div>
+                        </div>
+                        <div class="empty-state" id="tournament-no-fixtures">
+                            <div class="empty-icon"><i class="fas fa-calendar-alt"></i></div>
+                            <h3 class="empty-title">No Fixtures Yet</h3>
+                            <p class="empty-subtitle">Generate fixtures to see the match schedule!</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -416,7 +452,7 @@ const Tournaments = {
 
         } catch (error) {
             console.error('Failed to load tournaments:', error);
-            UI.showNotification(CONFIG.MESSAGES.ERROR.LOAD_TOURNAMENTS, 'error');
+            UI.showNotification(I18n.t('messages.error.loadTournaments'), 'error');
             this.showEmpty();
         }
     },
@@ -550,6 +586,8 @@ const Tournaments = {
     },
 
     async openDetailsModal(tournament) {
+        this.currentTournament = tournament;
+
         document.getElementById('modal-tournament-name').textContent = tournament.name;
 
         const statusBadge = document.getElementById('modal-tournament-status');
@@ -571,9 +609,224 @@ const Tournaments = {
 
         await this.updateJoinButton(tournament);
         await this.updateGenerateFixturesButton(tournament);
-        await this.loadTournamentFixtures(tournament.id);
+
+        // Load all tabs data
+        await Promise.all([
+            this.loadStandings(tournament.id),
+            this.loadStatistics(tournament.id),
+            this.loadTournamentFixtures(tournament.id)
+        ]);
+
+        // Set default tab to standings
+        this.switchTab('standings');
 
         UI.openModal('tournament-details-modal');
+    },
+
+    switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.tournament-tab').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.tab === tabName) {
+                btn.classList.add('active');
+            }
+        });
+
+        // Update tab content
+        document.querySelectorAll('.tournament-tab-content').forEach(content => {
+            content.style.display = 'none';
+        });
+        document.getElementById(`tournament-${tabName}-tab`).style.display = 'block';
+    },
+
+    async loadStandings(tournamentId) {
+        const container = document.getElementById('tournament-standings-container');
+        const table = document.getElementById('tournament-standings-table');
+        const noStandings = document.getElementById('tournament-no-standings');
+
+        try {
+            const response = await API.getStandings(tournamentId);
+            const standings = response.standings || [];
+
+            if (standings.length === 0) {
+                container.style.display = 'none';
+                noStandings.style.display = 'flex';
+                return;
+            }
+
+            table.innerHTML = `
+                <table style="width: 100%; border-collapse: collapse; color: white;">
+                    <thead>
+                        <tr style="background: rgba(46, 204, 113, 0.2); text-align: left;">
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1);">#</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1);">Team</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">P</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">W</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">D</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">L</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">GF</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">GA</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">GD</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center; font-weight: bold;">Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${standings.map((team, index) => `
+                            <tr style="background: ${index % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent'};">
+                                <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">${index + 1}</td>
+                                <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="
+                                            width: 30px;
+                                            height: 30px;
+                                            background: ${team.team_color || '#2ecc71'};
+                                            border-radius: 50%;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                            font-weight: bold;
+                                            font-size: 12px;
+                                        ">${team.team_logo || team.team_name.substring(0, 2).toUpperCase()}</div>
+                                        <span>${team.team_name}</span>
+                                    </div>
+                                </td>
+                                <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center;">${team.played}</td>
+                                <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; color: #2ecc71;">${team.won}</td>
+                                <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; color: #f39c12;">${team.drawn}</td>
+                                <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; color: #e74c3c;">${team.lost}</td>
+                                <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center;">${team.goals_for}</td>
+                                <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center;">${team.goals_against}</td>
+                                <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; color: ${team.goal_difference >= 0 ? '#2ecc71' : '#e74c3c'};">${team.goal_difference > 0 ? '+' : ''}${team.goal_difference}</td>
+                                <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; font-weight: bold; color: #2ecc71; font-size: 16px;">${team.points}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.style.display = 'block';
+            noStandings.style.display = 'none';
+
+        } catch (error) {
+            console.error('Failed to load standings:', error);
+            container.style.display = 'none';
+            noStandings.style.display = 'flex';
+        }
+    },
+
+    async loadStatistics(tournamentId) {
+        const container = document.getElementById('tournament-statistics-container');
+        const list = document.getElementById('tournament-statistics-list');
+        const noStats = document.getElementById('tournament-no-statistics');
+
+        try {
+            const response = await API.getPlayerStatistics(tournamentId);
+            const statistics = response.statistics || [];
+
+            if (statistics.length === 0) {
+                container.style.display = 'none';
+                noStats.style.display = 'flex';
+                return;
+            }
+
+            // Top scorers
+            const topScorers = statistics.filter(s => s.goals > 0).sort((a, b) => b.goals - a.goals).slice(0, 10);
+
+            list.innerHTML = `
+                <div style="margin-bottom: 32px;">
+                    <h4 style="color: #2ecc71; margin-bottom: 16px;"><i class="fas fa-futbol"></i> Top Scorers</h4>
+                    ${topScorers.length > 0 ? `
+                        <div style="display: grid; gap: 8px;">
+                            ${topScorers.map((player, index) => `
+                                <div style="
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: space-between;
+                                    padding: 12px;
+                                    background: rgba(255,255,255,0.05);
+                                    border-radius: 8px;
+                                ">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <span style="
+                                            width: 28px;
+                                            height: 28px;
+                                            background: ${index < 3 ? '#f39c12' : 'rgba(255,255,255,0.1)'};
+                                            border-radius: 50%;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                            font-weight: bold;
+                                            font-size: 12px;
+                                        ">${index + 1}</span>
+                                        <div>
+                                            <div style="color: white; font-weight: 600;">${player.player_name}</div>
+                                            <div style="color: #b0b0b0; font-size: 12px;">${player.team_name}</div>
+                                        </div>
+                                    </div>
+                                    <div style="font-size: 20px; font-weight: bold; color: #2ecc71;">${player.goals}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<p style="color: #b0b0b0;">No goals scored yet</p>'}
+                </div>
+
+                <div style="margin-bottom: 32px;">
+                    <h4 style="color: #f39c12; margin-bottom: 16px;"><i class="fas fa-square"></i> Yellow Cards</h4>
+                    ${statistics.filter(s => s.yellow_cards > 0).length > 0 ? `
+                        <div style="display: grid; gap: 8px;">
+                            ${statistics.filter(s => s.yellow_cards > 0).sort((a, b) => b.yellow_cards - a.yellow_cards).slice(0, 5).map(player => `
+                                <div style="
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: space-between;
+                                    padding: 12px;
+                                    background: rgba(255,255,255,0.05);
+                                    border-radius: 8px;
+                                ">
+                                    <div>
+                                        <div style="color: white; font-weight: 600;">${player.player_name}</div>
+                                        <div style="color: #b0b0b0; font-size: 12px;">${player.team_name}</div>
+                                    </div>
+                                    <div style="font-size: 18px; font-weight: bold; color: #f39c12;">${player.yellow_cards}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<p style="color: #b0b0b0;">No yellow cards yet</p>'}
+                </div>
+
+                <div>
+                    <h4 style="color: #e74c3c; margin-bottom: 16px;"><i class="fas fa-square"></i> Red Cards</h4>
+                    ${statistics.filter(s => s.red_cards > 0).length > 0 ? `
+                        <div style="display: grid; gap: 8px;">
+                            ${statistics.filter(s => s.red_cards > 0).sort((a, b) => b.red_cards - a.red_cards).slice(0, 5).map(player => `
+                                <div style="
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: space-between;
+                                    padding: 12px;
+                                    background: rgba(255,255,255,0.05);
+                                    border-radius: 8px;
+                                ">
+                                    <div>
+                                        <div style="color: white; font-weight: 600;">${player.player_name}</div>
+                                        <div style="color: #b0b0b0; font-size: 12px;">${player.team_name}</div>
+                                    </div>
+                                    <div style="font-size: 18px; font-weight: bold; color: #e74c3c;">${player.red_cards}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<p style="color: #b0b0b0;">No red cards yet</p>'}
+                </div>
+            `;
+
+            container.style.display = 'block';
+            noStats.style.display = 'none';
+
+        } catch (error) {
+            console.error('Failed to load statistics:', error);
+            container.style.display = 'none';
+            noStats.style.display = 'flex';
+        }
     },
 
     closeDetailsModal() {

@@ -590,6 +590,9 @@ const generateFixtures = async (req, res) => {
             );
         }
 
+        // Initialize standings for all teams
+        await initializeStandings(tournamentId);
+
         const [savedMatches] = await db.promise().query(`
             SELECT m.*, ta.name as home_team_name, tb.name as away_team_name
             FROM matches m
@@ -599,7 +602,7 @@ const generateFixtures = async (req, res) => {
             ORDER BY m.round, m.match_date
         `, [tournamentId]);
 
-        console.log('Generated', scheduledMatches.length, 'matches');
+        console.log('Generated', scheduledMatches.length, 'matches and initialized standings');
 
         res.json({
             success: true,
@@ -792,6 +795,9 @@ const updateMatchResult = async (req, res) => {
             [homeScore, awayScore, status || 'finished', matchId]
         );
 
+        // Recalculate standings after match result update
+        await recalculateStandings(tournamentId);
+
         console.log('Match result updated:', matchId, `(${homeScore} - ${awayScore})`);
 
         res.json({
@@ -819,14 +825,14 @@ const updateMatchResult = async (req, res) => {
 const addMatchEvent = async (req, res) => {
     try {
         const { tournamentId, matchId } = req.params;
-        const { playerId, teamId, eventType, minute, description } = req.body;
+        const { playerId, playerEmail, teamId, eventType, minute, description } = req.body;
         const userId = req.user.id;
 
-        // Validate
-        if (!playerId || !teamId || !eventType || minute === undefined) {
+        // Validate required fields
+        if ((!playerId && !playerEmail) || !teamId || !eventType || minute === undefined) {
             return res.status(400).json({
                 success: false,
-                message: 'Player, team, event type, and minute are required'
+                message: 'Player (id or email), team, event type, and minute are required'
             });
         }
 
@@ -861,12 +867,29 @@ const addMatchEvent = async (req, res) => {
             });
         }
 
+        // Resolve playerId from email if needed
+        let resolvedPlayerId = playerId;
+        if (!resolvedPlayerId && playerEmail) {
+            const [users] = await db.promise().query(
+                'SELECT id FROM users WHERE email = ? AND role = ?',
+                [playerEmail, 'player']
+            );
+
+            if (users.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: `Player not found with email: ${playerEmail}`
+                });
+            }
+            resolvedPlayerId = users[0].id;
+        }
+
         // Verify player exists and is in the team
         const [players] = await db.promise().query(`
             SELECT tp.id
             FROM team_players tp
             WHERE tp.team_id = ? AND tp.player_id = ?
-        `, [teamId, playerId]);
+        `, [teamId, resolvedPlayerId]);
 
         if (players.length === 0) {
             return res.status(400).json({
@@ -880,10 +903,13 @@ const addMatchEvent = async (req, res) => {
             `INSERT INTO match_events
             (match_id, player_id, team_id, event_type, minute, description)
             VALUES (?, ?, ?, ?, ?, ?)`,
-            [matchId, playerId, teamId, eventType, minute, description || null]
+            [matchId, resolvedPlayerId, teamId, eventType, minute, description || null]
         );
 
-        console.log('Match event added:', eventType, 'Player:', playerId, 'Minute:', minute);
+        // Recalculate player statistics after adding event
+        await recalculatePlayerStatistics(tournamentId);
+
+        console.log('Match event added:', eventType, 'Player:', resolvedPlayerId, 'Minute:', minute);
 
         res.status(201).json({
             success: true,
@@ -900,6 +926,235 @@ const addMatchEvent = async (req, res) => {
     }
 };
 
+/**
+ * Get tournament standings
+ * Returns sorted standings table
+ */
+const getStandings = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const [standings] = await db.promise().query(`
+            SELECT
+                s.*,
+                t.name as team_name,
+                t.logo as team_logo,
+                t.logo_color as team_color
+            FROM standings s
+            INNER JOIN teams t ON s.team_id = t.id
+            WHERE s.tournament_id = ?
+            ORDER BY s.points DESC, s.goal_difference DESC, s.goals_for DESC, t.name ASC
+        `, [id]);
+
+        res.json({
+            success: true,
+            standings
+        });
+
+    } catch (error) {
+        console.error('Get standings error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch standings',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Initialize standings for all teams in tournament
+ * Called when fixtures are generated
+ */
+const initializeStandings = async (tournamentId) => {
+    const [teams] = await db.promise().query(`
+        SELECT team_id FROM tournament_teams WHERE tournament_id = ?
+    `, [tournamentId]);
+
+    for (const team of teams) {
+        await db.promise().query(`
+            INSERT IGNORE INTO standings
+            (tournament_id, team_id, played, won, drawn, lost, goals_for, goals_against, goal_difference, points)
+            VALUES (?, ?, 0, 0, 0, 0, 0, 0, 0, 0)
+        `, [tournamentId, team.team_id]);
+    }
+
+    console.log(`Standings initialized for tournament ${tournamentId} with ${teams.length} teams`);
+};
+
+/**
+ * Recalculate all standings for a tournament based on finished matches
+ */
+const recalculateStandings = async (tournamentId) => {
+    // Reset all standings
+    await db.promise().query(`
+        UPDATE standings
+        SET played = 0, won = 0, drawn = 0, lost = 0,
+            goals_for = 0, goals_against = 0, goal_difference = 0, points = 0
+        WHERE tournament_id = ?
+    `, [tournamentId]);
+
+    // Get all finished matches
+    const [matches] = await db.promise().query(`
+        SELECT home_team_id, away_team_id, home_score, away_score
+        FROM matches
+        WHERE tournament_id = ? AND status = 'finished'
+    `, [tournamentId]);
+
+    // Process each match
+    for (const match of matches) {
+        const { home_team_id, away_team_id, home_score, away_score } = match;
+
+        // Determine result
+        let homePoints = 0, awayPoints = 0;
+        let homeWon = 0, homeDraw = 0, homeLost = 0;
+        let awayWon = 0, awayDraw = 0, awayLost = 0;
+
+        if (home_score > away_score) {
+            homePoints = 3;
+            homeWon = 1;
+            awayLost = 1;
+        } else if (home_score < away_score) {
+            awayPoints = 3;
+            awayWon = 1;
+            homeLost = 1;
+        } else {
+            homePoints = 1;
+            awayPoints = 1;
+            homeDraw = 1;
+            awayDraw = 1;
+        }
+
+        // Update home team
+        await db.promise().query(`
+            UPDATE standings SET
+                played = played + 1,
+                won = won + ?,
+                drawn = drawn + ?,
+                lost = lost + ?,
+                goals_for = goals_for + ?,
+                goals_against = goals_against + ?,
+                goal_difference = goal_difference + ?,
+                points = points + ?
+            WHERE tournament_id = ? AND team_id = ?
+        `, [homeWon, homeDraw, homeLost, home_score, away_score, home_score - away_score, homePoints, tournamentId, home_team_id]);
+
+        // Update away team
+        await db.promise().query(`
+            UPDATE standings SET
+                played = played + 1,
+                won = won + ?,
+                drawn = drawn + ?,
+                lost = lost + ?,
+                goals_for = goals_for + ?,
+                goals_against = goals_against + ?,
+                goal_difference = goal_difference + ?,
+                points = points + ?
+            WHERE tournament_id = ? AND team_id = ?
+        `, [awayWon, awayDraw, awayLost, away_score, home_score, away_score - home_score, awayPoints, tournamentId, away_team_id]);
+    }
+
+    console.log(`Standings recalculated for tournament ${tournamentId}`);
+};
+
+/**
+ * Get player statistics for a tournament
+ * Returns top scorers, assists, cards
+ */
+const getPlayerStatistics = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const [statistics] = await db.promise().query(`
+            SELECT
+                ps.*,
+                u.name as player_name,
+                u.email as player_email,
+                t.name as team_name,
+                t.logo as team_logo,
+                t.logo_color as team_color
+            FROM player_statistics ps
+            INNER JOIN users u ON ps.player_id = u.id
+            INNER JOIN teams t ON ps.team_id = t.id
+            WHERE ps.tournament_id = ?
+            ORDER BY ps.goals DESC, ps.assists DESC, u.name ASC
+        `, [id]);
+
+        res.json({
+            success: true,
+            statistics
+        });
+
+    } catch (error) {
+        console.error('Get player statistics error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch player statistics',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Recalculate player statistics from match events
+ */
+const recalculatePlayerStatistics = async (tournamentId) => {
+    // Clear existing statistics for this tournament
+    await db.promise().query(
+        'DELETE FROM player_statistics WHERE tournament_id = ?',
+        [tournamentId]
+    );
+
+    // Get all match events for finished matches
+    const [events] = await db.promise().query(`
+        SELECT
+            me.player_id,
+            me.team_id,
+            me.event_type,
+            m.tournament_id
+        FROM match_events me
+        INNER JOIN matches m ON me.match_id = m.id
+        WHERE m.tournament_id = ? AND m.status = 'finished'
+    `, [tournamentId]);
+
+    // Aggregate statistics by player
+    const playerStats = {};
+
+    for (const event of events) {
+        const key = `${event.player_id}_${event.team_id}`;
+
+        if (!playerStats[key]) {
+            playerStats[key] = {
+                player_id: event.player_id,
+                team_id: event.team_id,
+                goals: 0,
+                assists: 0,
+                yellow_cards: 0,
+                red_cards: 0,
+                matches_played: 0
+            };
+        }
+
+        if (event.event_type === 'goal') {
+            playerStats[key].goals++;
+        } else if (event.event_type === 'yellow_card') {
+            playerStats[key].yellow_cards++;
+        } else if (event.event_type === 'red_card') {
+            playerStats[key].red_cards++;
+        }
+    }
+
+    // Insert aggregated statistics
+    for (const stats of Object.values(playerStats)) {
+        await db.promise().query(`
+            INSERT INTO player_statistics
+            (tournament_id, player_id, team_id, goals, assists, yellow_cards, red_cards, matches_played)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [tournamentId, stats.player_id, stats.team_id, stats.goals, stats.assists, stats.yellow_cards, stats.red_cards, stats.matches_played]);
+    }
+
+    console.log(`Player statistics recalculated for tournament ${tournamentId}`);
+};
+
 module.exports = {
     getTournaments,
     getTournamentById,
@@ -913,5 +1168,10 @@ module.exports = {
     getTournamentMatches,
     getMatchDetails,
     updateMatchResult,
-    addMatchEvent
+    addMatchEvent,
+    getStandings,
+    initializeStandings,
+    recalculateStandings,
+    getPlayerStatistics,
+    recalculatePlayerStatistics
 };

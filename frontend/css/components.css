@@ -48,6 +48,13 @@
     border-color: rgba(255, 255, 255, 0.3);
 }
 
+/* Tab button active state */
+.tournament-tab.active {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
 /* Outline кнопка */
 .btn-outline {
     background: transparent;
@@ -558,5 +565,91 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* ========== LANGUAGE SWITCHER ========== */
+
+.language-switcher {
+    position: relative;
+    margin-right: var(--space-lg);
+}
+
+.lang-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-md);
+    color: white;
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    transition: all var(--transition-base);
+}
+
+.lang-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--color-primary);
+}
+
+.lang-btn i:first-child {
+    color: var(--color-primary);
+}
+
+.lang-btn i:last-child {
+    font-size: 10px;
+    transition: transform var(--transition-base);
+}
+
+.lang-dropdown.show + .lang-btn i:last-child,
+.lang-btn:focus i:last-child {
+    transform: rotate(180deg);
+}
+
+.lang-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 150px;
+    background: var(--color-surface);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    z-index: var(--z-dropdown);
+    overflow: hidden;
+}
+
+.lang-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.lang-option {
+    display: block;
+    width: 100%;
+    padding: var(--space-md) var(--space-lg);
+    background: none;
+    border: none;
+    color: var(--color-text-primary);
+    text-align: left;
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    transition: background 0.2s ease;
+}
+
+.lang-option:hover {
+    background: rgba(46, 204, 113, 0.1);
+}
+
+.lang-option.active {
+    background: rgba(46, 204, 113, 0.2);
+    color: var(--color-primary);
+    font-weight: var(--font-weight-semibold);
 }
 

@@ -232,6 +232,18 @@ const API = {
         });
     },
 
+    // Standings endpoints
+    async getStandings(tournamentId) {
+        const endpoint = `/tournaments/${tournamentId}/standings`;
+        return await this.request(endpoint);
+    },
+
+    // Player statistics endpoints
+    async getPlayerStatistics(tournamentId) {
+        const endpoint = `/tournaments/${tournamentId}/statistics`;
+        return await this.request(endpoint);
+    },
+
 };
 
 window.API = API;

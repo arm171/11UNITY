@@ -10,6 +10,8 @@ const { verifyToken, checkRole } = require('../middleware/auth');
 // Public routes
 router.get('/', tournamentController.getTournaments);
 router.get('/:id/matches', tournamentController.getTournamentMatches);
+router.get('/:id/standings', tournamentController.getStandings);
+router.get('/:id/statistics', tournamentController.getPlayerStatistics);
 router.get('/:tournamentId/matches/:matchId', tournamentController.getMatchDetails);
 
 // Organizer-only routes

@@ -20,39 +20,41 @@ const Auth = {
 
                     <div class="auth-tabs">
                         <button class="auth-tab active" data-tab="login">
-                            <i class="fas fa-sign-in-alt"></i> Login
+                            <i class="fas fa-sign-in-alt"></i> <span data-i18n="auth.login">Login</span>
                         </button>
                         <button class="auth-tab" data-tab="register">
-                            <i class="fas fa-user-plus"></i> Register
+                            <i class="fas fa-user-plus"></i> <span data-i18n="auth.register">Register</span>
                         </button>
                     </div>
 
                     <div class="auth-form-container active" id="login-form-container">
                         <form id="login-form">
                             <div class="form-group">
-                                <label class="form-label">Email</label>
+                                <label class="form-label" data-i18n="auth.email">Email</label>
                                 <input
                                     type="email"
                                     class="form-input"
                                     id="login-email"
+                                    data-i18n-placeholder="auth.emailPlaceholder"
                                     placeholder="your@email.com"
                                     required
                                 >
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Password</label>
+                                <label class="form-label" data-i18n="auth.password">Password</label>
                                 <input
                                     type="password"
                                     class="form-input"
                                     id="login-password"
-                                    placeholder="••••••••"
+                                    data-i18n-placeholder="auth.passwordPlaceholder"
+                                    placeholder="........"
                                     required
                                 >
                             </div>
 
                             <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
-                                <span class="btn-text">Login</span>
+                                <span class="btn-text" data-i18n="auth.login">Login</span>
                                 <div class="spinner" style="display: none;"></div>
                             </button>
                         </form>
@@ -61,66 +63,70 @@ const Auth = {
                     <div class="auth-form-container" id="register-form-container">
                         <form id="register-form">
                             <div class="form-group">
-                                <label class="form-label">Full Name</label>
+                                <label class="form-label" data-i18n="auth.fullName">Full Name</label>
                                 <input
                                     type="text"
                                     class="form-input"
                                     id="register-name"
+                                    data-i18n-placeholder="auth.namePlaceholder"
                                     placeholder="John Doe"
                                     required
                                 >
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Email</label>
+                                <label class="form-label" data-i18n="auth.email">Email</label>
                                 <input
                                     type="email"
                                     class="form-input"
                                     id="register-email"
+                                    data-i18n-placeholder="auth.emailPlaceholder"
                                     placeholder="your@email.com"
                                     required
                                 >
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Password</label>
+                                <label class="form-label" data-i18n="auth.password">Password</label>
                                 <input
                                     type="password"
                                     class="form-input"
                                     id="register-password"
-                                    placeholder="••••••••"
+                                    data-i18n-placeholder="auth.passwordPlaceholder"
+                                    placeholder="........"
                                     required
                                     minlength="6"
                                 >
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Confirm Password</label>
+                                <label class="form-label" data-i18n="auth.confirmPassword">Confirm Password</label>
                                 <input
                                     type="password"
                                     class="form-input"
                                     id="register-confirm-password"
-                                    placeholder="••••••••"
+                                    data-i18n-placeholder="auth.passwordPlaceholder"
+                                    placeholder="........"
                                     required
                                     minlength="6"
                                 >
                                 <span id="password-match-error" style="color: #e74c3c; font-size: 12px; display: none;">
-                                    <i class="fas fa-exclamation-circle"></i> Passwords do not match
+                                    <i class="fas fa-exclamation-circle"></i> <span data-i18n="auth.passwordsDoNotMatch">Passwords do not match</span>
                                 </span>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Role</label>
+                                <label class="form-label" data-i18n="auth.role">Role</label>
                                 <select class="form-select" id="register-role" required>
-                                    <option value="">Select your role</option>
-                                    <option value="player">Player</option>
-                                    <option value="coach">Coach</option>
-                                    <option value="organizer">Organizer</option>
+                                    <option value="" data-i18n="auth.selectRole">Select your role</option>
+                                    <option value="player" data-i18n="auth.roles.player">Player</option>
+                                    <option value="coach" data-i18n="auth.roles.coach">Coach</option>
+                                    <option value="organizer" data-i18n="auth.roles.organizer">Organizer</option>
                                 </select>
                             </div>
 
                             <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
-                                <span class="btn-text">Create Account</span>
+                                <span class="btn-text" data-i18n="auth.createAccount">Create Account</span>
                                 <div class="spinner" style="display: none;"></div>
                             </button>
                         </form>
@@ -130,6 +136,11 @@ const Auth = {
         `;
 
         document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        // Apply translations to dynamic content
+        if (window.I18n) {
+            I18n.applyTranslations();
+        }
     },
 
     attachEventListeners() {
@@ -245,7 +256,7 @@ const Auth = {
 
             const response = await API.login(credentials);
 
-            UI.showNotification(CONFIG.MESSAGES.SUCCESS.LOGIN, 'success');
+            UI.showNotification(I18n.t('messages.success.login'), 'success');
             this.closeAuthModal();
             this.updateUI();
 
@@ -254,7 +265,7 @@ const Auth = {
 
         } catch (error) {
             console.error('Login failed:', error);
-            UI.showNotification(error.message || CONFIG.MESSAGES.ERROR.LOGIN_FAILED, 'error');
+            UI.showNotification(error.message || I18n.t('messages.error.loginFailed'), 'error');
         } finally {
             btnText.style.display = 'inline-block';
             spinner.style.display = 'none';
@@ -266,7 +277,7 @@ const Auth = {
         e.preventDefault();
 
         if (!this.validatePasswordMatch()) {
-            UI.showNotification('Passwords do not match!', 'error');
+            UI.showNotification(I18n.t('auth.passwordsDoNotMatch'), 'error');
             return;
         }
 
@@ -289,7 +300,7 @@ const Auth = {
 
             const response = await API.register(userData);
 
-            UI.showNotification(CONFIG.MESSAGES.SUCCESS.REGISTER, 'success');
+            UI.showNotification(I18n.t('messages.success.register'), 'success');
             this.closeAuthModal();
             this.updateUI();
 
@@ -298,7 +309,7 @@ const Auth = {
 
         } catch (error) {
             console.error('Registration failed:', error);
-            UI.showNotification(error.message || CONFIG.MESSAGES.ERROR.REGISTER_FAILED, 'error');
+            UI.showNotification(error.message || I18n.t('messages.error.registerFailed'), 'error');
         } finally {
             btnText.style.display = 'inline-block';
             spinner.style.display = 'none';
@@ -307,9 +318,9 @@ const Auth = {
     },
 
     logout() {
-        if (confirm('Are you sure you want to logout?')) {
+        if (confirm(I18n.t('common.confirmLogout'))) {
             API.logout();
-            UI.showNotification(CONFIG.MESSAGES.SUCCESS.LOGOUT, 'success');
+            UI.showNotification(I18n.t('messages.success.logout'), 'success');
             this.updateUI();
 
             if (window.Tournaments) Tournaments.load();

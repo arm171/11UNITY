@@ -11,6 +11,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    if (!window.I18n) {
+        console.error('I18n not loaded!');
+        return;
+    }
+
     if (!window.API) {
         console.error('API not loaded!');
         return;
@@ -38,6 +43,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize modules
     try {
+        // Initialize I18n first (before UI to translate static content)
+        I18n.init();
+
         UI.init();
         Auth.init();
         Tournaments.init();
@@ -47,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const hasVisited = localStorage.getItem('11unity_visited');
         if (!hasVisited) {
             setTimeout(() => {
-                UI.showNotification('Welcome to 11UNITY!', 'success', 4000);
+                UI.showNotification(I18n.t('welcome'), 'success', 4000);
                 localStorage.setItem('11unity_visited', 'true');
             }, 1000);
         }
@@ -57,6 +65,17 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('Failed to initialize application. Please refresh the page.');
     }
 
+});
+
+// Listen for language changes to refresh dynamic content
+window.addEventListener('languageChanged', function() {
+    // Re-render dynamic content when language changes
+    if (window.Tournaments && Tournaments.render) {
+        Tournaments.render();
+    }
+    if (window.Teams && Teams.render) {
+        Teams.render();
+    }
 });
 
 // Global error handlers

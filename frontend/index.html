@@ -35,17 +35,17 @@
                 
                 <!-- Navigation Links -->
                 <ul class="nav-list">
-                    <li><a href="#home" class="nav-link active">Home</a></li>
-                    <li><a href="#tournaments" class="nav-link">Tournaments</a></li>
-                    <li><a href="#teams" class="nav-link">Teams</a></li>
-                    <li><a href="#matches" class="nav-link">Matches</a></li>
-                    <li><a href="#statistics" class="nav-link">Statistics</a></li>
+                    <li><a href="#home" class="nav-link active" data-i18n="nav.home">Home</a></li>
+                    <li><a href="#tournaments" class="nav-link" data-i18n="nav.tournaments">Tournaments</a></li>
+                    <li><a href="#teams" class="nav-link" data-i18n="nav.teams">Teams</a></li>
+                    <li><a href="#matches" class="nav-link" data-i18n="nav.matches">Matches</a></li>
+                    <li><a href="#statistics" class="nav-link" data-i18n="nav.statistics">Statistics</a></li>
                 </ul>
                 
                 <!-- Actions -->
                 <div class="nav-actions">
                     <!-- Get Started Button (for guests) -->
-                    <button class="btn btn-primary get-started-btn" id="get-started-btn">
+                    <button class="btn btn-primary get-started-btn" id="get-started-btn" data-i18n="nav.getStarted">
                         Get Started
                     </button>
                     
@@ -65,121 +65,121 @@
             
             <!-- ========== HERO SECTION ========== -->
             <section class="hero" id="home">
-                <h1>Welcome to 11UNITY</h1>
-                <p>
-                    The ultimate platform for managing football tournaments. 
+                <h1 data-i18n="hero.title">Welcome to 11UNITY</h1>
+                <p data-i18n="hero.subtitle">
+                    The ultimate platform for managing football tournaments.
                     Create teams, organize tournaments, track matches, and analyze statistics.
                 </p>
-                <button class="btn btn-primary btn-lg" id="hero-cta">
+                <button class="btn btn-primary btn-lg" id="hero-cta" data-i18n="hero.cta">
                     Start Your Tournament
                 </button>
             </section>
             
             <!-- ========== TOURNAMENTS SECTION ========== -->
             <section id="tournaments">
-                <h2><i class="fas fa-trophy"></i> Tournaments</h2>
-                
+                <h2><i class="fas fa-trophy"></i> <span data-i18n="tournaments.title">Tournaments</span></h2>
+
                 <!-- Statistics -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <span class="stat-number" id="total-tournaments">0</span>
-                        <span class="stat-label">Total</span>
+                        <span class="stat-label" data-i18n="tournaments.total">Total</span>
                     </div>
                     <div class="stat-card">
                         <span class="stat-number" id="active-tournaments">0</span>
-                        <span class="stat-label">Active</span>
+                        <span class="stat-label" data-i18n="tournaments.active">Active</span>
                     </div>
                     <div class="stat-card">
                         <span class="stat-number" id="finished-tournaments">0</span>
-                        <span class="stat-label">Finished</span>
+                        <span class="stat-label" data-i18n="tournaments.finished">Finished</span>
                     </div>
                 </div>
-                
+
                 <!-- Create Tournament Button (only for organizers) -->
                 <div style="text-align: center; margin-bottom: 32px;">
                     <button class="btn btn-primary" id="create-tournament-btn" style="display: none;">
-                        <i class="fas fa-plus"></i> Create Tournament
+                        <i class="fas fa-plus"></i> <span data-i18n="tournaments.createTournament">Create Tournament</span>
                     </button>
                 </div>
-                
+
                 <!-- Tournaments Grid -->
                 <div class="cards-grid" id="tournaments-list">
                     <!-- Loading indicator -->
                     <div class="loading-indicator">
                         <div class="spinner"></div>
-                        <p>Loading tournaments...</p>
+                        <p data-i18n="common.loading">Loading...</p>
                     </div>
                 </div>
-                
+
                 <!-- Empty State -->
                 <div class="empty-state" id="tournaments-empty" style="display: none;">
                     <div class="empty-icon"><i class="fas fa-trophy"></i></div>
-                    <h3 class="empty-title">No tournaments yet</h3>
-                    <p class="empty-subtitle">Be the first to create a tournament!</p>
+                    <h3 class="empty-title" data-i18n="tournaments.noTournaments">No tournaments yet</h3>
+                    <p class="empty-subtitle" data-i18n="tournaments.beFirst">Be the first to create a tournament!</p>
                 </div>
             </section>
             
             <!-- ========== TEAMS SECTION ========== -->
             <section id="teams">
-                <h2><i class="fas fa-users"></i> Teams</h2>
-                
+                <h2><i class="fas fa-users"></i> <span data-i18n="teams.title">Teams</span></h2>
+
                 <!-- Statistics -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <span class="stat-number" id="total-teams">0</span>
-                        <span class="stat-label">Total Teams</span>
+                        <span class="stat-label" data-i18n="teams.totalTeams">Total Teams</span>
                     </div>
                     <div class="stat-card">
                         <span class="stat-number" id="total-players">0</span>
-                        <span class="stat-label">Players</span>
+                        <span class="stat-label" data-i18n="teams.players">Players</span>
                     </div>
                     <div class="stat-card">
                         <span class="stat-number" id="total-coaches">0</span>
-                        <span class="stat-label">Coaches</span>
+                        <span class="stat-label" data-i18n="teams.coaches">Coaches</span>
                     </div>
                 </div>
-                
+
                 <!-- Create Team Button (only for coaches) -->
                 <div style="text-align: center; margin-bottom: 32px;">
                     <button class="btn btn-primary" id="create-team-btn" style="display: none;">
-                        <i class="fas fa-plus"></i> Create Team
+                        <i class="fas fa-plus"></i> <span data-i18n="teams.createTeam">Create Team</span>
                     </button>
                 </div>
-                
+
                 <!-- Teams Grid -->
                 <div class="cards-grid" id="teams-list">
                     <!-- Loading indicator -->
                     <div class="loading-indicator">
                         <div class="spinner"></div>
-                        <p>Loading teams...</p>
+                        <p data-i18n="common.loading">Loading...</p>
                     </div>
                 </div>
-                
+
                 <!-- Empty State -->
                 <div class="empty-state" id="teams-empty" style="display: none;">
                     <div class="empty-icon"><i class="fas fa-futbol"></i></div>
-                    <h3 class="empty-title">No teams yet</h3>
-                    <p class="empty-subtitle">Create your team and start playing!</p>
+                    <h3 class="empty-title" data-i18n="teams.noTeams">No teams yet</h3>
+                    <p class="empty-subtitle" data-i18n="teams.createTeamCta">Create your team and start playing!</p>
                 </div>
             </section>
             
             <!-- ========== MATCHES SECTION ========== -->
             <section id="matches">
-                <h2><i class="fas fa-calendar-alt"></i> Matches</h2>
+                <h2><i class="fas fa-calendar-alt"></i> <span data-i18n="nav.matches">Matches</span></h2>
                 <div class="empty-state">
                     <div class="empty-icon"><i class="fas fa-calendar-alt"></i></div>
-                    <h3 class="empty-title">Coming Soon</h3>
-                    <p class="empty-subtitle">Match calendar will be available soon!</p>
+                    <h3 class="empty-title" data-i18n="comingSoon.title">Coming Soon</h3>
+                    <p class="empty-subtitle" data-i18n="comingSoon.matchesSubtitle">Match calendar will be available soon!</p>
                 </div>
             </section>
-            
+
             <!-- ========== STATISTICS SECTION ========== -->
             <section id="statistics">
-                <h2><i class="fas fa-chart-bar"></i> Statistics</h2>
+                <h2><i class="fas fa-chart-bar"></i> <span data-i18n="nav.statistics">Statistics</span></h2>
                 <div class="empty-state">
                     <div class="empty-icon"><i class="fas fa-chart-bar"></i></div>
-                    <h3 class="empty-title">Coming Soon</h3>
-                    <p class="empty-subtitle">Statistics will be available once matches are played!</p>
+                    <h3 class="empty-title" data-i18n="comingSoon.title">Coming Soon</h3>
+                    <p class="empty-subtitle" data-i18n="comingSoon.statisticsSubtitle">Statistics will be available once matches are played!</p>
                 </div>
             </section>
             
@@ -191,6 +191,11 @@
     
     <!-- ========== JAVASCRIPT ========== -->
     <script src="./js/config.js"></script>
+    <script src="./js/i18n.js"></script>
+    <script src="./locales/en.js"></script>
+    <script src="./locales/ru.js"></script>
+    <script src="./locales/hy.js"></script>
+    <script src="./locales/ge.js"></script>
     <script src="./js/api.js"></script>
     <script src="./js/auth.js"></script>
     <script src="./js/ui.js"></script>
