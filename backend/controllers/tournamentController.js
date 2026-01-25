@@ -4,6 +4,7 @@
  */
 
 const db = require('../config/database');
+const tournamentSocket = require('../socket/tournamentSocket');
 
 /**
  * Get all tournaments with team counts
@@ -798,6 +799,15 @@ const updateMatchResult = async (req, res) => {
         // Recalculate standings after match result update
         await recalculateStandings(tournamentId);
 
+        // Emit WebSocket events for real-time updates
+        tournamentSocket.emitScoreUpdate(tournamentId, {
+            id: matchId,
+            home_score: homeScore,
+            away_score: awayScore,
+            status: status || 'finished'
+        });
+        await tournamentSocket.emitStandingsUpdate(tournamentId);
+
         console.log('Match result updated:', matchId, `(${homeScore} - ${awayScore})`);
 
         res.json({
@@ -908,6 +918,25 @@ const addMatchEvent = async (req, res) => {
 
         // Recalculate player statistics after adding event
         await recalculatePlayerStatistics(tournamentId);
+
+        // Get player and team names for WebSocket event
+        const [playerInfo] = await db.promise().query(`
+            SELECT u.name as player_name, t.name as team_name
+            FROM users u, teams t
+            WHERE u.id = ? AND t.id = ?
+        `, [resolvedPlayerId, teamId]);
+
+        // Emit WebSocket events for real-time updates
+        tournamentSocket.emitMatchEvent(tournamentId, {
+            match_id: matchId,
+            event_type: eventType,
+            player_id: resolvedPlayerId,
+            player_name: playerInfo[0]?.player_name,
+            team_id: teamId,
+            team_name: playerInfo[0]?.team_name,
+            minute: minute
+        });
+        await tournamentSocket.emitStatisticsUpdate(tournamentId);
 
         console.log('Match event added:', eventType, 'Player:', resolvedPlayerId, 'Minute:', minute);
 

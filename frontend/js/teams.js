@@ -323,7 +323,7 @@ const Teams = {
 
         } catch (error) {
             console.error('Failed to load teams:', error);
-            UI.showNotification(CONFIG.MESSAGES.ERROR.LOAD_TEAMS, 'error');
+            UI.showNotification(I18n.t('messages.error.loadTeams'), 'error');
             this.showEmpty();
         }
     },
@@ -378,11 +378,11 @@ const Teams = {
             <div class="team-info">
                 <div class="team-info-item">
                     <i class="fas fa-user"></i>
-                    <span>Coach: ${team.coach_name || 'Unknown'}</span>
+                    <span>${I18n.t('teams.coach')}: ${team.coach_name || I18n.t('common.unknown')}</span>
                 </div>
                 <div class="team-info-item">
                     <i class="fas fa-users"></i>
-                    <span>Players: ${team.players_count || 0}/${team.max_players || 25}</span>
+                    <span>${I18n.t('teams.players')}: ${I18n.t('teams.playerCount', { count: team.players_count || 0, max: team.max_players || 25 })}</span>
                 </div>
                 ${team.stadium ? `
                     <div class="team-info-item">
@@ -408,14 +408,14 @@ const Teams = {
 
     openCreateModal() {
         if (!API.isAuthenticated()) {
-            UI.showNotification(CONFIG.MESSAGES.ERROR.UNAUTHORIZED, 'error');
+            UI.showNotification(I18n.t('messages.error.unauthorized'), 'error');
             Auth.openAuthModal('login');
             return;
         }
 
         const user = API.getUser();
         if (user.role !== 'coach') {
-            UI.showNotification('Only coaches can create teams', 'error');
+            UI.showNotification(I18n.t('messages.error.onlyCoaches'), 'error');
             return;
         }
 
@@ -431,15 +431,15 @@ const Teams = {
         this.currentTeamId = team.id;
 
         document.getElementById('modal-team-name').textContent = team.name;
-        document.getElementById('modal-team-coach').textContent = team.coach_name || 'Unknown';
-        document.getElementById('modal-team-stadium').textContent = team.stadium || 'Not specified';
+        document.getElementById('modal-team-coach').textContent = team.coach_name || I18n.t('common.unknown');
+        document.getElementById('modal-team-stadium').textContent = team.stadium || I18n.t('teams.notSpecified');
         document.getElementById('modal-team-players').textContent = team.players_count || 0;
 
         const logo = document.getElementById('modal-team-logo');
         logo.textContent = team.logo || team.name.substring(0, 2).toUpperCase();
         logo.style.background = team.logo_color || '#2ecc71';
 
-        const description = team.description || 'No description provided.';
+        const description = team.description || I18n.t('teams.noDescriptionProvided');
         document.getElementById('modal-team-description').textContent = description;
 
         document.getElementById('modal-team-stat-matches').textContent = 0;
@@ -489,8 +489,8 @@ const Teams = {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon"><i class="fas fa-users"></i></div>
-                        <h3 class="empty-title">No players yet</h3>
-                        <p class="empty-subtitle">Add players to your team!</p>
+                        <h3 class="empty-title">${I18n.t('teams.noPlayers')}</h3>
+                        <p class="empty-subtitle">${I18n.t('teams.addPlayersCta')}</p>
                     </div>
                 `;
                 return;
@@ -568,7 +568,7 @@ const Teams = {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon"><i class="fas fa-exclamation-circle"></i></div>
-                    <h3 class="empty-title">Failed to load players</h3>
+                    <h3 class="empty-title">${I18n.t('messages.error.loadPlayersFailed')}</h3>
                     <p class="empty-subtitle">${error.message}</p>
                 </div>
             `;
@@ -579,7 +579,7 @@ const Teams = {
         const email = document.getElementById('search-player-email').value.trim();
 
         if (!email) {
-            UI.showNotification('Please enter email to search', 'error');
+            UI.showNotification(I18n.t('messages.error.enterEmail'), 'error');
             return;
         }
 
@@ -593,7 +593,7 @@ const Teams = {
             if (players.length === 0) {
                 playersList.innerHTML = `
                     <div style="padding: 16px; text-align: center; color: #b0b0b0;">
-                        No players found with email: "${email}"
+                        ${I18n.t('addPlayer.noPlayersFound', { email: email })}
                     </div>
                 `;
             } else {
@@ -611,14 +611,14 @@ const Teams = {
                         <div>
                             <div style="color: white; font-weight: 600;">${player.name}</div>
                             <div style="color: #b0b0b0; font-size: 14px;">${player.email}</div>
-                            ${player.has_team ? '<div style="color: #e74c3c; font-size: 12px; margin-top: 4px;"><i class="fas fa-exclamation-circle"></i> Already in a team</div>' : ''}
+                            ${player.has_team ? `<div style="color: #e74c3c; font-size: 12px; margin-top: 4px;"><i class="fas fa-exclamation-circle"></i> ${I18n.t('addPlayer.alreadyInTeam')}</div>` : ''}
                         </div>
                         <button
                             class="btn btn-primary btn-sm"
                             onclick='Teams.selectPlayer(${JSON.stringify(player)})'
                             ${player.has_team ? 'disabled' : ''}
                         >
-                            Select
+                            ${I18n.t('addPlayer.select')}
                         </button>
                     </div>
                 `).join('');
@@ -628,7 +628,7 @@ const Teams = {
 
         } catch (error) {
             console.error('Search failed:', error);
-            UI.showNotification(error.message || 'Failed to search players', 'error');
+            UI.showNotification(error.message || I18n.t('messages.error.searchFailed'), 'error');
         }
     },
 
@@ -658,7 +658,7 @@ const Teams = {
 
             await API.addPlayerToTeam(this.currentTeamId, playerData);
 
-            UI.showNotification('Player added successfully!', 'success');
+            UI.showNotification(I18n.t('addPlayer.playerAdded'), 'success');
 
             this.closeAddPlayerModal();
 
@@ -667,28 +667,28 @@ const Teams = {
 
         } catch (error) {
             console.error('Failed to add player:', error);
-            UI.showNotification(error.message || 'Failed to add player', 'error');
+            UI.showNotification(error.message || I18n.t('messages.error.addPlayerFailed'), 'error');
         } finally {
             UI.hideButtonLoading(submitBtn);
         }
     },
 
     async handleRemovePlayer(teamId, playerId) {
-        if (!confirm('Are you sure you want to remove this player from the team?')) {
+        if (!confirm(I18n.t('addPlayer.confirmRemove'))) {
             return;
         }
 
         try {
             await API.removePlayerFromTeam(teamId, playerId);
 
-            UI.showNotification('Player removed successfully!', 'success');
+            UI.showNotification(I18n.t('addPlayer.playerRemoved'), 'success');
 
             await this.loadTeamPlayers(teamId);
             await this.load();
 
         } catch (error) {
             console.error('Failed to remove player:', error);
-            UI.showNotification(error.message || 'Failed to remove player', 'error');
+            UI.showNotification(error.message || I18n.t('messages.error.removePlayerFailed'), 'error');
         }
     },
 
@@ -712,14 +712,14 @@ const Teams = {
 
             await API.createTeam(teamData);
 
-            UI.showNotification(CONFIG.MESSAGES.SUCCESS.TEAM_CREATED, 'success');
+            UI.showNotification(I18n.t('messages.success.teamCreated'), 'success');
 
             this.closeCreateModal();
             await this.load();
 
         } catch (error) {
             console.error('Failed to create team:', error);
-            UI.showNotification(error.message || CONFIG.MESSAGES.ERROR.CREATE_TEAM, 'error');
+            UI.showNotification(error.message || I18n.t('messages.error.createTeam'), 'error');
         } finally {
             UI.hideButtonLoading(submitBtn);
         }

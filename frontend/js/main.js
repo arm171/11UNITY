@@ -41,6 +41,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    if (!window.WebSocketManager) {
+        console.error('WebSocketManager not loaded!');
+        return;
+    }
+
     // Initialize modules
     try {
         // Initialize I18n first (before UI to translate static content)
@@ -50,6 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
         Auth.init();
         Tournaments.init();
         Teams.init();
+        WebSocketManager.init();
 
         // Welcome message for first-time visitors
         const hasVisited = localStorage.getItem('11unity_visited');
@@ -95,6 +101,7 @@ window.debug = {
     auth: Auth,
     tournaments: Tournaments,
     teams: Teams,
+    ws: WebSocketManager,
 
     login: (email, password) => {
         return API.login({ email, password });

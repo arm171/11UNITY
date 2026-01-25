@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chcp 65001:*)",
+      "Bash(powershell.exe -Command \"Write-Host ''Test: Բdelays Թdelays Delays'' -Encoding UTF8\")",
+      "Bash(npm install:*)"
+    ]
+  }
+}

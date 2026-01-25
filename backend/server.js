@@ -6,8 +6,14 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
 
 const app = express();
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+const { initSocket } = require('./socket/socketHandler');
+initSocket(server);
 const PORT = process.env.PORT || 3000;
 
 /**
@@ -95,11 +101,12 @@ app.use((err, req, res, next) => {
 /**
  * START SERVER
  */
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log('=======================================');
     console.log('11UNITY Backend Server');
     console.log('=======================================');
     console.log(`Server running on: http://localhost:${PORT}`);
+    console.log(`WebSocket: ws://localhost:${PORT}`);
     console.log(`Database: ${process.env.DB_NAME}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log('=======================================');
@@ -110,8 +117,10 @@ app.listen(PORT, () => {
  */
 process.on('SIGTERM', () => {
     console.log('SIGTERM received. Closing server...');
-    db.end(() => {
-        console.log('Database connection closed');
-        process.exit(0);
+    server.close(() => {
+        db.end(() => {
+            console.log('Database connection closed');
+            process.exit(0);
+        });
     });
 });

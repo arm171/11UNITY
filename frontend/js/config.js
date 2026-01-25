@@ -5,6 +5,7 @@
 
 const CONFIG = {
     API_URL: 'http://localhost:3000/api',
+    WS_URL: 'http://localhost:3000',
 
     ENDPOINTS: {
         REGISTER: '/auth/register',

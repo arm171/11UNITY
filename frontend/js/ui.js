@@ -38,10 +38,11 @@ const UI = {
         const container = document.getElementById(containerId);
         if (!container) return;
 
+        const loadingText = window.I18n ? I18n.t('common.loading') : 'Loading...';
         container.innerHTML = `
             <div class="loading-indicator">
                 <div class="spinner"></div>
-                <p>Loading...</p>
+                <p>${loadingText}</p>
             </div>
         `;
         container.style.display = 'flex';
@@ -157,8 +158,11 @@ const UI = {
         button.disabled = false;
     },
 
-    // Date formatting
+    // Date formatting (delegates to I18n if available)
     formatDate(dateString) {
+        if (window.I18n) {
+            return I18n.formatDate(dateString);
+        }
         const date = new Date(dateString);
         const options = {
             year: 'numeric',
@@ -169,6 +173,9 @@ const UI = {
     },
 
     formatDateTime(dateString) {
+        if (window.I18n) {
+            return I18n.formatDateTime(dateString);
+        }
         const date = new Date(dateString);
         const dateOptions = {
             year: 'numeric',

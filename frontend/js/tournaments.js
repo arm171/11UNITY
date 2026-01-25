@@ -501,11 +501,7 @@ const Tournaments = {
         const endDate = UI.formatDate(tournament.end_date);
 
         const statusClass = `badge-${tournament.status}`;
-        const statusText = {
-            'upcoming': 'Upcoming',
-            'active': 'Active',
-            'finished': 'Finished'
-        }[tournament.status] || tournament.status;
+        const statusText = I18n.t(`tournaments.${tournament.status}`);
 
         card.innerHTML = `
             <div class="tournament-header">
@@ -520,11 +516,11 @@ const Tournaments = {
                 </div>
                 <div class="meta-item">
                     <i class="fas fa-map-marker-alt"></i>
-                    <span>${tournament.location || 'TBD'}</span>
+                    <span>${tournament.location || I18n.t('common.tbd')}</span>
                 </div>
                 <div class="meta-item">
                     <i class="fas fa-users"></i>
-                    <span>${tournament.teams_count || 0}/${tournament.max_teams} teams</span>
+                    <span>${I18n.t('tournaments.teamsJoined', { current: tournament.teams_count || 0, max: tournament.max_teams })}</span>
                 </div>
                 <div class="meta-item">
                     <i class="fas fa-list"></i>
@@ -533,12 +529,12 @@ const Tournaments = {
             </div>
 
             <div class="tournament-description">
-                ${tournament.description || 'No description available.'}
+                ${tournament.description || I18n.t('common.noDescription')}
             </div>
 
             <div class="tournament-footer">
                 <i class="fas fa-user"></i>
-                <span>${tournament.organizer_name || 'Unknown'}</span>
+                <span>${tournament.organizer_name || I18n.t('common.unknown')}</span>
             </div>
         `;
 
@@ -546,12 +542,7 @@ const Tournaments = {
     },
 
     getTypeLabel(type) {
-        const labels = {
-            'league': 'League',
-            'playoff': 'Playoff',
-            'group_playoff': 'Group + Playoff'
-        };
-        return labels[type] || type;
+        return I18n.t(`tournaments.types.${type}`) || type;
     },
 
     showEmpty() {
@@ -566,14 +557,14 @@ const Tournaments = {
 
     openCreateModal() {
         if (!API.isAuthenticated()) {
-            UI.showNotification(CONFIG.MESSAGES.ERROR.UNAUTHORIZED, 'error');
+            UI.showNotification(I18n.t('messages.error.unauthorized'), 'error');
             Auth.openAuthModal('login');
             return;
         }
 
         const user = API.getUser();
         if (user.role !== 'organizer') {
-            UI.showNotification('Only organizers can create tournaments', 'error');
+            UI.showNotification(I18n.t('messages.error.onlyOrganizers'), 'error');
             return;
         }
 
@@ -588,24 +579,25 @@ const Tournaments = {
     async openDetailsModal(tournament) {
         this.currentTournament = tournament;
 
+        // Join WebSocket room for real-time updates
+        if (window.WebSocketManager) {
+            WebSocketManager.joinTournament(tournament.id);
+        }
+
         document.getElementById('modal-tournament-name').textContent = tournament.name;
 
         const statusBadge = document.getElementById('modal-tournament-status');
         statusBadge.className = `badge badge-${tournament.status}`;
-        statusBadge.textContent = {
-            'upcoming': 'Upcoming',
-            'active': 'Active',
-            'finished': 'Finished'
-        }[tournament.status] || tournament.status;
+        statusBadge.textContent = I18n.t(`tournaments.${tournament.status}`);
 
         const startDate = UI.formatDate(tournament.start_date);
         const endDate = UI.formatDate(tournament.end_date);
         document.getElementById('modal-tournament-dates').textContent = `${startDate} - ${endDate}`;
 
-        document.getElementById('modal-tournament-location').textContent = tournament.location || 'TBD';
-        document.getElementById('modal-tournament-teams').textContent = `${tournament.teams_count || 0}/${tournament.max_teams} teams`;
+        document.getElementById('modal-tournament-location').textContent = tournament.location || I18n.t('common.tbd');
+        document.getElementById('modal-tournament-teams').textContent = I18n.t('tournaments.teamsJoined', { current: tournament.teams_count || 0, max: tournament.max_teams });
         document.getElementById('modal-tournament-type').textContent = this.getTypeLabel(tournament.type);
-        document.getElementById('modal-tournament-description').textContent = tournament.description || 'No description available.';
+        document.getElementById('modal-tournament-description').textContent = tournament.description || I18n.t('common.noDescription');
 
         await this.updateJoinButton(tournament);
         await this.updateGenerateFixturesButton(tournament);
@@ -830,6 +822,10 @@ const Tournaments = {
     },
 
     closeDetailsModal() {
+        // Leave WebSocket room
+        if (this.currentTournament && window.WebSocketManager) {
+            WebSocketManager.leaveTournament(this.currentTournament.id);
+        }
         UI.closeModal('tournament-details-modal');
     },
 
@@ -868,14 +864,14 @@ const Tournaments = {
             const response = await API.checkTournamentJoined(tournament.id);
 
             if (response.joined) {
-                joinStatusText.textContent = 'Your team is participating in this tournament';
+                joinStatusText.textContent = I18n.t('tournaments.teamParticipating');
                 joinStatus.style.color = '#2ecc71';
                 joinStatus.style.display = 'block';
                 return;
             }
 
             if (!response.hasTeam) {
-                joinStatusText.textContent = 'You need to create a team first';
+                joinStatusText.textContent = I18n.t('tournaments.needTeamFirst');
                 joinStatus.style.color = '#f39c12';
                 joinStatus.querySelector('i').className = 'fas fa-exclamation-triangle';
                 joinStatus.style.display = 'block';
@@ -893,7 +889,7 @@ const Tournaments = {
             joinBtn.style.display = 'inline-flex';
             joinBtn.onclick = () => this.handleJoinTournament(tournament.id);
         } else {
-            joinStatusText.textContent = 'Tournament is full';
+            joinStatusText.textContent = I18n.t('tournaments.tournamentFull');
             joinStatus.style.color = '#e74c3c';
             joinStatus.querySelector('i').className = 'fas fa-times-circle';
             joinStatus.style.display = 'block';
@@ -928,14 +924,14 @@ const Tournaments = {
         try {
             await API.joinTournament(tournamentId);
 
-            UI.showNotification('Successfully joined the tournament!', 'success');
+            UI.showNotification(I18n.t('tournaments.joinSuccess'), 'success');
 
             this.closeDetailsModal();
             await this.load();
 
         } catch (error) {
             console.error('Join error:', error);
-            UI.showNotification(error.message || 'Failed to join tournament', 'error');
+            UI.showNotification(error.message || I18n.t('messages.error.joinFailed'), 'error');
 
             joinBtn.innerHTML = originalHTML;
             joinBtn.disabled = false;
@@ -960,7 +956,7 @@ const Tournaments = {
                 .map(cb => parseInt(cb.value));
 
             if (matchDays.length === 0) {
-                throw new Error('Select at least one match day');
+                throw new Error(I18n.t('fixturesSettings.selectAtLeastOneDay'));
             }
 
             const data = {
@@ -977,13 +973,13 @@ const Tournaments = {
                 body: JSON.stringify(data)
             });
 
-            UI.showNotification('Fixtures generated successfully!', 'success');
+            UI.showNotification(I18n.t('messages.success.fixturesGenerated'), 'success');
             this.closeFixturesSettingsModal();
             await this.load();
 
         } catch (error) {
             console.error('Generate fixtures error:', error);
-            UI.showNotification(error.message || 'Failed to generate fixtures', 'error');
+            UI.showNotification(error.message || I18n.t('messages.error.generateFixturesFailed'), 'error');
         } finally {
             UI.hideButtonLoading(submitBtn);
         }
@@ -1022,7 +1018,7 @@ const Tournaments = {
 
                 roundDiv.innerHTML = `
                     <h4 style="color: #2ecc71; margin-bottom: 12px;">
-                        Round ${roundNum}
+                        ${I18n.t('tournaments.round', { num: roundNum })}
                     </h4>
                     <div style="display: grid; gap: 12px;">
                         ${roundMatches.map(match => this.createFixtureCard(match, tournamentId)).join('')}
@@ -1043,16 +1039,8 @@ const Tournaments = {
     },
 
     createFixtureCard(match, tournamentId) {
-        const matchDate = new Date(match.match_date);
-        const dateStr = matchDate.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
-        const timeStr = matchDate.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        const dateStr = I18n.formatDate(match.match_date);
+        const timeStr = I18n.formatTime(match.match_date);
 
         const user = API.getUser();
         const isOrganizer = user && user.role === 'organizer' && match.organizer_id === user.id;
@@ -1089,7 +1077,7 @@ const Tournaments = {
                                 ${match.home_score} - ${match.away_score}
                             </div>
                         ` : `
-                            <div style="color: #2ecc71; font-weight: bold; font-size: 18px;">VS</div>
+                            <div style="color: #2ecc71; font-weight: bold; font-size: 18px;">${I18n.t('common.vs')}</div>
                         `}
                         <div style="color: #b0b0b0; font-size: 12px; margin-top: 4px;">${dateStr}</div>
                         <div style="color: #b0b0b0; font-size: 12px;">${timeStr}</div>
@@ -1121,7 +1109,7 @@ const Tournaments = {
                             class="btn btn-primary btn-sm"
                             onclick="Tournaments.openMatchResultsModal(${tournamentId}, ${match.id}); event.stopPropagation();"
                         >
-                            <i class="fas fa-edit"></i> Enter Results
+                            <i class="fas fa-edit"></i> ${I18n.t('match.enterResults')}
                         </button>
                     </div>
                 ` : ''}
@@ -1152,7 +1140,7 @@ const Tournaments = {
 
         } catch (error) {
             console.error('Failed to open match results:', error);
-            UI.showNotification('Failed to load match details', 'error');
+            UI.showNotification(I18n.t('messages.error.loadMatchDetails'), 'error');
         }
     },
 
@@ -1160,7 +1148,7 @@ const Tournaments = {
         const eventsList = document.getElementById('match-events-list');
 
         if (!this.currentMatch || !this.currentMatch.events || this.currentMatch.events.length === 0) {
-            eventsList.innerHTML = '<p style="color: #b0b0b0; text-align: center;">No events yet</p>';
+            eventsList.innerHTML = `<p style="color: #b0b0b0; text-align: center;">${I18n.t('match.noEvents')}</p>`;
             return;
         }
 
@@ -1241,11 +1229,11 @@ const Tournaments = {
             this.currentMatch.away_score = awayScore;
             this.currentMatch.status = 'finished';
 
-            UI.showNotification('Score updated successfully!', 'success');
+            UI.showNotification(I18n.t('match.scoreUpdated'), 'success');
 
         } catch (error) {
             console.error('Update score error:', error);
-            UI.showNotification(error.message || 'Failed to update score', 'error');
+            UI.showNotification(error.message || I18n.t('messages.error.updateScoreFailed'), 'error');
         } finally {
             UI.hideButtonLoading(submitBtn);
         }
@@ -1265,7 +1253,7 @@ const Tournaments = {
             const assistEmail = document.getElementById('goal-assist-email').value;
 
             if (!teamType || !playerEmail) {
-                throw new Error('Team and player are required');
+                throw new Error(I18n.t('messages.error.teamAndPlayerRequired'));
             }
 
             const teamId = teamType === 'home' ? this.currentMatch.home_team_id : this.currentMatch.away_team_id;
@@ -1284,7 +1272,7 @@ const Tournaments = {
                 eventData
             );
 
-            UI.showNotification('Goal added successfully!', 'success');
+            UI.showNotification(I18n.t('match.goalAdded'), 'success');
 
             const response = await API.getMatchDetails(this.currentMatch.tournament_id, this.currentMatch.id);
             this.currentMatch = response.match;
@@ -1294,7 +1282,7 @@ const Tournaments = {
 
         } catch (error) {
             console.error('Add goal error:', error);
-            UI.showNotification(error.message || 'Failed to add goal', 'error');
+            UI.showNotification(error.message || I18n.t('messages.error.addGoalFailed'), 'error');
         } finally {
             UI.hideButtonLoading(submitBtn);
         }
@@ -1314,7 +1302,7 @@ const Tournaments = {
             const minute = parseInt(document.getElementById('card-minute').value);
 
             if (!teamType || !playerEmail || !cardType) {
-                throw new Error('All fields are required');
+                throw new Error(I18n.t('messages.error.allFieldsRequired'));
             }
 
             const teamId = teamType === 'home' ? this.currentMatch.home_team_id : this.currentMatch.away_team_id;
@@ -1332,7 +1320,7 @@ const Tournaments = {
                 eventData
             );
 
-            UI.showNotification('Card added successfully!', 'success');
+            UI.showNotification(I18n.t('match.cardAdded'), 'success');
 
             const response = await API.getMatchDetails(this.currentMatch.tournament_id, this.currentMatch.id);
             this.currentMatch = response.match;
@@ -1342,7 +1330,7 @@ const Tournaments = {
 
         } catch (error) {
             console.error('Add card error:', error);
-            UI.showNotification(error.message || 'Failed to add card', 'error');
+            UI.showNotification(error.message || I18n.t('messages.error.addCardFailed'), 'error');
         } finally {
             UI.hideButtonLoading(submitBtn);
         }
@@ -1369,14 +1357,14 @@ const Tournaments = {
 
             await API.createTournament(tournamentData);
 
-            UI.showNotification(CONFIG.MESSAGES.SUCCESS.TOURNAMENT_CREATED, 'success');
+            UI.showNotification(I18n.t('messages.success.tournamentCreated'), 'success');
 
             this.closeCreateModal();
             await this.load();
 
         } catch (error) {
             console.error('Failed to create tournament:', error);
-            UI.showNotification(error.message || CONFIG.MESSAGES.ERROR.CREATE_TOURNAMENT, 'error');
+            UI.showNotification(error.message || I18n.t('messages.error.createTournament'), 'error');
         } finally {
             UI.hideButtonLoading(submitBtn);
         }
