@@ -829,6 +829,176 @@ const Tournaments = {
         UI.closeModal('tournament-details-modal');
     },
 
+    // WebSocket data render methods
+    renderStandingsFromData(standings) {
+        const container = document.getElementById('tournament-standings-container');
+        const table = document.getElementById('tournament-standings-table');
+        const noStandings = document.getElementById('tournament-no-standings');
+
+        if (!standings || standings.length === 0) {
+            container.style.display = 'none';
+            noStandings.style.display = 'flex';
+            return;
+        }
+
+        table.innerHTML = `
+            <table style="width: 100%; border-collapse: collapse; color: white;">
+                <thead>
+                    <tr style="background: rgba(46, 204, 113, 0.2); text-align: left;">
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1);">#</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1);">Team</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">P</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">W</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">D</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">L</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">GF</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">GA</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">GD</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center; font-weight: bold;">Pts</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${standings.map((team, index) => `
+                        <tr style="background: ${index % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent'};">
+                            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">${index + 1}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="
+                                        width: 30px;
+                                        height: 30px;
+                                        background: ${team.team_color || '#2ecc71'};
+                                        border-radius: 50%;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        font-weight: bold;
+                                        font-size: 12px;
+                                    ">${team.team_logo || team.team_name.substring(0, 2).toUpperCase()}</div>
+                                    <span>${team.team_name}</span>
+                                </div>
+                            </td>
+                            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center;">${team.played}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; color: #2ecc71;">${team.won}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; color: #f39c12;">${team.drawn}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; color: #e74c3c;">${team.lost}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center;">${team.goals_for}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center;">${team.goals_against}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; color: ${team.goal_difference >= 0 ? '#2ecc71' : '#e74c3c'};">${team.goal_difference > 0 ? '+' : ''}${team.goal_difference}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; font-weight: bold; color: #2ecc71; font-size: 16px;">${team.points}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+
+        container.style.display = 'block';
+        noStandings.style.display = 'none';
+    },
+
+    renderStatisticsFromData(statistics) {
+        const container = document.getElementById('tournament-statistics-container');
+        const list = document.getElementById('tournament-statistics-list');
+        const noStats = document.getElementById('tournament-no-statistics');
+
+        if (!statistics || statistics.length === 0) {
+            container.style.display = 'none';
+            noStats.style.display = 'flex';
+            return;
+        }
+
+        const topScorers = statistics.filter(s => s.goals > 0).sort((a, b) => b.goals - a.goals).slice(0, 10);
+
+        list.innerHTML = `
+            <div style="margin-bottom: 32px;">
+                <h4 style="color: #2ecc71; margin-bottom: 16px;"><i class="fas fa-futbol"></i> Top Scorers</h4>
+                ${topScorers.length > 0 ? `
+                    <div style="display: grid; gap: 8px;">
+                        ${topScorers.map((player, index) => `
+                            <div style="
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                padding: 12px;
+                                background: rgba(255,255,255,0.05);
+                                border-radius: 8px;
+                            ">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="
+                                        width: 28px;
+                                        height: 28px;
+                                        background: ${index < 3 ? '#f39c12' : 'rgba(255,255,255,0.1)'};
+                                        border-radius: 50%;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        font-weight: bold;
+                                        font-size: 12px;
+                                    ">${index + 1}</span>
+                                    <div>
+                                        <div style="color: white; font-weight: 600;">${player.player_name}</div>
+                                        <div style="color: #b0b0b0; font-size: 12px;">${player.team_name}</div>
+                                    </div>
+                                </div>
+                                <div style="font-size: 20px; font-weight: bold; color: #2ecc71;">${player.goals}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : '<p style="color: #b0b0b0;">No goals scored yet</p>'}
+            </div>
+
+            <div style="margin-bottom: 32px;">
+                <h4 style="color: #f39c12; margin-bottom: 16px;"><i class="fas fa-square"></i> Yellow Cards</h4>
+                ${statistics.filter(s => s.yellow_cards > 0).length > 0 ? `
+                    <div style="display: grid; gap: 8px;">
+                        ${statistics.filter(s => s.yellow_cards > 0).sort((a, b) => b.yellow_cards - a.yellow_cards).slice(0, 5).map(player => `
+                            <div style="
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                padding: 12px;
+                                background: rgba(255,255,255,0.05);
+                                border-radius: 8px;
+                            ">
+                                <div>
+                                    <div style="color: white; font-weight: 600;">${player.player_name}</div>
+                                    <div style="color: #b0b0b0; font-size: 12px;">${player.team_name}</div>
+                                </div>
+                                <div style="font-size: 18px; font-weight: bold; color: #f39c12;">${player.yellow_cards}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : '<p style="color: #b0b0b0;">No yellow cards yet</p>'}
+            </div>
+
+            <div>
+                <h4 style="color: #e74c3c; margin-bottom: 16px;"><i class="fas fa-square"></i> Red Cards</h4>
+                ${statistics.filter(s => s.red_cards > 0).length > 0 ? `
+                    <div style="display: grid; gap: 8px;">
+                        ${statistics.filter(s => s.red_cards > 0).sort((a, b) => b.red_cards - a.red_cards).slice(0, 5).map(player => `
+                            <div style="
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                padding: 12px;
+                                background: rgba(255,255,255,0.05);
+                                border-radius: 8px;
+                            ">
+                                <div>
+                                    <div style="color: white; font-weight: 600;">${player.player_name}</div>
+                                    <div style="color: #b0b0b0; font-size: 12px;">${player.team_name}</div>
+                                </div>
+                                <div style="font-size: 18px; font-weight: bold; color: #e74c3c;">${player.red_cards}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : '<p style="color: #b0b0b0;">No red cards yet</p>'}
+            </div>
+        `;
+
+        container.style.display = 'block';
+        noStats.style.display = 'none';
+    },
+
     closeFixturesSettingsModal() {
         UI.closeModal('fixtures-settings-modal');
         document.getElementById('fixtures-settings-form').reset();
@@ -1046,7 +1216,7 @@ const Tournaments = {
         const isOrganizer = user && user.role === 'organizer' && match.organizer_id === user.id;
 
         return `
-            <div style="
+            <div data-match-id="${match.id}" style="
                 background: rgba(255, 255, 255, 0.05);
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 border-radius: 12px;
@@ -1073,11 +1243,11 @@ const Tournaments = {
 
                     <div style="text-align: center; padding: 0 24px;">
                         ${match.status === 'finished' ? `
-                            <div style="color: #2ecc71; font-weight: bold; font-size: 24px;">
+                            <div class="match-score" style="color: #2ecc71; font-weight: bold; font-size: 24px;">
                                 ${match.home_score} - ${match.away_score}
                             </div>
                         ` : `
-                            <div style="color: #2ecc71; font-weight: bold; font-size: 18px;">${I18n.t('common.vs')}</div>
+                            <div class="match-score" style="color: #2ecc71; font-weight: bold; font-size: 18px;">${I18n.t('common.vs')}</div>
                         `}
                         <div style="color: #b0b0b0; font-size: 12px; margin-top: 4px;">${dateStr}</div>
                         <div style="color: #b0b0b0; font-size: 12px;">${timeStr}</div>
