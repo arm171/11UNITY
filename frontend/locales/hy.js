@@ -41,6 +41,13 @@ I18n.registerTranslations('hy', {
         cta: 'Delays Delays Delays'
     },
 
+    // Profile
+    profile: {
+        title: 'Պdelays',
+        language: 'Լdelays',
+        memberSince: 'Անdelays delays'
+    },
+
     // Auth
     auth: {
         login: 'Delays',
@@ -200,6 +207,8 @@ I18n.registerTranslations('hy', {
     addPlayer: {
         title: 'Delays delays',
         searchByEmail: 'Delays delays delays Email-delays',
+        emailPlaceholder: 'player@email.com',
+        search: 'Որdelays',
         searchPlaceholder: 'player@email.com',
         searchResults: 'Delays delays:',
         noPlayersFound: '"{email}" email-delays delays delays delays delays delays',

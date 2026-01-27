@@ -24,34 +24,35 @@ const Tournaments = {
                     <button class="modal-close" id="close-create-tournament">&times;</button>
 
                     <h2 style="margin-bottom: 32px; text-align: center; color: white;">
-                        <i class="fas fa-trophy"></i> Create Tournament
+                        <i class="fas fa-trophy"></i> <span data-i18n="tournaments.createTournament">Create Tournament</span>
                     </h2>
 
                     <form id="create-tournament-form">
                         <div class="form-group">
-                            <label class="form-label">Tournament Name</label>
+                            <label class="form-label" data-i18n="tournaments.tournamentName">Tournament Name</label>
                             <input
                                 type="text"
                                 class="form-input"
                                 id="tournament-name"
+                                data-i18n-placeholder="tournaments.tournamentNamePlaceholder"
                                 placeholder="Champions League 2024"
                                 required
                             >
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Type</label>
+                            <label class="form-label" data-i18n="tournaments.type">Type</label>
                             <select class="form-select" id="tournament-type" required>
-                                <option value="">Select type</option>
-                                <option value="league">League (All vs All)</option>
-                                <option value="playoff">Playoff (Knockout)</option>
-                                <option value="group_playoff">Group + Playoff</option>
+                                <option value="" data-i18n="tournaments.selectType">Select type</option>
+                                <option value="league" data-i18n="tournaments.types.league">League (All vs All)</option>
+                                <option value="playoff" data-i18n="tournaments.types.playoff">Playoff (Knockout)</option>
+                                <option value="group_playoff" data-i18n="tournaments.types.group_playoff">Group + Playoff</option>
                             </select>
                         </div>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                             <div class="form-group">
-                                <label class="form-label">Start Date</label>
+                                <label class="form-label" data-i18n="tournaments.startDate">Start Date</label>
                                 <input
                                     type="date"
                                     class="form-input"
@@ -61,7 +62,7 @@ const Tournaments = {
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">End Date</label>
+                                <label class="form-label" data-i18n="tournaments.endDate">End Date</label>
                                 <input
                                     type="date"
                                     class="form-input"
@@ -72,31 +73,33 @@ const Tournaments = {
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Location</label>
+                            <label class="form-label" data-i18n="tournaments.location">Location</label>
                             <input
                                 type="text"
                                 class="form-input"
                                 id="tournament-location"
+                                data-i18n-placeholder="tournaments.locationPlaceholder"
                                 placeholder="City, Stadium"
                                 required
                             >
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Maximum Teams</label>
+                            <label class="form-label" data-i18n="tournaments.maxTeams">Maximum Teams</label>
                             <select class="form-select" id="tournament-max-teams" required>
-                                <option value="4">4 teams</option>
-                                <option value="8" selected>8 teams</option>
-                                <option value="12">12 teams</option>
-                                <option value="16">16 teams</option>
+                                <option value="4">4</option>
+                                <option value="8" selected>8</option>
+                                <option value="12">12</option>
+                                <option value="16">16</option>
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Description</label>
+                            <label class="form-label" data-i18n="tournaments.description">Description</label>
                             <textarea
                                 class="form-textarea"
                                 id="tournament-description"
+                                data-i18n-placeholder="tournaments.descriptionPlaceholder"
                                 placeholder="Tournament details..."
                                 rows="4"
                             ></textarea>
@@ -104,10 +107,10 @@ const Tournaments = {
 
                         <div style="display: flex; gap: 16px; margin-top: 24px;">
                             <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="Tournaments.closeCreateModal()">
-                                Cancel
+                                <span data-i18n="common.cancel">Cancel</span>
                             </button>
                             <button type="submit" class="btn btn-primary" style="flex: 1;">
-                                <span class="btn-text">Create Tournament</span>
+                                <span class="btn-text" data-i18n="tournaments.createTournament">Create Tournament</span>
                                 <div class="spinner" style="display: none;"></div>
                             </button>
                         </div>
@@ -151,7 +154,7 @@ const Tournaments = {
 
                     <div style="text-align: center; margin-bottom: 32px;">
                         <button class="btn btn-primary" id="join-tournament-btn" style="display: none;">
-                            <i class="fas fa-plus-circle"></i> Join Tournament
+                            <i class="fas fa-plus-circle"></i> <span data-i18n="tournaments.joinTournament">Join Tournament</span>
                         </button>
                         <p id="join-tournament-status" style="margin-top: 16px; display: none; font-size: 16px; font-weight: 600;">
                             <i class="fas fa-check-circle"></i> <span id="join-status-text"></span>
@@ -160,20 +163,20 @@ const Tournaments = {
 
                     <div style="text-align: center; margin-bottom: 32px;">
                         <button class="btn btn-primary" id="generate-fixtures-btn" style="display: none;">
-                            <i class="fas fa-magic"></i> Generate Fixtures
+                            <i class="fas fa-magic"></i> <span data-i18n="tournaments.generateFixtures">Generate Fixtures</span>
                         </button>
                     </div>
 
                     <!-- Tabs for Standings, Statistics, Fixtures -->
                     <div style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 16px;">
                         <button class="btn btn-secondary tournament-tab active" data-tab="standings" onclick="Tournaments.switchTab('standings')">
-                            <i class="fas fa-table"></i> Standings
+                            <i class="fas fa-table"></i> <span data-i18n="tournaments.standings">Standings</span>
                         </button>
                         <button class="btn btn-secondary tournament-tab" data-tab="statistics" onclick="Tournaments.switchTab('statistics')">
-                            <i class="fas fa-chart-bar"></i> Statistics
+                            <i class="fas fa-chart-bar"></i> <span data-i18n="tournaments.statistics">Statistics</span>
                         </button>
                         <button class="btn btn-secondary tournament-tab" data-tab="fixtures" onclick="Tournaments.switchTab('fixtures')">
-                            <i class="fas fa-calendar-alt"></i> Fixtures
+                            <i class="fas fa-calendar-alt"></i> <span data-i18n="tournaments.fixtures">Fixtures</span>
                         </button>
                     </div>
 
@@ -184,8 +187,8 @@ const Tournaments = {
                         </div>
                         <div class="empty-state" id="tournament-no-standings">
                             <div class="empty-icon"><i class="fas fa-table"></i></div>
-                            <h3 class="empty-title">No Standings Yet</h3>
-                            <p class="empty-subtitle">Standings will appear after matches are played</p>
+                            <h3 class="empty-title" data-i18n="tournaments.noStandings">No Standings Yet</h3>
+                            <p class="empty-subtitle" data-i18n="tournaments.standingsSubtitle">Standings will appear after matches are played</p>
                         </div>
                     </div>
 
@@ -196,8 +199,8 @@ const Tournaments = {
                         </div>
                         <div class="empty-state" id="tournament-no-statistics">
                             <div class="empty-icon"><i class="fas fa-chart-bar"></i></div>
-                            <h3 class="empty-title">No Statistics Yet</h3>
-                            <p class="empty-subtitle">Player statistics will appear after match events are recorded</p>
+                            <h3 class="empty-title" data-i18n="tournaments.noStatistics">No Statistics Yet</h3>
+                            <p class="empty-subtitle" data-i18n="tournaments.statisticsSubtitle">Player statistics will appear after match events are recorded</p>
                         </div>
                     </div>
 
@@ -208,8 +211,8 @@ const Tournaments = {
                         </div>
                         <div class="empty-state" id="tournament-no-fixtures">
                             <div class="empty-icon"><i class="fas fa-calendar-alt"></i></div>
-                            <h3 class="empty-title">No Fixtures Yet</h3>
-                            <p class="empty-subtitle">Generate fixtures to see the match schedule!</p>
+                            <h3 class="empty-title" data-i18n="tournaments.noFixtures">No Fixtures Yet</h3>
+                            <p class="empty-subtitle" data-i18n="tournaments.fixturesSubtitle">Generate fixtures to see the match schedule!</p>
                         </div>
                     </div>
                 </div>
@@ -222,68 +225,68 @@ const Tournaments = {
                     <button class="modal-close" id="close-fixtures-settings">&times;</button>
 
                     <h2 style="margin-bottom: 32px; text-align: center; color: white;">
-                        <i class="fas fa-magic"></i> Generate Fixtures Settings
+                        <i class="fas fa-magic"></i> <span data-i18n="fixturesSettings.title">Generate Fixtures Settings</span>
                     </h2>
 
                     <form id="fixtures-settings-form">
                         <div class="form-group">
-                            <label class="form-label">Start Date</label>
+                            <label class="form-label" data-i18n="tournaments.startDate">Start Date</label>
                             <input type="date" class="form-input" id="fixtures-start-date" required>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Match Time</label>
+                            <label class="form-label" data-i18n="fixturesSettings.matchTime">Match Time</label>
                             <input type="time" class="form-input" id="fixtures-match-time" value="18:00" required>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Match Days</label>
+                            <label class="form-label" data-i18n="fixturesSettings.matchDays">Match Days</label>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                                 <label style="display: flex; align-items: center; gap: 4px; color: white;">
-                                    <input type="checkbox" name="match-days" value="1"> Mon
+                                    <input type="checkbox" name="match-days" value="1"> <span data-i18n="fixturesSettings.days.mon">Mon</span>
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 4px; color: white;">
-                                    <input type="checkbox" name="match-days" value="2"> Tue
+                                    <input type="checkbox" name="match-days" value="2"> <span data-i18n="fixturesSettings.days.tue">Tue</span>
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 4px; color: white;">
-                                    <input type="checkbox" name="match-days" value="3" checked> Wed
+                                    <input type="checkbox" name="match-days" value="3" checked> <span data-i18n="fixturesSettings.days.wed">Wed</span>
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 4px; color: white;">
-                                    <input type="checkbox" name="match-days" value="4"> Thu
+                                    <input type="checkbox" name="match-days" value="4"> <span data-i18n="fixturesSettings.days.thu">Thu</span>
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 4px; color: white;">
-                                    <input type="checkbox" name="match-days" value="5" checked> Fri
+                                    <input type="checkbox" name="match-days" value="5" checked> <span data-i18n="fixturesSettings.days.fri">Fri</span>
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 4px; color: white;">
-                                    <input type="checkbox" name="match-days" value="6"> Sat
+                                    <input type="checkbox" name="match-days" value="6"> <span data-i18n="fixturesSettings.days.sat">Sat</span>
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 4px; color: white;">
-                                    <input type="checkbox" name="match-days" value="0"> Sun
+                                    <input type="checkbox" name="match-days" value="0"> <span data-i18n="fixturesSettings.days.sun">Sun</span>
                                 </label>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Matches Per Day</label>
+                            <label class="form-label" data-i18n="fixturesSettings.matchesPerDay">Matches Per Day</label>
                             <select class="form-select" id="fixtures-matches-per-day" required>
-                                <option value="1">1 match</option>
-                                <option value="2" selected>2 matches</option>
-                                <option value="3">3 matches</option>
-                                <option value="4">4 matches</option>
+                                <option value="1">1</option>
+                                <option value="2" selected>2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Venue</label>
-                            <input type="text" class="form-input" id="fixtures-venue" placeholder="Stadium name">
+                            <label class="form-label" data-i18n="fixturesSettings.venue">Venue</label>
+                            <input type="text" class="form-input" id="fixtures-venue" data-i18n-placeholder="fixturesSettings.venuePlaceholder" placeholder="Stadium name">
                         </div>
 
                         <div style="display: flex; gap: 16px; margin-top: 24px;">
                             <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="Tournaments.closeFixturesSettingsModal()">
-                                Cancel
+                                <span data-i18n="common.cancel">Cancel</span>
                             </button>
                             <button type="submit" class="btn btn-primary" style="flex: 1;">
-                                <span class="btn-text">Generate</span>
+                                <span class="btn-text" data-i18n="fixturesSettings.generate">Generate</span>
                                 <div class="spinner" style="display: none;"></div>
                             </button>
                         </div>
@@ -298,7 +301,7 @@ const Tournaments = {
                     <button class="modal-close" id="close-match-results">&times;</button>
 
                     <h2 style="margin-bottom: 24px; text-align: center; color: white;">
-                        <i class="fas fa-futbol"></i> Enter Match Results
+                        <i class="fas fa-futbol"></i> <span data-i18n="match.enterResults">Enter Match Results</span>
                     </h2>
 
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 12px;">
@@ -306,7 +309,7 @@ const Tournaments = {
                             <div style="font-size: 32px; margin-bottom: 8px;" id="match-home-logo">H</div>
                             <div style="font-size: 18px; font-weight: bold; color: white;" id="match-home-name">Home Team</div>
                         </div>
-                        <div style="font-size: 28px; font-weight: bold; color: #2ecc71;">VS</div>
+                        <div style="font-size: 28px; font-weight: bold; color: #2ecc71;" data-i18n="common.vs">VS</div>
                         <div style="flex: 1; text-align: center;">
                             <div style="font-size: 32px; margin-bottom: 8px;" id="match-away-logo">A</div>
                             <div style="font-size: 18px; font-weight: bold; color: white;" id="match-away-name">Away Team</div>
@@ -315,22 +318,22 @@ const Tournaments = {
 
                     <div style="margin-bottom: 32px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 12px;">
                         <h3 style="color: white; margin-bottom: 16px;">
-                            <i class="fas fa-star"></i> Final Score
+                            <i class="fas fa-star"></i> <span data-i18n="match.finalScore">Final Score</span>
                         </h3>
                         <form id="update-score-form">
                             <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: end;">
                                 <div class="form-group" style="margin: 0;">
-                                    <label class="form-label">Home Score</label>
+                                    <label class="form-label" data-i18n="match.homeScore">Home Score</label>
                                     <input type="number" class="form-input" id="home-score" min="0" value="0" required>
                                 </div>
                                 <div style="font-size: 24px; font-weight: bold; color: #b0b0b0; padding-bottom: 12px;">-</div>
                                 <div class="form-group" style="margin: 0;">
-                                    <label class="form-label">Away Score</label>
+                                    <label class="form-label" data-i18n="match.awayScore">Away Score</label>
                                     <input type="number" class="form-input" id="away-score" min="0" value="0" required>
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
-                                <span class="btn-text">Update Score</span>
+                                <span class="btn-text" data-i18n="match.updateScore">Update Score</span>
                                 <div class="spinner" style="display: none;"></div>
                             </button>
                         </form>
@@ -338,31 +341,31 @@ const Tournaments = {
 
                     <div style="margin-bottom: 32px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 12px;">
                         <h3 style="color: white; margin-bottom: 16px;">
-                            <i class="fas fa-futbol"></i> Add Goal
+                            <i class="fas fa-futbol"></i> <span data-i18n="match.addGoal">Add Goal</span>
                         </h3>
                         <form id="add-goal-form">
                             <div class="form-group">
-                                <label class="form-label">Team</label>
+                                <label class="form-label" data-i18n="match.team">Team</label>
                                 <select class="form-select" id="goal-team" required>
-                                    <option value="">Select team</option>
-                                    <option value="home">Home Team</option>
-                                    <option value="away">Away Team</option>
+                                    <option value="" data-i18n="match.selectTeam">Select team</option>
+                                    <option value="home" data-i18n="match.homeTeam">Home Team</option>
+                                    <option value="away" data-i18n="match.awayTeam">Away Team</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Player (email)</label>
-                                <input type="email" class="form-input" id="goal-player-email" placeholder="player@example.com" required>
+                                <label class="form-label" data-i18n="match.playerEmail">Player (email)</label>
+                                <input type="email" class="form-input" id="goal-player-email" data-i18n-placeholder="match.playerEmailPlaceholder" placeholder="player@example.com" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Minute</label>
+                                <label class="form-label" data-i18n="match.minute">Minute</label>
                                 <input type="number" class="form-input" id="goal-minute" min="1" max="120" placeholder="45" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Assist (optional - email)</label>
-                                <input type="email" class="form-input" id="goal-assist-email" placeholder="assistant@example.com">
+                                <label class="form-label" data-i18n="match.assist">Assist (optional - email)</label>
+                                <input type="email" class="form-input" id="goal-assist-email" data-i18n-placeholder="match.assistPlaceholder" placeholder="assistant@example.com">
                             </div>
                             <button type="submit" class="btn btn-primary" style="width: 100%;">
-                                <span class="btn-text"><i class="fas fa-plus"></i> Add Goal</span>
+                                <span class="btn-text"><i class="fas fa-plus"></i> <span data-i18n="match.addGoal">Add Goal</span></span>
                                 <div class="spinner" style="display: none;"></div>
                             </button>
                         </form>
@@ -370,35 +373,35 @@ const Tournaments = {
 
                     <div style="margin-bottom: 32px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 12px;">
                         <h3 style="color: white; margin-bottom: 16px;">
-                            <i class="fas fa-square"></i> Add Card
+                            <i class="fas fa-square"></i> <span data-i18n="match.addCard">Add Card</span>
                         </h3>
                         <form id="add-card-form">
                             <div class="form-group">
-                                <label class="form-label">Team</label>
+                                <label class="form-label" data-i18n="match.team">Team</label>
                                 <select class="form-select" id="card-team" required>
-                                    <option value="">Select team</option>
-                                    <option value="home">Home Team</option>
-                                    <option value="away">Away Team</option>
+                                    <option value="" data-i18n="match.selectTeam">Select team</option>
+                                    <option value="home" data-i18n="match.homeTeam">Home Team</option>
+                                    <option value="away" data-i18n="match.awayTeam">Away Team</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Player (email)</label>
-                                <input type="email" class="form-input" id="card-player-email" placeholder="player@example.com" required>
+                                <label class="form-label" data-i18n="match.playerEmail">Player (email)</label>
+                                <input type="email" class="form-input" id="card-player-email" data-i18n-placeholder="match.playerEmailPlaceholder" placeholder="player@example.com" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Card Type</label>
+                                <label class="form-label" data-i18n="match.cardType">Card Type</label>
                                 <select class="form-select" id="card-type" required>
-                                    <option value="">Select type</option>
-                                    <option value="yellow_card">Yellow Card</option>
-                                    <option value="red_card">Red Card</option>
+                                    <option value="" data-i18n="match.selectCardType">Select type</option>
+                                    <option value="yellow_card" data-i18n="match.yellowCard">Yellow Card</option>
+                                    <option value="red_card" data-i18n="match.redCard">Red Card</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Minute</label>
+                                <label class="form-label" data-i18n="match.minute">Minute</label>
                                 <input type="number" class="form-input" id="card-minute" min="1" max="120" placeholder="67" required>
                             </div>
                             <button type="submit" class="btn btn-primary" style="width: 100%;">
-                                <span class="btn-text"><i class="fas fa-plus"></i> Add Card</span>
+                                <span class="btn-text"><i class="fas fa-plus"></i> <span data-i18n="match.addCard">Add Card</span></span>
                                 <div class="spinner" style="display: none;"></div>
                             </button>
                         </form>
@@ -406,7 +409,7 @@ const Tournaments = {
 
                     <div style="padding: 20px; background: rgba(255,255,255,0.05); border-radius: 12px;">
                         <h3 style="color: white; margin-bottom: 16px;">
-                            <i class="fas fa-list"></i> Match Events
+                            <i class="fas fa-list"></i> <span data-i18n="match.matchEvents">Match Events</span>
                         </h3>
                         <div id="match-events-list"></div>
                     </div>
@@ -415,9 +418,28 @@ const Tournaments = {
         `;
 
         document.body.insertAdjacentHTML('beforeend', modalsHTML);
+
+        // Apply translations to newly created modals
+        if (window.I18n) {
+            I18n.applyTranslations();
+        }
     },
 
     attachEventListeners() {
+        // Listen for language changes to update dynamic content
+        window.addEventListener('languageChanged', () => {
+            if (window.I18n) {
+                I18n.applyTranslations();
+            }
+            // Re-render cards with new language
+            this.render();
+            // If tournament details modal is open, refresh standings/statistics
+            if (this.currentTournament && document.getElementById('tournament-details-modal').classList.contains('active')) {
+                this.loadStandings(this.currentTournament.id);
+                this.loadStatistics(this.currentTournament.id);
+                this.loadTournamentFixtures(this.currentTournament.id);
+            }
+        });
         const createBtn = document.getElementById('create-tournament-btn');
         if (createBtn) {
             createBtn.addEventListener('click', () => this.openCreateModal());
@@ -650,16 +672,16 @@ const Tournaments = {
                 <table style="width: 100%; border-collapse: collapse; color: white;">
                     <thead>
                         <tr style="background: rgba(46, 204, 113, 0.2); text-align: left;">
-                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1);">#</th>
-                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1);">Team</th>
-                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">P</th>
-                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">W</th>
-                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">D</th>
-                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">L</th>
-                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">GF</th>
-                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">GA</th>
-                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">GD</th>
-                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center; font-weight: bold;">Pts</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1);">${I18n.t('stats.rank')}</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1);">${I18n.t('stats.team')}</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">${I18n.t('stats.played')}</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">${I18n.t('stats.won')}</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">${I18n.t('stats.drawn')}</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">${I18n.t('stats.lost')}</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">${I18n.t('stats.goalsFor')}</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">${I18n.t('stats.goalsAgainst')}</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">${I18n.t('stats.goalDifference')}</th>
+                            <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center; font-weight: bold;">${I18n.t('stats.points')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -726,7 +748,7 @@ const Tournaments = {
 
             list.innerHTML = `
                 <div style="margin-bottom: 32px;">
-                    <h4 style="color: #2ecc71; margin-bottom: 16px;"><i class="fas fa-futbol"></i> Top Scorers</h4>
+                    <h4 style="color: #2ecc71; margin-bottom: 16px;"><i class="fas fa-futbol"></i> ${I18n.t('stats.topScorers')}</h4>
                     ${topScorers.length > 0 ? `
                         <div style="display: grid; gap: 8px;">
                             ${topScorers.map((player, index) => `
@@ -759,11 +781,11 @@ const Tournaments = {
                                 </div>
                             `).join('')}
                         </div>
-                    ` : '<p style="color: #b0b0b0;">No goals scored yet</p>'}
+                    ` : `<p style="color: #b0b0b0;">${I18n.t('stats.noGoalsScored')}</p>`}
                 </div>
 
                 <div style="margin-bottom: 32px;">
-                    <h4 style="color: #f39c12; margin-bottom: 16px;"><i class="fas fa-square"></i> Yellow Cards</h4>
+                    <h4 style="color: #f39c12; margin-bottom: 16px;"><i class="fas fa-square"></i> ${I18n.t('stats.yellowCards')}</h4>
                     ${statistics.filter(s => s.yellow_cards > 0).length > 0 ? `
                         <div style="display: grid; gap: 8px;">
                             ${statistics.filter(s => s.yellow_cards > 0).sort((a, b) => b.yellow_cards - a.yellow_cards).slice(0, 5).map(player => `
@@ -783,11 +805,11 @@ const Tournaments = {
                                 </div>
                             `).join('')}
                         </div>
-                    ` : '<p style="color: #b0b0b0;">No yellow cards yet</p>'}
+                    ` : `<p style="color: #b0b0b0;">${I18n.t('stats.noYellowCards')}</p>`}
                 </div>
 
                 <div>
-                    <h4 style="color: #e74c3c; margin-bottom: 16px;"><i class="fas fa-square"></i> Red Cards</h4>
+                    <h4 style="color: #e74c3c; margin-bottom: 16px;"><i class="fas fa-square"></i> ${I18n.t('stats.redCards')}</h4>
                     ${statistics.filter(s => s.red_cards > 0).length > 0 ? `
                         <div style="display: grid; gap: 8px;">
                             ${statistics.filter(s => s.red_cards > 0).sort((a, b) => b.red_cards - a.red_cards).slice(0, 5).map(player => `
@@ -807,7 +829,7 @@ const Tournaments = {
                                 </div>
                             `).join('')}
                         </div>
-                    ` : '<p style="color: #b0b0b0;">No red cards yet</p>'}
+                    ` : `<p style="color: #b0b0b0;">${I18n.t('stats.noRedCards')}</p>`}
                 </div>
             `;
 
@@ -845,16 +867,16 @@ const Tournaments = {
             <table style="width: 100%; border-collapse: collapse; color: white;">
                 <thead>
                     <tr style="background: rgba(46, 204, 113, 0.2); text-align: left;">
-                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1);">#</th>
-                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1);">Team</th>
-                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">P</th>
-                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">W</th>
-                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">D</th>
-                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">L</th>
-                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">GF</th>
-                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">GA</th>
-                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">GD</th>
-                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center; font-weight: bold;">Pts</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1);">${I18n.t('stats.rank')}</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1);">${I18n.t('stats.team')}</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">${I18n.t('stats.played')}</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">${I18n.t('stats.won')}</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">${I18n.t('stats.drawn')}</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">${I18n.t('stats.lost')}</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">${I18n.t('stats.goalsFor')}</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">${I18n.t('stats.goalsAgainst')}</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center;">${I18n.t('stats.goalDifference')}</th>
+                        <th style="padding: 12px; border-bottom: 2px solid rgba(255,255,255,0.1); text-align: center; font-weight: bold;">${I18n.t('stats.points')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -910,7 +932,7 @@ const Tournaments = {
 
         list.innerHTML = `
             <div style="margin-bottom: 32px;">
-                <h4 style="color: #2ecc71; margin-bottom: 16px;"><i class="fas fa-futbol"></i> Top Scorers</h4>
+                <h4 style="color: #2ecc71; margin-bottom: 16px;"><i class="fas fa-futbol"></i> ${I18n.t('stats.topScorers')}</h4>
                 ${topScorers.length > 0 ? `
                     <div style="display: grid; gap: 8px;">
                         ${topScorers.map((player, index) => `
@@ -943,11 +965,11 @@ const Tournaments = {
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p style="color: #b0b0b0;">No goals scored yet</p>'}
+                ` : `<p style="color: #b0b0b0;">${I18n.t('stats.noGoalsScored')}</p>`}
             </div>
 
             <div style="margin-bottom: 32px;">
-                <h4 style="color: #f39c12; margin-bottom: 16px;"><i class="fas fa-square"></i> Yellow Cards</h4>
+                <h4 style="color: #f39c12; margin-bottom: 16px;"><i class="fas fa-square"></i> ${I18n.t('stats.yellowCards')}</h4>
                 ${statistics.filter(s => s.yellow_cards > 0).length > 0 ? `
                     <div style="display: grid; gap: 8px;">
                         ${statistics.filter(s => s.yellow_cards > 0).sort((a, b) => b.yellow_cards - a.yellow_cards).slice(0, 5).map(player => `
@@ -967,11 +989,11 @@ const Tournaments = {
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p style="color: #b0b0b0;">No yellow cards yet</p>'}
+                ` : `<p style="color: #b0b0b0;">${I18n.t('stats.noYellowCards')}</p>`}
             </div>
 
             <div>
-                <h4 style="color: #e74c3c; margin-bottom: 16px;"><i class="fas fa-square"></i> Red Cards</h4>
+                <h4 style="color: #e74c3c; margin-bottom: 16px;"><i class="fas fa-square"></i> ${I18n.t('stats.redCards')}</h4>
                 ${statistics.filter(s => s.red_cards > 0).length > 0 ? `
                     <div style="display: grid; gap: 8px;">
                         ${statistics.filter(s => s.red_cards > 0).sort((a, b) => b.red_cards - a.red_cards).slice(0, 5).map(player => `
@@ -991,7 +1013,7 @@ const Tournaments = {
                             </div>
                         `).join('')}
                     </div>
-                ` : '<p style="color: #b0b0b0;">No red cards yet</p>'}
+                ` : `<p style="color: #b0b0b0;">${I18n.t('stats.noRedCards')}</p>`}
             </div>
         `;
 

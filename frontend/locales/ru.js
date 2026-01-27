@@ -41,6 +41,13 @@ I18n.registerTranslations('ru', {
         cta: 'Начать турнир'
     },
 
+    // Profile
+    profile: {
+        title: 'Профиль',
+        language: 'Язык',
+        memberSince: 'На сайте с'
+    },
+
     // Auth
     auth: {
         login: 'Вход',
@@ -200,6 +207,8 @@ I18n.registerTranslations('ru', {
     addPlayer: {
         title: 'Добавить игрока',
         searchByEmail: 'Поиск игрока по Email',
+        emailPlaceholder: 'player@email.com',
+        search: 'Поиск',
         searchPlaceholder: 'player@email.com',
         searchResults: 'Результаты поиска:',
         noPlayersFound: 'Игроки с email "{email}" не найдены',

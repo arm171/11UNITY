@@ -12,6 +12,19 @@ const Teams = {
         this.createModals();
         this.attachEventListeners();
         this.load();
+
+        // Apply translations to dynamically created modals
+        if (window.I18n) {
+            I18n.applyTranslations();
+        }
+
+        // Listen for language changes
+        window.addEventListener('languageChanged', () => {
+            if (window.I18n) {
+                I18n.applyTranslations();
+            }
+            this.render();
+        });
     },
 
     createModals() {
@@ -23,16 +36,17 @@ const Teams = {
                     <button class="modal-close" id="close-create-team">&times;</button>
 
                     <h2 style="margin-bottom: 32px; text-align: center; color: white;">
-                        <i class="fas fa-users"></i> Create Team
+                        <i class="fas fa-users"></i> <span data-i18n="teams.createTeam">Create Team</span>
                     </h2>
 
                     <form id="create-team-form">
                         <div class="form-group">
-                            <label class="form-label">Team Name</label>
+                            <label class="form-label" data-i18n="teams.teamName">Team Name</label>
                             <input
                                 type="text"
                                 class="form-input"
                                 id="team-name"
+                                data-i18n-placeholder="teams.teamNamePlaceholder"
                                 placeholder="FC Barcelona"
                                 required
                             >
@@ -40,11 +54,12 @@ const Teams = {
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                             <div class="form-group">
-                                <label class="form-label">Logo (2-3 letters)</label>
+                                <label class="form-label" data-i18n="teams.logo">Logo (2-3 letters)</label>
                                 <input
                                     type="text"
                                     class="form-input"
                                     id="team-logo"
+                                    data-i18n-placeholder="teams.logoPlaceholder"
                                     placeholder="FCB"
                                     maxlength="3"
                                     style="text-transform: uppercase;"
@@ -53,7 +68,7 @@ const Teams = {
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Logo Color</label>
+                                <label class="form-label" data-i18n="teams.logoColor">Logo Color</label>
                                 <input
                                     type="color"
                                     class="form-input"
@@ -65,42 +80,44 @@ const Teams = {
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Stadium</label>
+                            <label class="form-label" data-i18n="teams.stadium">Stadium</label>
                             <input
                                 type="text"
                                 class="form-input"
                                 id="team-stadium"
+                                data-i18n-placeholder="teams.stadiumPlaceholder"
                                 placeholder="Camp Nou"
                             >
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Description</label>
+                            <label class="form-label" data-i18n="tournaments.description">Description</label>
                             <textarea
                                 class="form-textarea"
                                 id="team-description"
+                                data-i18n-placeholder="tournaments.descriptionPlaceholder"
                                 placeholder="Tell about your team..."
                                 rows="4"
                             ></textarea>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Maximum Players</label>
+                            <label class="form-label" data-i18n="teams.maxPlayers">Maximum Players</label>
                             <select class="form-select" id="team-max-players" required>
-                                <option value="11">11 players</option>
-                                <option value="15">15 players</option>
-                                <option value="18">18 players</option>
-                                <option value="20">20 players</option>
-                                <option value="25" selected>25 players</option>
+                                <option value="11">11</option>
+                                <option value="15">15</option>
+                                <option value="18">18</option>
+                                <option value="20">20</option>
+                                <option value="25" selected>25</option>
                             </select>
                         </div>
 
                         <div style="display: flex; gap: 16px; margin-top: 24px;">
                             <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="Teams.closeCreateModal()">
-                                Cancel
+                                <span data-i18n="common.cancel">Cancel</span>
                             </button>
                             <button type="submit" class="btn btn-primary" style="flex: 1;">
-                                <span class="btn-text">Create Team</span>
+                                <span class="btn-text" data-i18n="teams.createTeam">Create Team</span>
                                 <div class="spinner" style="display: none;"></div>
                             </button>
                         </div>
@@ -136,7 +153,7 @@ const Teams = {
                             <h2 style="color: white; margin: 0 0 8px 0;" id="modal-team-name">Team Name</h2>
                             <p style="color: #b0b0b0; margin: 0;">
                                 <i class="fas fa-user"></i>
-                                Coach: <span id="modal-team-coach">Unknown</span>
+                                <span data-i18n="teams.coach">Coach</span>: <span id="modal-team-coach">Unknown</span>
                             </p>
                         </div>
                     </div>
@@ -144,11 +161,11 @@ const Teams = {
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
                         <div style="display: flex; align-items: center; gap: 8px; color: #b0b0b0;">
                             <i class="fas fa-building"></i>
-                            <span>Stadium: <span id="modal-team-stadium">Not specified</span></span>
+                            <span><span data-i18n="teams.stadium">Stadium</span>: <span id="modal-team-stadium">Not specified</span></span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; color: #b0b0b0;">
                             <i class="fas fa-users"></i>
-                            <span>Players: <span id="modal-team-players">0</span></span>
+                            <span><span data-i18n="teams.players">Players</span>: <span id="modal-team-players">0</span></span>
                         </div>
                     </div>
 
@@ -160,37 +177,37 @@ const Teams = {
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px;">
                         <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid rgba(46, 204, 113, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
                             <div style="font-size: 32px; font-weight: bold; color: #2ecc71;" id="modal-team-stat-matches">0</div>
-                            <div style="color: #b0b0b0; font-size: 14px; margin-top: 8px;">Matches</div>
+                            <div style="color: #b0b0b0; font-size: 14px; margin-top: 8px;" data-i18n="teams.matches">Matches</div>
                         </div>
                         <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid rgba(46, 204, 113, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
                             <div style="font-size: 32px; font-weight: bold; color: #2ecc71;" id="modal-team-stat-wins">0</div>
-                            <div style="color: #b0b0b0; font-size: 14px; margin-top: 8px;">Wins</div>
+                            <div style="color: #b0b0b0; font-size: 14px; margin-top: 8px;" data-i18n="teams.wins">Wins</div>
                         </div>
                         <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid rgba(46, 204, 113, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
                             <div style="font-size: 32px; font-weight: bold; color: #2ecc71;" id="modal-team-stat-draws">0</div>
-                            <div style="color: #b0b0b0; font-size: 14px; margin-top: 8px;">Draws</div>
+                            <div style="color: #b0b0b0; font-size: 14px; margin-top: 8px;" data-i18n="teams.draws">Draws</div>
                         </div>
                         <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid rgba(46, 204, 113, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
                             <div style="font-size: 32px; font-weight: bold; color: #2ecc71;" id="modal-team-stat-losses">0</div>
-                            <div style="color: #b0b0b0; font-size: 14px; margin-top: 8px;">Losses</div>
+                            <div style="color: #b0b0b0; font-size: 14px; margin-top: 8px;" data-i18n="teams.losses">Losses</div>
                         </div>
                     </div>
 
                     <!-- Players Section -->
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <h3 style="color: white; margin: 0;">
-                            <i class="fas fa-users"></i> Team Players
+                            <i class="fas fa-users"></i> <span data-i18n="teams.teamPlayers">Team Players</span>
                         </h3>
                         <button class="btn btn-primary btn-sm" id="add-player-btn" style="display: none;">
-                            <i class="fas fa-plus"></i> Add Player
+                            <i class="fas fa-plus"></i> <span data-i18n="teams.addPlayer">Add Player</span>
                         </button>
                     </div>
 
                     <div id="players-container">
                         <div class="empty-state">
                             <div class="empty-icon"><i class="fas fa-users"></i></div>
-                            <h3 class="empty-title">No players yet</h3>
-                            <p class="empty-subtitle">Add players to your team!</p>
+                            <h3 class="empty-title" data-i18n="teams.noPlayers">No players yet</h3>
+                            <p class="empty-subtitle" data-i18n="teams.addPlayersCta">Add players to your team!</p>
                         </div>
                     </div>
                 </div>
@@ -203,26 +220,27 @@ const Teams = {
                     <button class="modal-close" id="close-add-player">&times;</button>
 
                     <h2 style="margin-bottom: 32px; text-align: center; color: white;">
-                        <i class="fas fa-user-plus"></i> Add Player
+                        <i class="fas fa-user-plus"></i> <span data-i18n="teams.addPlayer">Add Player</span>
                     </h2>
 
                     <!-- Search Section -->
                     <div class="form-group">
-                        <label class="form-label">Search Player by Email</label>
+                        <label class="form-label" data-i18n="addPlayer.searchByEmail">Search Player by Email</label>
                         <input
                             type="email"
                             class="form-input"
                             id="search-player-email"
+                            data-i18n-placeholder="addPlayer.emailPlaceholder"
                             placeholder="player@email.com"
                         >
                         <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 8px;" onclick="Teams.searchPlayers()">
-                            <i class="fas fa-search"></i> Search
+                            <i class="fas fa-search"></i> <span data-i18n="addPlayer.search">Search</span>
                         </button>
                     </div>
 
                     <!-- Search Results -->
                     <div id="search-results" style="margin: 24px 0; display: none;">
-                        <h4 style="color: white; margin-bottom: 12px;">Search Results:</h4>
+                        <h4 style="color: white; margin-bottom: 12px;" data-i18n="addPlayer.searchResults">Search Results:</h4>
                         <div id="players-search-list"></div>
                     </div>
 
@@ -230,7 +248,7 @@ const Teams = {
                     <div id="add-player-form-container" style="display: none;">
                         <hr style="border-color: rgba(255,255,255,0.1); margin: 24px 0;">
 
-                        <h4 style="color: white; margin-bottom: 16px;">Player Details:</h4>
+                        <h4 style="color: white; margin-bottom: 16px;" data-i18n="addPlayer.playerDetails">Player Details:</h4>
 
                         <div style="background: rgba(46, 204, 113, 0.1); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
                             <div style="color: white; font-weight: 600;" id="selected-player-name">-</div>
@@ -242,7 +260,7 @@ const Teams = {
 
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                                 <div class="form-group">
-                                    <label class="form-label">Jersey Number (1-99)</label>
+                                    <label class="form-label" data-i18n="addPlayer.jerseyNumber">Jersey Number (1-99)</label>
                                     <input
                                         type="number"
                                         class="form-input"
@@ -255,23 +273,23 @@ const Teams = {
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label">Position</label>
+                                    <label class="form-label" data-i18n="addPlayer.position">Position</label>
                                     <select class="form-select" id="player-position" required>
-                                        <option value="">Select position</option>
-                                        <option value="goalkeeper">Goalkeeper</option>
-                                        <option value="defender">Defender</option>
-                                        <option value="midfielder">Midfielder</option>
-                                        <option value="forward">Forward</option>
+                                        <option value="" data-i18n="addPlayer.selectPosition">Select position</option>
+                                        <option value="goalkeeper" data-i18n="addPlayer.positions.goalkeeper">Goalkeeper</option>
+                                        <option value="defender" data-i18n="addPlayer.positions.defender">Defender</option>
+                                        <option value="midfielder" data-i18n="addPlayer.positions.midfielder">Midfielder</option>
+                                        <option value="forward" data-i18n="addPlayer.positions.forward">Forward</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div style="display: flex; gap: 16px; margin-top: 24px;">
                                 <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="Teams.closeAddPlayerModal()">
-                                    Cancel
+                                    <span data-i18n="common.cancel">Cancel</span>
                                 </button>
                                 <button type="submit" class="btn btn-primary" style="flex: 1;">
-                                    <span class="btn-text">Add to Team</span>
+                                    <span class="btn-text" data-i18n="addPlayer.addToTeam">Add to Team</span>
                                     <div class="spinner" style="display: none;"></div>
                                 </button>
                             </div>

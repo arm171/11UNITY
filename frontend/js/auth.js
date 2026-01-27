@@ -7,6 +7,7 @@ const Auth = {
 
     init() {
         this.createAuthModal();
+        this.createProfileModal();
         this.attachEventListeners();
         this.updateUI();
     },
@@ -143,6 +144,73 @@ const Auth = {
         }
     },
 
+    createProfileModal() {
+        const modalHTML = `
+            <div class="modal" id="profile-modal">
+                <div class="modal-overlay"></div>
+                <div class="modal-content" style="max-width: 400px;">
+                    <button class="modal-close" id="close-profile-modal">&times;</button>
+
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <div id="profile-avatar" style="
+                            width: 80px;
+                            height: 80px;
+                            border-radius: 50%;
+                            background: var(--color-primary);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 32px;
+                            font-weight: bold;
+                            color: white;
+                            margin: 0 auto 16px;
+                        ">
+                            U
+                        </div>
+                        <h2 style="color: white; margin: 0 0 4px 0;" id="profile-user-name">User Name</h2>
+                        <p style="color: #b0b0b0; margin: 0;" id="profile-user-email">user@email.com</p>
+                    </div>
+
+                    <div style="background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: #b0b0b0;" data-i18n="auth.role">Role</span>
+                            <span id="profile-user-role" style="
+                                background: var(--color-primary);
+                                color: white;
+                                padding: 4px 12px;
+                                border-radius: 12px;
+                                font-size: 14px;
+                                font-weight: 600;
+                            ">Player</span>
+                        </div>
+                    </div>
+
+                    <!-- Language Selector -->
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label class="form-label" data-i18n="profile.language">Language</label>
+                        <select class="form-select" id="profile-language-select">
+                            <option value="en">English</option>
+                            <option value="ru">Русский</option>
+                            <option value="hy">Հայերdelays</option>
+                            <option value="ge">ქართული</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-secondary" style="width: 100%;" id="profile-logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> <span data-i18n="auth.logout">Logout</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        // Apply translations
+        if (window.I18n) {
+            I18n.applyTranslations();
+        }
+    },
+
     attachEventListeners() {
         const getStartedBtn = document.getElementById('get-started-btn');
         if (getStartedBtn) {
@@ -156,6 +224,26 @@ const Auth = {
 
         document.getElementById('close-auth-modal').addEventListener('click', () => this.closeAuthModal());
         document.querySelector('#auth-modal .modal-overlay').addEventListener('click', () => this.closeAuthModal());
+
+        // Profile modal events
+        const profileBtn = document.getElementById('profile-btn');
+        if (profileBtn) {
+            profileBtn.addEventListener('click', () => this.openProfileModal());
+        }
+
+        document.getElementById('close-profile-modal')?.addEventListener('click', () => this.closeProfileModal());
+        document.querySelector('#profile-modal .modal-overlay')?.addEventListener('click', () => this.closeProfileModal());
+        document.getElementById('profile-logout-btn')?.addEventListener('click', () => this.logout());
+
+        // Language selector in profile
+        const languageSelect = document.getElementById('profile-language-select');
+        if (languageSelect) {
+            languageSelect.addEventListener('change', (e) => {
+                if (window.I18n) {
+                    I18n.setLanguage(e.target.value);
+                }
+            });
+        }
 
         const tabs = document.querySelectorAll('.auth-tab');
         tabs.forEach(tab => {
@@ -234,6 +322,33 @@ const Auth = {
         document.getElementById('login-form').reset();
         document.getElementById('register-form').reset();
         document.getElementById('password-match-error').style.display = 'none';
+    },
+
+    openProfileModal() {
+        const user = API.getUser();
+        if (!user) return;
+
+        // Update profile info
+        document.getElementById('profile-user-name').textContent = user.name;
+        document.getElementById('profile-user-email').textContent = user.email;
+
+        // Set avatar initials
+        const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        document.getElementById('profile-avatar').textContent = initials;
+
+        // Set role with translation
+        const roleKey = `auth.roles.${user.role}`;
+        document.getElementById('profile-user-role').textContent = I18n.t(roleKey);
+
+        // Set current language
+        const currentLang = I18n.getCurrentLanguage ? I18n.getCurrentLanguage() : 'en';
+        document.getElementById('profile-language-select').value = currentLang;
+
+        UI.openModal('profile-modal');
+    },
+
+    closeProfileModal() {
+        UI.closeModal('profile-modal');
     },
 
     async handleLogin(e) {
@@ -320,6 +435,7 @@ const Auth = {
     logout() {
         if (confirm(I18n.t('common.confirmLogout'))) {
             API.logout();
+            this.closeProfileModal();
             UI.showNotification(I18n.t('messages.success.logout'), 'success');
             this.updateUI();
 

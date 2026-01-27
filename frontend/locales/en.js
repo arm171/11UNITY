@@ -41,6 +41,13 @@ I18n.registerTranslations('en', {
         cta: 'Start Your Tournament'
     },
 
+    // Profile
+    profile: {
+        title: 'Profile',
+        language: 'Language',
+        memberSince: 'Member since'
+    },
+
     // Auth
     auth: {
         login: 'Login',
@@ -200,6 +207,8 @@ I18n.registerTranslations('en', {
     addPlayer: {
         title: 'Add Player',
         searchByEmail: 'Search Player by Email',
+        emailPlaceholder: 'player@email.com',
+        search: 'Search',
         searchPlaceholder: 'player@email.com',
         searchResults: 'Search Results:',
         noPlayersFound: 'No players found with email: "{email}"',

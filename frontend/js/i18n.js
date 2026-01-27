@@ -90,6 +90,11 @@ const I18n = {
         return value;
     },
 
+    // Get current language
+    getCurrentLanguage() {
+        return this.currentLang;
+    },
+
     // Switch language
     setLanguage(lang) {
         if (!this.languages[lang]) {
