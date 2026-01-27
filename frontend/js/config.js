@@ -16,6 +16,7 @@ const CONFIG = {
         TEAM_BY_ID: '/teams/:id',
         MATCHES: '/matches',
         MATCH_BY_ID: '/matches/:id',
+        STATISTICS: '/statistics',
     },
 
     STORAGE: {

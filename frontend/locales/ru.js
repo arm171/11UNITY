@@ -255,6 +255,46 @@ I18n.registerTranslations('ru', {
         noRedCards: 'Красных карточек пока нет'
     },
 
+    // Matches section
+    matches: {
+        total: 'Всего',
+        finishedCount: 'Завершено',
+        scheduledCount: 'Запланировано',
+        allTournaments: 'Все турниры',
+        noMatches: 'Матчей пока нет',
+        noMatchesSubtitle: 'Матчи появятся здесь после создания расписания турниров!',
+        finished: 'Завершён',
+        scheduled: 'Запланирован',
+        live: 'Live'
+    },
+
+    // Statistics section
+    statistics: {
+        tournaments: 'Турниры',
+        teams: 'Команды',
+        matches: 'Матчи',
+        players: 'Игроки',
+        goals: 'Всего голов',
+        topScorers: 'Лучшие бомбардиры',
+        topTeams: 'Лучшие команды',
+        noData: 'Данных пока нет',
+        noTeam: 'Без команды',
+        gamesPlayed: 'игр',
+        error: 'Не удалось загрузить статистику',
+        errorSubtitle: 'Попробуйте обновить страницу'
+    },
+
+    // Footer
+    footer: {
+        description: 'Лучшая платформа для управления футбольными турнирами.',
+        quickLinks: 'Навигация',
+        contact: 'Контакты',
+        location: 'Москва, Россия',
+        followUs: 'Мы в соцсетях',
+        rights: 'Все права защищены.',
+        madeWith: 'Сделано с <i class="fas fa-heart"></i> для футбола'
+    },
+
     // Sections coming soon
     comingSoon: {
         title: 'Скоро',

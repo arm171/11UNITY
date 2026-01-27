@@ -122,6 +122,69 @@ const UI = {
         });
     },
 
+    // Mobile Menu
+    initMobileMenu() {
+        const burgerBtn = document.getElementById('burger-btn');
+        const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+
+        if (!burgerBtn || !mobileNavOverlay) return;
+
+        // Toggle mobile menu
+        burgerBtn.addEventListener('click', () => {
+            burgerBtn.classList.toggle('active');
+            mobileNavOverlay.classList.toggle('active');
+            document.body.style.overflow = mobileNavOverlay.classList.contains('active') ? 'hidden' : '';
+        });
+
+        // Close menu when clicking a link
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                // Close menu
+                burgerBtn.classList.remove('active');
+                mobileNavOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+
+                // Scroll to section
+                const targetId = link.getAttribute('href');
+                this.scrollToSection(targetId);
+
+                // Update active state
+                mobileNavLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+
+                // Also update desktop nav active state
+                const navLinks = document.querySelectorAll('.nav-link');
+                navLinks.forEach(l => {
+                    l.classList.remove('active');
+                    if (l.getAttribute('href') === targetId) {
+                        l.classList.add('active');
+                    }
+                });
+            });
+        });
+
+        // Close menu when clicking overlay background
+        mobileNavOverlay.addEventListener('click', (e) => {
+            if (e.target === mobileNavOverlay) {
+                burgerBtn.classList.remove('active');
+                mobileNavOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && mobileNavOverlay.classList.contains('active')) {
+                burgerBtn.classList.remove('active');
+                mobileNavOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    },
+
     // Modal helpers
     openModal(modalId) {
         const modal = document.getElementById(modalId);
@@ -193,6 +256,7 @@ const UI = {
     // Initialize
     init() {
         this.initNavigation();
+        this.initMobileMenu();
     },
 
 };

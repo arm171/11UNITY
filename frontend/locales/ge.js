@@ -255,6 +255,46 @@ I18n.registerTranslations('ge', {
         noRedCards: 'No red cards yet'
     },
 
+    // Matches section
+    matches: {
+        total: 'Total',
+        finishedCount: 'Finished',
+        scheduledCount: 'Scheduled',
+        allTournaments: 'All Tournaments',
+        noMatches: 'No matches yet',
+        noMatchesSubtitle: 'Matches will appear here once tournaments generate fixtures!',
+        finished: 'Finished',
+        scheduled: 'Scheduled',
+        live: 'Live'
+    },
+
+    // Statistics section
+    statistics: {
+        tournaments: 'ტურნირები',
+        teams: 'გუნდები',
+        matches: 'მატჩები',
+        players: 'მოთამაშეები',
+        goals: 'სულ გოლები',
+        topScorers: 'საუკეთესო ბომბარდირები',
+        topTeams: 'საუკეთესო გუნდები',
+        noData: 'მონაცემები არ არის',
+        noTeam: 'გუნდის გარეშე',
+        gamesPlayed: 'თამაში',
+        error: 'სტატისტიკის ჩატვირთვა ვერ მოხერხდა',
+        errorSubtitle: 'სცადეთ გვერდის განახლება'
+    },
+
+    // Footer
+    footer: {
+        description: 'საფეხბურთო ტურნირების მართვის საუკეთესო პლატფორმა.',
+        quickLinks: 'სწრაფი ბმულები',
+        contact: 'კონტაქტი',
+        location: 'თბილისი, საქართველო',
+        followUs: 'გამოგვყევით',
+        rights: 'ყველა უფლება დაცულია.',
+        madeWith: 'შექმნილია <i class="fas fa-heart"></i> ფეხბურთისთვის'
+    },
+
     // Sections coming soon
     comingSoon: {
         title: 'Coming Soon',

@@ -244,6 +244,11 @@ const API = {
         return await this.request(endpoint);
     },
 
+    // Global statistics
+    async getStatistics() {
+        return await this.request(CONFIG.ENDPOINTS.STATISTICS);
+    },
+
 };
 
 window.API = API;

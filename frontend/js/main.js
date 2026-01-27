@@ -41,6 +41,16 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    if (!window.Matches) {
+        console.error('Matches not loaded!');
+        return;
+    }
+
+    if (!window.Statistics) {
+        console.error('Statistics not loaded!');
+        return;
+    }
+
     if (!window.WebSocketManager) {
         console.error('WebSocketManager not loaded!');
         return;
@@ -55,6 +65,8 @@ document.addEventListener('DOMContentLoaded', function() {
         Auth.init();
         Tournaments.init();
         Teams.init();
+        Matches.init();
+        Statistics.init();
         WebSocketManager.init();
 
         // Welcome message for first-time visitors
@@ -81,6 +93,12 @@ window.addEventListener('languageChanged', function() {
     }
     if (window.Teams && Teams.render) {
         Teams.render();
+    }
+    if (window.Matches && Matches.render) {
+        Matches.render();
+    }
+    if (window.Statistics && Statistics.render) {
+        Statistics.render();
     }
 });
 

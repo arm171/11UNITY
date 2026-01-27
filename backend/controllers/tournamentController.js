@@ -621,6 +621,68 @@ const generateFixtures = async (req, res) => {
 };
 
 /**
+ * Get all matches across all tournaments
+ * Supports filtering by tournament
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getAllMatches = async (req, res) => {
+    try {
+        const { tournamentId, status } = req.query;
+
+        let query = `
+            SELECT
+                m.*,
+                t.name as tournament_name,
+                t.type as tournament_type,
+                th.name as home_team_name,
+                th.logo as home_team_logo,
+                th.logo_color as home_team_color,
+                ta.name as away_team_name,
+                ta.logo as away_team_logo,
+                ta.logo_color as away_team_color
+            FROM matches m
+            INNER JOIN tournaments t ON m.tournament_id = t.id
+            INNER JOIN teams th ON m.home_team_id = th.id
+            INNER JOIN teams ta ON m.away_team_id = ta.id
+            WHERE 1=1
+        `;
+
+        const params = [];
+
+        if (tournamentId) {
+            query += ' AND m.tournament_id = ?';
+            params.push(tournamentId);
+        }
+
+        if (status) {
+            query += ' AND m.status = ?';
+            params.push(status);
+        }
+
+        query += ' ORDER BY m.match_date DESC, m.id DESC';
+
+        const [matches] = await db.promise().query(query, params);
+
+        console.log(`Fetched ${matches.length} matches`);
+
+        res.json({
+            success: true,
+            matches
+        });
+
+    } catch (error) {
+        console.error('Get all matches error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch matches',
+            error: error.message
+        });
+    }
+};
+
+/**
  * Get all matches for a tournament
  * Returns matches with team details
  *
@@ -1194,6 +1256,7 @@ module.exports = {
     checkUserJoined,
     previewFixtures,
     generateFixtures,
+    getAllMatches,
     getTournamentMatches,
     getMatchDetails,
     updateMatchResult,

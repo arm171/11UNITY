@@ -255,6 +255,46 @@ I18n.registerTranslations('en', {
         noRedCards: 'No red cards yet'
     },
 
+    // Matches section
+    matches: {
+        total: 'Total',
+        finishedCount: 'Finished',
+        scheduledCount: 'Scheduled',
+        allTournaments: 'All Tournaments',
+        noMatches: 'No matches yet',
+        noMatchesSubtitle: 'Matches will appear here once tournaments generate fixtures!',
+        finished: 'Finished',
+        scheduled: 'Scheduled',
+        live: 'Live'
+    },
+
+    // Statistics section
+    statistics: {
+        tournaments: 'Tournaments',
+        teams: 'Teams',
+        matches: 'Matches',
+        players: 'Players',
+        goals: 'Total Goals',
+        topScorers: 'Top Scorers',
+        topTeams: 'Top Teams',
+        noData: 'No data available yet',
+        noTeam: 'No team',
+        gamesPlayed: 'games',
+        error: 'Failed to load statistics',
+        errorSubtitle: 'Please try refreshing the page'
+    },
+
+    // Footer
+    footer: {
+        description: 'The ultimate platform for managing football tournaments.',
+        quickLinks: 'Quick Links',
+        contact: 'Contact',
+        location: 'Moscow, Russia',
+        followUs: 'Follow Us',
+        rights: 'All rights reserved.',
+        madeWith: 'Made with <i class="fas fa-heart"></i> for football'
+    },
+
     // Sections coming soon
     comingSoon: {
         title: 'Coming Soon',

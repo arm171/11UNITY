@@ -255,6 +255,46 @@ I18n.registerTranslations('hy', {
         noRedCards: 'Delays delays delays delays delays delays'
     },
 
+    // Matches section
+    matches: {
+        total: ' Delays',
+        finishedCount: 'Delays',
+        scheduledCount: 'Delays',
+        allTournaments: 'Delays delays',
+        noMatches: 'Delays delays delays',
+        noMatchesSubtitle: 'Delays delays delays delays!',
+        finished: 'Delays',
+        scheduled: 'Delays',
+        live: 'Live'
+    },
+
+    // Statistics section
+    statistics: {
+        tournaments: 'Delays',
+        teams: 'Delays',
+        matches: 'Delays',
+        players: 'Delays',
+        goals: 'Delays delays',
+        topScorers: 'Delays delays',
+        topTeams: 'Delays delays',
+        noData: 'Delays delays delays',
+        noTeam: 'Delays delays',
+        gamesPlayed: 'delays',
+        error: 'Delays delays delays delays',
+        errorSubtitle: 'Delays delays delays'
+    },
+
+    // Footer
+    footer: {
+        description: 'Delays delays delays delays.',
+        quickLinks: 'Delays delays',
+        contact: 'Delays',
+        location: 'Delays, Delays',
+        followUs: 'Delays delays',
+        rights: 'Delays delays delays.',
+        madeWith: 'Delays <i class="fas fa-heart"></i> delays'
+    },
+
     // Sections coming soon
     comingSoon: {
         title: 'Delays delays',

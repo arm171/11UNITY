@@ -48,17 +48,36 @@
                     <button class="btn btn-primary get-started-btn" id="get-started-btn" data-i18n="nav.getStarted">
                         Get Started
                     </button>
-                    
+
                     <!-- Profile Button (for logged users) -->
                     <button class="btn btn-secondary profile-btn" id="profile-btn">
                         <i class="fas fa-user"></i>
                         <span id="profile-name"></span>
                     </button>
+
+                    <!-- Mobile Menu Button -->
+                    <button class="burger-btn" id="burger-btn" aria-label="Toggle menu">
+                        <span class="burger-line"></span>
+                        <span class="burger-line"></span>
+                        <span class="burger-line"></span>
+                    </button>
                 </div>
             </nav>
         </div>
     </header>
-    
+
+    <!-- Mobile Navigation Overlay -->
+    <div class="mobile-nav-overlay" id="mobile-nav-overlay">
+        <nav class="mobile-nav">
+            <ul class="mobile-nav-list">
+                <li><a href="#home" class="mobile-nav-link" data-i18n="nav.home">Home</a></li>
+                <li><a href="#tournaments" class="mobile-nav-link" data-i18n="nav.tournaments">Tournaments</a></li>
+                <li><a href="#teams" class="mobile-nav-link" data-i18n="nav.teams">Teams</a></li>
+                <li><a href="#matches" class="mobile-nav-link" data-i18n="nav.matches">Matches</a></li>
+                <li><a href="#statistics" class="mobile-nav-link" data-i18n="nav.statistics">Statistics</a></li>
+            </ul>
+        </nav>
+
     <!-- ========== MAIN CONTENT ========== -->
     <main class="main">
         <div class="container">
@@ -166,26 +185,121 @@
             <!-- ========== MATCHES SECTION ========== -->
             <section id="matches">
                 <h2><i class="fas fa-calendar-alt"></i> <span data-i18n="nav.matches">Matches</span></h2>
-                <div class="empty-state">
+
+                <!-- Statistics -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number" id="total-matches">0</span>
+                        <span class="stat-label" data-i18n="matches.total">Total</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="finished-matches">0</span>
+                        <span class="stat-label" data-i18n="matches.finishedCount">Finished</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="scheduled-matches">0</span>
+                        <span class="stat-label" data-i18n="matches.scheduledCount">Scheduled</span>
+                    </div>
+                </div>
+
+                <!-- Filter -->
+                <div style="text-align: center; margin-bottom: 32px;">
+                    <select class="form-select" id="matches-filter" style="max-width: 300px; margin: 0 auto;">
+                        <option value="all" data-i18n="matches.allTournaments">All Tournaments</option>
+                    </select>
+                </div>
+
+                <!-- Matches List -->
+                <div id="matches-list">
+                    <!-- Loading indicator -->
+                    <div class="loading-indicator">
+                        <div class="spinner"></div>
+                        <p data-i18n="common.loading">Loading...</p>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state" id="matches-empty" style="display: none;">
                     <div class="empty-icon"><i class="fas fa-calendar-alt"></i></div>
-                    <h3 class="empty-title" data-i18n="comingSoon.title">Coming Soon</h3>
-                    <p class="empty-subtitle" data-i18n="comingSoon.matchesSubtitle">Match calendar will be available soon!</p>
+                    <h3 class="empty-title" data-i18n="matches.noMatches">No matches yet</h3>
+                    <p class="empty-subtitle" data-i18n="matches.noMatchesSubtitle">Matches will appear here once tournaments generate fixtures!</p>
                 </div>
             </section>
 
             <!-- ========== STATISTICS SECTION ========== -->
             <section id="statistics">
                 <h2><i class="fas fa-chart-bar"></i> <span data-i18n="nav.statistics">Statistics</span></h2>
-                <div class="empty-state">
-                    <div class="empty-icon"><i class="fas fa-chart-bar"></i></div>
-                    <h3 class="empty-title" data-i18n="comingSoon.title">Coming Soon</h3>
-                    <p class="empty-subtitle" data-i18n="comingSoon.statisticsSubtitle">Statistics will be available once matches are played!</p>
+
+                <!-- Statistics Content -->
+                <div id="statistics-content">
+                    <!-- Loading indicator -->
+                    <div class="loading-indicator">
+                        <div class="spinner"></div>
+                        <p data-i18n="common.loading">Loading...</p>
+                    </div>
                 </div>
             </section>
-            
+
         </div>
     </main>
-    
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <!-- Logo & Description -->
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <img src="./img/logo.png" alt="11UNITY Logo">
+                        <span>11UNITY</span>
+                    </div>
+                    <p class="footer-description" data-i18n="footer.description">
+                        The ultimate platform for managing football tournaments.
+                    </p>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="footer-links">
+                    <h4 data-i18n="footer.quickLinks">Quick Links</h4>
+                    <ul>
+                        <li><a href="#home" data-i18n="nav.home">Home</a></li>
+                        <li><a href="#tournaments" data-i18n="nav.tournaments">Tournaments</a></li>
+                        <li><a href="#teams" data-i18n="nav.teams">Teams</a></li>
+                        <li><a href="#matches" data-i18n="nav.matches">Matches</a></li>
+                        <li><a href="#statistics" data-i18n="nav.statistics">Statistics</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact -->
+                <div class="footer-contact">
+                    <h4 data-i18n="footer.contact">Contact</h4>
+                    <ul>
+                        <li><i class="fas fa-envelope"></i> support@11unity.com</li>
+                        <li><i class="fas fa-phone"></i> +7 (999) 123-45-67</li>
+                        <li><i class="fas fa-map-marker-alt"></i> <span data-i18n="footer.location">Moscow, Russia</span></li>
+                    </ul>
+                </div>
+
+                <!-- Social -->
+                <div class="footer-social">
+                    <h4 data-i18n="footer.followUs">Follow Us</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-link" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link" aria-label="Telegram"><i class="fab fa-telegram-plane"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Bar -->
+            <div class="footer-bottom">
+                <p>&copy; 2024 11UNITY. <span data-i18n="footer.rights">All rights reserved.</span></p>
+                <p class="footer-credit" data-i18n="footer.madeWith">Made with <i class="fas fa-heart"></i> for football</p>
+            </div>
+        </div>
+    </footer>
+
     <!-- ========== MODALS ========== -->
     <!-- Модалки создаются динамически через JavaScript -->
     
@@ -203,6 +317,8 @@
     <script src="./js/ui.js"></script>
     <script src="./js/tournaments.js"></script>
     <script src="./js/teams.js"></script>
+    <script src="./js/matches.js"></script>
+    <script src="./js/statistics.js"></script>
     <script src="./js/main.js"></script>
     
 </body>
