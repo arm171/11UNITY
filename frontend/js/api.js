@@ -133,6 +133,13 @@ const API = {
         return await this.request(endpoint);
     },
 
+    async leaveTournament(tournamentId) {
+        const endpoint = CONFIG.ENDPOINTS.TOURNAMENT_BY_ID.replace(':id', tournamentId) + '/leave';
+        return await this.request(endpoint, {
+            method: 'POST'
+        });
+    },
+
     async updateTournament(id, tournamentData) {
         const endpoint = CONFIG.ENDPOINTS.TOURNAMENT_BY_ID.replace(':id', id);
         return await this.request(endpoint, {
@@ -180,9 +187,16 @@ const API = {
         });
     },
 
+    // Leave team (player)
+    async leaveTeam() {
+        return await this.request('/teams/leave', {
+            method: 'POST',
+        });
+    },
+
     // Player management endpoints
-    async searchPlayers(teamId, email) {
-        const endpoint = `/teams/${teamId}/players/search?email=${encodeURIComponent(email)}`;
+    async searchPlayers(teamId, query) {
+        const endpoint = `/teams/${teamId}/players/search?query=${encodeURIComponent(query)}`;
         return await this.request(endpoint);
     },
 
@@ -229,6 +243,13 @@ const API = {
         return await this.request(endpoint, {
             method: 'POST',
             body: JSON.stringify(eventData),
+        });
+    },
+
+    async deleteMatchEvent(tournamentId, matchId, eventId) {
+        const endpoint = `/tournaments/${tournamentId}/matches/${matchId}/events/${eventId}`;
+        return await this.request(endpoint, {
+            method: 'DELETE',
         });
     },
 

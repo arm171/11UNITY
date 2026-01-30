@@ -21,6 +21,18 @@ router.post('/',
     tournamentController.createTournament
 );
 
+router.put('/:id',
+    verifyToken,
+    checkRole(['organizer']),
+    tournamentController.updateTournament
+);
+
+router.delete('/:id',
+    verifyToken,
+    checkRole(['organizer']),
+    tournamentController.deleteTournament
+);
+
 router.post('/:id/fixtures/preview',
     verifyToken,
     checkRole(['organizer']),
@@ -45,11 +57,23 @@ router.post('/:tournamentId/matches/:matchId/events',
     tournamentController.addMatchEvent
 );
 
+router.delete('/:tournamentId/matches/:matchId/events/:eventId',
+    verifyToken,
+    checkRole(['organizer']),
+    tournamentController.deleteMatchEvent
+);
+
 // Coach-only routes
 router.post('/:id/join',
     verifyToken,
     checkRole(['coach']),
     tournamentController.joinTournament
+);
+
+router.post('/:id/leave',
+    verifyToken,
+    checkRole(['coach']),
+    tournamentController.leaveTournament
 );
 
 router.get('/:id/check-joined',

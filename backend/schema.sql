@@ -7,8 +7,8 @@
 -- DROP DATABASE IF EXISTS 11unity;
 
 -- Create database
-CREATE DATABASE IF NOT EXISTS 11unity 
-CHARACTER SET utf8mb4 
+CREATE DATABASE IF NOT EXISTS 11unity
+CHARACTER SET utf8mb4
 COLLATE utf8mb4_unicode_ci;
 
 USE 11unity;
@@ -25,7 +25,7 @@ CREATE TABLE users (
     role ENUM('player', 'coach', 'organizer') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     INDEX idx_email (email),
     INDEX idx_role (role)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -38,20 +38,22 @@ CREATE TABLE tournaments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     type ENUM('league', 'playoff', 'group_playoff') NOT NULL,
+    category ENUM('school', 'university', 'amateur') NOT NULL DEFAULT 'amateur',
     start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
     location VARCHAR(255),
     description TEXT,
     max_teams INT NOT NULL DEFAULT 8,
+    min_players_per_team INT NOT NULL DEFAULT 11,
     status ENUM('upcoming', 'active', 'finished') DEFAULT 'upcoming',
     organizer_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     FOREIGN KEY (organizer_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_status (status),
     INDEX idx_organizer (organizer_id),
-    INDEX idx_dates (start_date, end_date)
+    INDEX idx_start_date (start_date),
+    INDEX idx_category (category)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ===============================================
@@ -60,16 +62,15 @@ CREATE TABLE tournaments (
 
 CREATE TABLE teams (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    logo VARCHAR(10),  -- 2-3 letter abbreviation
+    name VARCHAR(100) NOT NULL,
+    logo VARCHAR(10),  -- 2-3 letter abbreviation (auto-generated from name)
     logo_color VARCHAR(7) DEFAULT '#2ecc71',  -- Hex color code
-    stadium VARCHAR(255),
     description TEXT,
-    max_players INT DEFAULT 25,
+    max_players INT NOT NULL DEFAULT 25,  -- Fixed at 25
     coach_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     FOREIGN KEY (coach_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_coach (coach_id),
     UNIQUE KEY unique_coach_team (coach_id)  -- One team per coach
@@ -86,12 +87,13 @@ CREATE TABLE team_players (
     position ENUM('goalkeeper', 'defender', 'midfielder', 'forward'),
     jersey_number INT,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY (player_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_team (team_id),
     INDEX idx_player (player_id),
     UNIQUE KEY unique_team_player (team_id, player_id),  -- Player can't join same team twice
+    UNIQUE KEY unique_player (player_id),  -- One player = one team only
     UNIQUE KEY unique_team_jersey (team_id, jersey_number)  -- Unique jersey per team
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -104,7 +106,7 @@ CREATE TABLE tournament_teams (
     tournament_id INT NOT NULL,
     team_id INT NOT NULL,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+
     FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE CASCADE,
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     INDEX idx_tournament (tournament_id),
@@ -119,23 +121,22 @@ CREATE TABLE tournament_teams (
 CREATE TABLE matches (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tournament_id INT NOT NULL,
-    home_team_id INT NOT NULL,
-    away_team_id INT NOT NULL,
+    team1_id INT NOT NULL,
+    team2_id INT NOT NULL,
     match_date DATETIME,
-    venue VARCHAR(255),
     round VARCHAR(50),  -- e.g., "Round 1", "Quarter Final", "Semi Final"
-    home_score INT DEFAULT 0,
-    away_score INT DEFAULT 0,
+    team1_score INT DEFAULT 0,
+    team2_score INT DEFAULT 0,
     status ENUM('scheduled', 'in_progress', 'finished', 'cancelled') DEFAULT 'scheduled',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE CASCADE,
-    FOREIGN KEY (home_team_id) REFERENCES teams(id) ON DELETE CASCADE,
-    FOREIGN KEY (away_team_id) REFERENCES teams(id) ON DELETE CASCADE,
+    FOREIGN KEY (team1_id) REFERENCES teams(id) ON DELETE CASCADE,
+    FOREIGN KEY (team2_id) REFERENCES teams(id) ON DELETE CASCADE,
     INDEX idx_tournament (tournament_id),
-    INDEX idx_home_team (home_team_id),
-    INDEX idx_away_team (away_team_id),
+    INDEX idx_team1 (team1_id),
+    INDEX idx_team2 (team2_id),
     INDEX idx_status (status),
     INDEX idx_match_date (match_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -151,12 +152,15 @@ CREATE TABLE match_events (
     player_id INT NOT NULL,
     event_type ENUM('goal', 'yellow_card', 'red_card', 'substitution') NOT NULL,
     minute INT,
+    is_own_goal BOOLEAN DEFAULT FALSE,  -- For own goals
+    assist_player_id INT NULL,  -- Player who assisted (for goals)
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+
     FOREIGN KEY (match_id) REFERENCES matches(id) ON DELETE CASCADE,
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY (player_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (assist_player_id) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_match (match_id),
     INDEX idx_team (team_id),
     INDEX idx_player (player_id),
@@ -180,7 +184,7 @@ CREATE TABLE standings (
     goal_difference INT DEFAULT 0,
     points INT DEFAULT 0,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE CASCADE,
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     INDEX idx_tournament (tournament_id),
@@ -204,7 +208,7 @@ CREATE TABLE player_statistics (
     red_cards INT DEFAULT 0,
     matches_played INT DEFAULT 0,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE CASCADE,
     FOREIGN KEY (player_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
@@ -232,7 +236,7 @@ INSERT INTO users (name, email, password, role) VALUES
 
 -- Get tournament with teams count
 /*
-SELECT 
+SELECT
     t.*,
     u.name as organizer_name,
     COUNT(DISTINCT tt.team_id) as teams_count
@@ -244,7 +248,7 @@ GROUP BY t.id;
 
 -- Get team with players count
 /*
-SELECT 
+SELECT
     t.*,
     u.name as coach_name,
     COUNT(DISTINCT tp.player_id) as players_count
@@ -254,9 +258,9 @@ LEFT JOIN team_players tp ON t.id = tp.team_id
 GROUP BY t.id;
 */
 
--- Get standings for a tournament
+-- Get standings for a tournament (with tiebreaker order)
 /*
-SELECT 
+SELECT
     s.*,
     t.name as team_name,
     t.logo,
@@ -264,12 +268,12 @@ SELECT
 FROM standings s
 JOIN teams t ON s.team_id = t.id
 WHERE s.tournament_id = ?
-ORDER BY s.points DESC, s.goal_difference DESC, s.goals_for DESC;
+ORDER BY s.points DESC, s.goal_difference DESC, s.goals_for DESC, t.name ASC;
 */
 
 -- Get top scorers in a tournament
 /*
-SELECT 
+SELECT
     ps.*,
     u.name as player_name,
     t.name as team_name

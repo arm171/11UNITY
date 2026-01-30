@@ -1,19 +1,62 @@
 // ============================================
 // STATISTICS MODULE
-// Global site statistics display
+// Global & tournament-specific statistics
 // ============================================
 
 const Statistics = {
 
     data: null,
+    tournamentData: null,
+    currentMode: 'global', // 'global' or tournament id
 
     init() {
+        this.attachEventListeners();
+        this.loadTournamentsList();
         this.load();
 
-        // Listen for language changes
         window.addEventListener('languageChanged', () => {
             this.render();
         });
+    },
+
+    attachEventListeners() {
+        const select = document.getElementById('statistics-tournament-select');
+        if (select) {
+            select.addEventListener('change', (e) => {
+                this.currentMode = e.target.value;
+                if (this.currentMode === 'global') {
+                    this.load();
+                } else {
+                    this.loadTournamentStats(this.currentMode);
+                }
+            });
+        }
+    },
+
+    async loadTournamentsList() {
+        try {
+            const response = await API.request('/api/statistics/tournaments');
+            const tournaments = response.tournaments || [];
+
+            const select = document.getElementById('statistics-tournament-select');
+            if (!select) return;
+
+            const t = (key) => window.I18n ? I18n.t(key) : key;
+
+            // Keep global option
+            select.innerHTML = `<option value="global">${t('statistics.global')}</option>`;
+
+            tournaments.forEach(tournament => {
+                const option = document.createElement('option');
+                option.value = tournament.id;
+                const statusIcon = tournament.status === 'active' ? '🟢' : tournament.status === 'upcoming' ? '🟡' : '⚪';
+                option.textContent = `${statusIcon} ${tournament.name}`;
+                select.appendChild(option);
+            });
+
+        } catch (error) {
+            console.error('Failed to load tournaments list:', error);
+        }
     },
 
     async load() {
@@ -25,6 +68,7 @@ const Statistics = {
         try {
             const response = await API.getStatistics();
             this.data = response.statistics;
+            this.currentMode = 'global';
             this.render();
 
         } catch (error) {
@@ -33,34 +77,62 @@ const Statistics = {
         }
     },
 
+    async loadTournamentStats(tournamentId) {
+        const container = document.getElementById('statistics-content');
+        if (!container) return;
+
+        UI.showLoading('statistics-content');
+
+        try {
+            const response = await API.request(`/api/statistics/tournament/${tournamentId}`);
+            this.tournamentData = response;
+            this.render();
+
+        } catch (error) {
+            console.error('Failed to load tournament statistics:', error);
+            this.showError();
+        }
+    },
+
     render() {
+        if (this.currentMode === 'global') {
+            this.renderGlobal();
+        } else {
+            this.renderTournament();
+        }
+    },
+
+    renderGlobal() {
         const container = document.getElementById('statistics-content');
         if (!container || !this.data) return;
 
         UI.hideLoading('statistics-content');
 
+        const t = (key) => window.I18n ? I18n.t(key) : key;
+        const fn = (num) => window.I18n && I18n.formatNumber ? I18n.formatNumber(num) : num;
+
         container.innerHTML = `
             <!-- Main Stats Grid -->
             <div class="stats-grid stats-grid-5">
                 <div class="stat-card">
-                    <span class="stat-number">${I18n.formatNumber(this.data.tournaments)}</span>
-                    <span class="stat-label" data-i18n="statistics.tournaments">${I18n.t('statistics.tournaments')}</span>
+                    <span class="stat-number">${fn(this.data.tournaments)}</span>
+                    <span class="stat-label">${t('statistics.tournaments')}</span>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-number">${I18n.formatNumber(this.data.teams)}</span>
-                    <span class="stat-label" data-i18n="statistics.teams">${I18n.t('statistics.teams')}</span>
+                    <span class="stat-number">${fn(this.data.teams)}</span>
+                    <span class="stat-label">${t('statistics.teams')}</span>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-number">${I18n.formatNumber(this.data.matches)}</span>
-                    <span class="stat-label" data-i18n="statistics.matches">${I18n.t('statistics.matches')}</span>
+                    <span class="stat-number">${fn(this.data.matches)}</span>
+                    <span class="stat-label">${t('statistics.matches')}</span>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-number">${I18n.formatNumber(this.data.players)}</span>
-                    <span class="stat-label" data-i18n="statistics.players">${I18n.t('statistics.players')}</span>
+                    <span class="stat-number">${fn(this.data.players)}</span>
+                    <span class="stat-label">${t('statistics.players')}</span>
                 </div>
                 <div class="stat-card stat-card-highlight">
-                    <span class="stat-number">${I18n.formatNumber(this.data.goals)}</span>
-                    <span class="stat-label" data-i18n="statistics.goals">${I18n.t('statistics.goals')}</span>
+                    <span class="stat-number">${fn(this.data.goals)}</span>
+                    <span class="stat-label">${t('statistics.goals')}</span>
                 </div>
             </div>
 
@@ -68,58 +140,121 @@ const Statistics = {
             <div class="statistics-lists">
                 <!-- Top Scorers -->
                 <div class="statistics-list-card">
-                    <h3><i class="fas fa-futbol"></i> <span data-i18n="statistics.topScorers">${I18n.t('statistics.topScorers')}</span></h3>
-                    ${this.renderTopScorers()}
+                    <h3><i class="fas fa-futbol"></i> ${t('statistics.topScorers')}</h3>
+                    ${this.renderTopList(this.data.topScorers, 'goals', 'fas fa-futbol')}
                 </div>
 
-                <!-- Top Teams -->
+                <!-- Top Assists -->
                 <div class="statistics-list-card">
-                    <h3><i class="fas fa-trophy"></i> <span data-i18n="statistics.topTeams">${I18n.t('statistics.topTeams')}</span></h3>
-                    ${this.renderTopTeams()}
+                    <h3><i class="fas fa-hands-helping"></i> ${t('statistics.topAssists')}</h3>
+                    ${this.renderTopList(this.data.topAssists, 'assists', 'fas fa-hands-helping')}
                 </div>
             </div>
         `;
     },
 
-    renderTopScorers() {
-        if (!this.data.topScorers || this.data.topScorers.length === 0) {
-            return `<p class="statistics-empty">${I18n.t('statistics.noData')}</p>`;
-        }
+    renderTournament() {
+        const container = document.getElementById('statistics-content');
+        if (!container || !this.tournamentData) return;
 
-        return `
-            <ul class="statistics-ranking">
-                ${this.data.topScorers.map((player, index) => `
-                    <li class="ranking-item">
-                        <span class="ranking-position">${index + 1}</span>
-                        <div class="ranking-info">
-                            <span class="ranking-name">${player.name}</span>
-                            <span class="ranking-team">${player.team_name || I18n.t('statistics.noTeam')}</span>
-                        </div>
-                        <span class="ranking-value">${player.goals} <i class="fas fa-futbol"></i></span>
-                    </li>
-                `).join('')}
-            </ul>
+        UI.hideLoading('statistics-content');
+
+        const t = (key) => window.I18n ? I18n.t(key) : key;
+        const { tournament, standings, topScorers, topAssists } = this.tournamentData;
+
+        container.innerHTML = `
+            <!-- Standings Table -->
+            <div class="standings-section">
+                <h3 style="color: white; margin-bottom: 16px;">
+                    <i class="fas fa-table"></i> ${t('statistics.standings')}
+                </h3>
+                ${this.renderStandingsTable(standings)}
+            </div>
+
+            <!-- Top Lists -->
+            <div class="statistics-lists" style="margin-top: 32px;">
+                <div class="statistics-list-card">
+                    <h3><i class="fas fa-futbol"></i> ${t('statistics.topScorers')}</h3>
+                    ${this.renderTopList(topScorers, 'goals', 'fas fa-futbol')}
+                </div>
+                <div class="statistics-list-card">
+                    <h3><i class="fas fa-hands-helping"></i> ${t('statistics.topAssists')}</h3>
+                    ${this.renderTopList(topAssists, 'assists', 'fas fa-hands-helping')}
+                </div>
+            </div>
         `;
     },
 
-    renderTopTeams() {
-        if (!this.data.topTeams || this.data.topTeams.length === 0) {
-            return `<p class="statistics-empty">${I18n.t('statistics.noData')}</p>`;
+    renderStandingsTable(standings) {
+        if (!standings || standings.length === 0) {
+            const t = (key) => window.I18n ? I18n.t(key) : key;
+            return `<p class="statistics-empty">${t('statistics.noData')}</p>`;
+        }
+
+        const t = (key) => window.I18n ? I18n.t(key) : key;
+
+        return `
+            <div class="standings-table-container">
+                <table class="standings-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th class="team-col">${t('statistics.team')}</th>
+                            <th>${t('statistics.played_short')}</th>
+                            <th>${t('statistics.won_short')}</th>
+                            <th>${t('statistics.drawn_short')}</th>
+                            <th>${t('statistics.lost_short')}</th>
+                            <th>${t('statistics.gf_short')}</th>
+                            <th>${t('statistics.ga_short')}</th>
+                            <th>${t('statistics.gd_short')}</th>
+                            <th class="points-col">${t('statistics.pts')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${standings.map((row, index) => `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td class="team-col">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div class="team-logo-tiny" style="background: ${row.team_color || '#2ecc71'}">
+                                            ${row.team_logo || row.team_name.substring(0, 2).toUpperCase()}
+                                        </div>
+                                        ${row.team_name}
+                                    </div>
+                                </td>
+                                <td>${row.played}</td>
+                                <td>${row.won}</td>
+                                <td>${row.drawn}</td>
+                                <td>${row.lost}</td>
+                                <td>${row.goals_for}</td>
+                                <td>${row.goals_against}</td>
+                                <td>${row.goal_difference > 0 ? '+' : ''}${row.goal_difference}</td>
+                                <td class="points-col"><strong>${row.points}</strong></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    },
+
+    renderTopList(list, valueKey, iconClass) {
+        const t = (key) => window.I18n ? I18n.t(key) : key;
+
+        if (!list || list.length === 0) {
+            return `<p class="statistics-empty">${t('statistics.noData')}</p>`;
         }
 
         return `
             <ul class="statistics-ranking">
-                ${this.data.topTeams.map((team, index) => `
+                ${list.map((item, index) => `
                     <li class="ranking-item">
                         <span class="ranking-position">${index + 1}</span>
-                        <div class="ranking-logo" style="background: ${team.logo_color || '#2ecc71'}">
-                            ${team.logo || team.name.substring(0, 2).toUpperCase()}
-                        </div>
                         <div class="ranking-info">
-                            <span class="ranking-name">${team.name}</span>
-                            <span class="ranking-team">${team.played} ${I18n.t('statistics.gamesPlayed')}</span>
+                            <span class="ranking-name">${item.name}</span>
+                            <span class="ranking-team">${item.team_name || ''}</span>
                         </div>
-                        <span class="ranking-value">${team.wins} <i class="fas fa-trophy"></i></span>
+                        <span class="ranking-value">${item[valueKey]} <i class="${iconClass}"></i></span>
                     </li>
                 `).join('')}
             </ul>
@@ -132,11 +267,13 @@ const Statistics = {
 
         UI.hideLoading('statistics-content');
 
+        const t = (key) => window.I18n ? I18n.t(key) : key;
+
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                <h3 class="empty-title" data-i18n="statistics.error">${I18n.t('statistics.error')}</h3>
-                <p class="empty-subtitle" data-i18n="statistics.errorSubtitle">${I18n.t('statistics.errorSubtitle')}</p>
+                <h3 class="empty-title">${t('statistics.error')}</h3>
+                <p class="empty-subtitle">${t('statistics.errorSubtitle')}</p>
             </div>
         `;
     }

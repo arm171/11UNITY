@@ -1,6 +1,6 @@
 // ============================================
 // MATCHES MODULE
-// Matches display and filtering
+// Matches display, filtering, and details modal
 // ============================================
 
 const Matches = {
@@ -8,12 +8,13 @@ const Matches = {
     matches: [],
     tournaments: [],
     currentFilter: 'all',
+    currentStatusFilter: 'all',
 
     init() {
+        this.createDetailsModal();
         this.attachEventListeners();
         this.load();
 
-        // Listen for language changes
         window.addEventListener('languageChanged', () => {
             if (window.I18n) {
                 I18n.applyTranslations();
@@ -22,12 +23,47 @@ const Matches = {
         });
     },
 
+    createDetailsModal() {
+        const modalHTML = `
+            <div class="modal" id="match-details-modal">
+                <div class="modal-overlay"></div>
+                <div class="modal-content modal-content-large">
+                    <button class="modal-close" id="close-match-details">&times;</button>
+
+                    <!-- Match Header -->
+                    <div class="match-details-header" id="match-details-header">
+                        <div class="match-details-tournament" id="match-detail-tournament"></div>
+                        <div class="match-details-round" id="match-detail-round"></div>
+                    </div>
+
+                    <!-- Score Section -->
+                    <div class="match-details-score" id="match-details-score-section"></div>
+
+                    <!-- Events Section (2 columns) -->
+                    <div class="match-details-events" id="match-details-events"></div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        document.getElementById('close-match-details')?.addEventListener('click', () => this.closeDetailsModal());
+        document.querySelector('#match-details-modal .modal-overlay')?.addEventListener('click', () => this.closeDetailsModal());
+    },
+
     attachEventListeners() {
-        // Filter change event
         const filterSelect = document.getElementById('matches-filter');
         if (filterSelect) {
             filterSelect.addEventListener('change', (e) => {
                 this.currentFilter = e.target.value;
+                this.render();
+            });
+        }
+
+        const statusFilter = document.getElementById('matches-status-filter');
+        if (statusFilter) {
+            statusFilter.addEventListener('change', (e) => {
+                this.currentStatusFilter = e.target.value;
                 this.render();
             });
         }
@@ -40,7 +76,6 @@ const Matches = {
         UI.showLoading('matches-list');
 
         try {
-            // Load matches and tournaments in parallel
             const [matchesResponse, tournamentsResponse] = await Promise.all([
                 API.getMatches(),
                 API.getTournaments()
@@ -55,7 +90,6 @@ const Matches = {
 
         } catch (error) {
             console.error('Failed to load matches:', error);
-            UI.showNotification(I18n.t('messages.error.loadMatches') || 'Failed to load matches', 'error');
             this.showEmpty();
         }
     },
@@ -64,10 +98,10 @@ const Matches = {
         const filterSelect = document.getElementById('matches-filter');
         if (!filterSelect) return;
 
-        // Keep "All tournaments" option, remove others
-        filterSelect.innerHTML = `<option value="all" data-i18n="matches.allTournaments">${I18n.t('matches.allTournaments')}</option>`;
+        const t = (key) => window.I18n ? I18n.t(key) : key;
 
-        // Add tournament options
+        filterSelect.innerHTML = `<option value="all">${t('matches.allTournaments')}</option>`;
+
         this.tournaments.forEach(tournament => {
             const option = document.createElement('option');
             option.value = tournament.id;
@@ -75,22 +109,21 @@ const Matches = {
             filterSelect.appendChild(option);
         });
 
-        // Restore selected filter
         filterSelect.value = this.currentFilter;
     },
 
     updateStats() {
         const total = this.matches.length;
         const finished = this.matches.filter(m => m.status === 'finished').length;
-        const scheduled = this.matches.filter(m => m.status === 'scheduled').length;
+        const upcoming = this.matches.filter(m => m.status === 'scheduled').length;
 
         const totalEl = document.getElementById('total-matches');
         const finishedEl = document.getElementById('finished-matches');
-        const scheduledEl = document.getElementById('scheduled-matches');
+        const upcomingEl = document.getElementById('upcoming-matches');
 
         if (totalEl) totalEl.textContent = total;
         if (finishedEl) finishedEl.textContent = finished;
-        if (scheduledEl) scheduledEl.textContent = scheduled;
+        if (upcomingEl) upcomingEl.textContent = upcoming;
     },
 
     render() {
@@ -101,10 +134,17 @@ const Matches = {
 
         UI.hideLoading('matches-list');
 
-        // Filter matches
+        // Filter matches by tournament
         let filteredMatches = this.matches;
         if (this.currentFilter !== 'all') {
-            filteredMatches = this.matches.filter(m => m.tournament_id == this.currentFilter);
+            filteredMatches = filteredMatches.filter(m => m.tournament_id == this.currentFilter);
+        }
+
+        // Filter by status
+        if (this.currentStatusFilter === 'upcoming') {
+            filteredMatches = filteredMatches.filter(m => m.status === 'scheduled');
+        } else if (this.currentStatusFilter === 'finished') {
+            filteredMatches = filteredMatches.filter(m => m.status === 'finished');
         }
 
         if (filteredMatches.length === 0) {
@@ -129,12 +169,13 @@ const Matches = {
 
     groupMatchesByDate(matches) {
         const groups = {};
+        const lang = window.I18n ? I18n.getCurrentLanguage() : 'en';
+        const locale = lang === 'ru' ? 'ru-RU' : lang === 'hy' ? 'hy-AM' : lang === 'ge' ? 'ka-GE' : 'en-US';
 
         matches.forEach(match => {
-            const date = new Date(match.match_date).toLocaleDateString(
-                I18n.getCurrentLanguage() === 'ru' ? 'ru-RU' : 'en-US',
-                { year: 'numeric', month: 'long', day: 'numeric' }
-            );
+            const date = new Date(match.match_date).toLocaleDateString(locale, {
+                year: 'numeric', month: 'long', day: 'numeric'
+            });
 
             if (!groups[date]) {
                 groups[date] = [];
@@ -163,56 +204,202 @@ const Matches = {
 
     createMatchCard(match) {
         const isFinished = match.status === 'finished';
-        const matchTime = new Date(match.match_date).toLocaleTimeString(
-            I18n.getCurrentLanguage() === 'ru' ? 'ru-RU' : 'en-US',
-            { hour: '2-digit', minute: '2-digit' }
-        );
+        const matchTime = new Date(match.match_date).toLocaleTimeString('en-US', {
+            hour: '2-digit', minute: '2-digit', hour12: false
+        });
 
-        const homeScore = match.home_score ?? '-';
-        const awayScore = match.away_score ?? '-';
+        const t = (key) => window.I18n ? I18n.t(key) : key;
+
+        const team1Score = isFinished ? match.team1_score : '-';
+        const team2Score = isFinished ? match.team2_score : '-';
+
+        // Round display
+        let roundText = '';
+        if (match.round) {
+            const roundNum = parseInt(match.round);
+            if (!isNaN(roundNum)) {
+                roundText = `${t('matches.round')} ${roundNum}`;
+            } else {
+                roundText = match.round;
+            }
+        }
 
         return `
-            <div class="match-card ${isFinished ? 'finished' : 'scheduled'}">
+            <div class="match-card ${isFinished ? 'finished' : 'scheduled'}"
+                 onclick="Matches.openDetailsModal(${match.tournament_id}, ${match.id})"
+                 style="cursor: pointer;">
                 <div class="match-tournament-badge">
                     <i class="fas fa-trophy"></i> ${match.tournament_name}
                 </div>
 
                 <div class="match-content">
-                    <div class="match-team home">
-                        <div class="team-logo-small" style="background: ${match.home_team_color || '#2ecc71'}">
-                            ${match.home_team_logo || match.home_team_name.substring(0, 2).toUpperCase()}
+                    <div class="match-team team1">
+                        <div class="team-logo-small" style="background: ${match.team1_color || '#2ecc71'}">
+                            ${match.team1_logo || match.team1_name.substring(0, 2).toUpperCase()}
                         </div>
-                        <span class="team-name">${match.home_team_name}</span>
+                        <span class="team-name">${match.team1_name}</span>
                     </div>
 
                     <div class="match-score-section">
                         ${isFinished ? `
                             <div class="match-score">
-                                <span class="score">${homeScore}</span>
+                                <span class="score">${team1Score}</span>
                                 <span class="score-separator">:</span>
-                                <span class="score">${awayScore}</span>
+                                <span class="score">${team2Score}</span>
                             </div>
-                            <div class="match-status finished">${I18n.t('matches.finished')}</div>
+                            <div class="match-status finished">${t('matches.finished')}</div>
                         ` : `
                             <div class="match-time">${matchTime}</div>
-                            <div class="match-status scheduled">${I18n.t('matches.scheduled')}</div>
+                            <div class="match-status scheduled">${t('matches.scheduled')}</div>
                         `}
                     </div>
 
-                    <div class="match-team away">
-                        <span class="team-name">${match.away_team_name}</span>
-                        <div class="team-logo-small" style="background: ${match.away_team_color || '#3498db'}">
-                            ${match.away_team_logo || match.away_team_name.substring(0, 2).toUpperCase()}
+                    <div class="match-team team2">
+                        <span class="team-name">${match.team2_name}</span>
+                        <div class="team-logo-small" style="background: ${match.team2_color || '#3498db'}">
+                            ${match.team2_logo || match.team2_name.substring(0, 2).toUpperCase()}
                         </div>
                     </div>
                 </div>
 
                 <div class="match-footer">
-                    <span class="match-round">${I18n.t('tournaments.round', { num: match.round })}</span>
-                    <span class="match-venue"><i class="fas fa-map-marker-alt"></i> ${match.venue || I18n.t('common.tbd')}</span>
+                    ${roundText ? `<span class="match-round">${roundText}</span>` : ''}
                 </div>
             </div>
         `;
+    },
+
+    async openDetailsModal(tournamentId, matchId) {
+        try {
+            const response = await API.request(`/api/tournaments/${tournamentId}/matches/${matchId}`);
+            const match = response.match;
+
+            if (!match) return;
+
+            const t = (key) => window.I18n ? I18n.t(key) : key;
+
+            // Tournament & round
+            document.getElementById('match-detail-tournament').innerHTML =
+                `<i class="fas fa-trophy"></i> ${match.tournament_name || ''}`;
+
+            let roundText = '';
+            if (match.round) {
+                const roundNum = parseInt(match.round);
+                roundText = !isNaN(roundNum) ? `${t('matches.round')} ${roundNum}` : match.round;
+            }
+            document.getElementById('match-detail-round').textContent = roundText;
+
+            // Score section
+            const isFinished = match.status === 'finished';
+            const scoreSection = document.getElementById('match-details-score-section');
+
+            scoreSection.innerHTML = `
+                <div class="match-details-teams">
+                    <div class="match-detail-team">
+                        <div class="team-logo-large" style="background: ${match.team1_color || '#2ecc71'}">
+                            ${match.team1_logo || match.team1_name.substring(0, 2).toUpperCase()}
+                        </div>
+                        <span class="team-name-large">${match.team1_name}</span>
+                    </div>
+
+                    <div class="match-detail-score-center">
+                        ${isFinished ? `
+                            <div class="detail-score">
+                                <span>${match.team1_score}</span>
+                                <span class="separator">:</span>
+                                <span>${match.team2_score}</span>
+                            </div>
+                            <div class="detail-status finished">${t('matches.finished')}</div>
+                        ` : `
+                            <div class="detail-time">
+                                ${new Date(match.match_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                            </div>
+                            <div class="detail-date">
+                                ${new Date(match.match_date).toLocaleDateString()}
+                            </div>
+                            <div class="detail-status scheduled">${t('matches.scheduled')}</div>
+                        `}
+                    </div>
+
+                    <div class="match-detail-team">
+                        <div class="team-logo-large" style="background: ${match.team2_color || '#3498db'}">
+                            ${match.team2_logo || match.team2_name.substring(0, 2).toUpperCase()}
+                        </div>
+                        <span class="team-name-large">${match.team2_name}</span>
+                    </div>
+                </div>
+            `;
+
+            // Events section (2 columns: team1 left, team2 right)
+            const eventsContainer = document.getElementById('match-details-events');
+            const events = match.events || [];
+
+            if (events.length === 0) {
+                eventsContainer.innerHTML = `
+                    <p style="text-align: center; color: #b0b0b0; padding: 24px;">
+                        ${t('matches.noEvents')}
+                    </p>
+                `;
+            } else {
+                const team1Events = events.filter(e => e.team_id === match.team1_id);
+                const team2Events = events.filter(e => e.team_id === match.team2_id);
+
+                const formatEvent = (event) => {
+                    let icon = '';
+                    if (event.event_type === 'goal') {
+                        icon = event.is_own_goal ? '<i class="fas fa-futbol" style="color: #e74c3c;"></i>' : '<i class="fas fa-futbol" style="color: #2ecc71;"></i>';
+                    } else if (event.event_type === 'yellow_card') {
+                        icon = '<span style="display:inline-block;width:12px;height:16px;background:#f1c40f;border-radius:2px;"></span>';
+                    } else if (event.event_type === 'red_card') {
+                        icon = '<span style="display:inline-block;width:12px;height:16px;background:#e74c3c;border-radius:2px;"></span>';
+                    } else if (event.event_type === 'substitution') {
+                        icon = '<i class="fas fa-exchange-alt" style="color: #3498db;"></i>';
+                    }
+
+                    let text = `${event.player_name}`;
+                    if (event.event_type === 'goal' && event.is_own_goal) {
+                        text += ' (OG)';
+                    }
+                    if (event.event_type === 'goal' && event.assist_player_name) {
+                        text += ` <span style="color: #888; font-size: 12px;">(${event.assist_player_name})</span>`;
+                    }
+
+                    return `
+                        <div class="event-item">
+                            <span class="event-minute">${event.minute}'</span>
+                            ${icon}
+                            <span class="event-player">${text}</span>
+                        </div>
+                    `;
+                };
+
+                eventsContainer.innerHTML = `
+                    <h4 style="color: white; margin-bottom: 16px; text-align: center;">
+                        <i class="fas fa-list"></i> ${t('matches.events')}
+                    </h4>
+                    <div class="events-two-columns">
+                        <div class="events-column events-left">
+                            <div class="events-column-header">${match.team1_name}</div>
+                            ${team1Events.length > 0 ? team1Events.map(formatEvent).join('') : '<p style="color: #666; text-align: center; padding: 8px;">-</p>'}
+                        </div>
+                        <div class="events-column events-right">
+                            <div class="events-column-header">${match.team2_name}</div>
+                            ${team2Events.length > 0 ? team2Events.map(formatEvent).join('') : '<p style="color: #666; text-align: center; padding: 8px;">-</p>'}
+                        </div>
+                    </div>
+                `;
+            }
+
+            UI.openModal('match-details-modal');
+
+        } catch (error) {
+            console.error('Failed to load match details:', error);
+            UI.showNotification(error.message || 'Failed to load match details', 'error');
+        }
+    },
+
+    closeDetailsModal() {
+        UI.closeModal('match-details-modal');
     },
 
     showEmpty() {

@@ -134,7 +134,7 @@ const WebSocketManager = {
             if (scoreDisplay) {
                 scoreDisplay.innerHTML = `
                     <span style="color: #2ecc71; font-weight: bold; font-size: 24px;">
-                        ${data.homeScore} - ${data.awayScore}
+                        ${data.team1Score} - ${data.team2Score}
                     </span>
                 `;
             }
@@ -142,13 +142,10 @@ const WebSocketManager = {
 
         // Update match results modal if open
         if (Tournaments.currentMatch && Tournaments.currentMatch.id == data.matchId) {
-            const homeScoreInput = document.getElementById('home-score');
-            const awayScoreInput = document.getElementById('away-score');
-            if (homeScoreInput) homeScoreInput.value = data.homeScore;
-            if (awayScoreInput) awayScoreInput.value = data.awayScore;
-            Tournaments.currentMatch.home_score = data.homeScore;
-            Tournaments.currentMatch.away_score = data.awayScore;
+            Tournaments.currentMatch.team1_score = data.team1Score;
+            Tournaments.currentMatch.team2_score = data.team2Score;
             Tournaments.currentMatch.status = data.status;
+            Tournaments.updateScoreDisplay();
         }
 
         // Show notification

@@ -24,10 +24,10 @@ router.get('/', async (req, res) => {
             db.promise().query('SELECT COUNT(*) as count FROM teams'),
             db.promise().query('SELECT COUNT(*) as count FROM matches'),
             db.promise().query('SELECT COUNT(*) as count FROM users WHERE role = "player"'),
-            db.promise().query('SELECT COALESCE(SUM(home_score + away_score), 0) as count FROM matches WHERE status = "finished"')
+            db.promise().query(`SELECT COUNT(*) as count FROM match_events WHERE event_type = 'goal'`)
         ]);
 
-        // Get top scorers (top 5)
+        // Get top 5 scorers (across all tournaments)
         const [topScorers] = await db.promise().query(`
             SELECT
                 u.id,
@@ -36,7 +36,7 @@ router.get('/', async (req, res) => {
                 t.logo_color as team_color,
                 COALESCE(SUM(ps.goals), 0) as goals
             FROM users u
-            LEFT JOIN team_players tp ON u.id = tp.user_id
+            LEFT JOIN team_players tp ON u.id = tp.player_id
             LEFT JOIN teams t ON tp.team_id = t.id
             LEFT JOIN player_statistics ps ON u.id = ps.player_id
             WHERE u.role = 'player'
@@ -46,20 +46,22 @@ router.get('/', async (req, res) => {
             LIMIT 5
         `);
 
-        // Get top teams by wins
-        const [topTeams] = await db.promise().query(`
+        // Get top 5 assistants (across all tournaments)
+        const [topAssists] = await db.promise().query(`
             SELECT
-                t.id,
-                t.name,
-                t.logo,
-                t.logo_color,
-                COALESCE(SUM(s.wins), 0) as wins,
-                COALESCE(SUM(s.played), 0) as played
-            FROM teams t
-            LEFT JOIN standings s ON t.id = s.team_id
-            GROUP BY t.id, t.name, t.logo, t.logo_color
-            HAVING played > 0
-            ORDER BY wins DESC, played ASC
+                u.id,
+                u.name,
+                t.name as team_name,
+                t.logo_color as team_color,
+                COALESCE(SUM(ps.assists), 0) as assists
+            FROM users u
+            LEFT JOIN team_players tp ON u.id = tp.player_id
+            LEFT JOIN teams t ON tp.team_id = t.id
+            LEFT JOIN player_statistics ps ON u.id = ps.player_id
+            WHERE u.role = 'player'
+            GROUP BY u.id, u.name, t.name, t.logo_color
+            HAVING assists > 0
+            ORDER BY assists DESC
             LIMIT 5
         `);
 
@@ -72,7 +74,7 @@ router.get('/', async (req, res) => {
                 players: playersResult[0].count,
                 goals: goalsResult[0].count,
                 topScorers,
-                topTeams
+                topAssists
             }
         });
 
@@ -81,6 +83,117 @@ router.get('/', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch statistics',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Get tournament-specific statistics
+ * GET /api/statistics/tournament/:id
+ * Returns: standings + top 5 scorers + top 5 assists
+ */
+router.get('/tournament/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Get tournament info
+        const [tournament] = await db.promise().query(
+            'SELECT id, name, type, status FROM tournaments WHERE id = ?',
+            [id]
+        );
+
+        if (tournament.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Tournament not found'
+            });
+        }
+
+        // Get standings (sorted with tiebreaker)
+        const [standings] = await db.promise().query(`
+            SELECT
+                s.*,
+                t.name as team_name,
+                t.logo as team_logo,
+                t.logo_color as team_color
+            FROM standings s
+            INNER JOIN teams t ON s.team_id = t.id
+            WHERE s.tournament_id = ?
+            ORDER BY s.points DESC, s.goal_difference DESC, s.goals_for DESC, t.name ASC
+        `, [id]);
+
+        // Get top 5 scorers for this tournament
+        const [topScorers] = await db.promise().query(`
+            SELECT
+                ps.player_id as id,
+                u.name,
+                t.name as team_name,
+                t.logo_color as team_color,
+                ps.goals
+            FROM player_statistics ps
+            INNER JOIN users u ON ps.player_id = u.id
+            INNER JOIN teams t ON ps.team_id = t.id
+            WHERE ps.tournament_id = ? AND ps.goals > 0
+            ORDER BY ps.goals DESC
+            LIMIT 5
+        `, [id]);
+
+        // Get top 5 assists for this tournament
+        const [topAssists] = await db.promise().query(`
+            SELECT
+                ps.player_id as id,
+                u.name,
+                t.name as team_name,
+                t.logo_color as team_color,
+                ps.assists
+            FROM player_statistics ps
+            INNER JOIN users u ON ps.player_id = u.id
+            INNER JOIN teams t ON ps.team_id = t.id
+            WHERE ps.tournament_id = ? AND ps.assists > 0
+            ORDER BY ps.assists DESC
+            LIMIT 5
+        `, [id]);
+
+        res.json({
+            success: true,
+            tournament: tournament[0],
+            standings,
+            topScorers,
+            topAssists
+        });
+
+    } catch (error) {
+        console.error('Get tournament statistics error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch tournament statistics',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * Get list of tournaments for dropdown selector
+ * GET /api/statistics/tournaments
+ */
+router.get('/tournaments', async (req, res) => {
+    try {
+        const [tournaments] = await db.promise().query(`
+            SELECT id, name, type, category, status
+            FROM tournaments
+            ORDER BY
+                CASE WHEN status = 'active' THEN 0 WHEN status = 'upcoming' THEN 1 ELSE 2 END,
+                created_at DESC
+        `);
+
+        res.json({ success: true, tournaments });
+
+    } catch (error) {
+        console.error('Get tournaments list error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch tournaments',
             error: error.message
         });
     }

@@ -13,12 +13,10 @@ const Teams = {
         this.attachEventListeners();
         this.load();
 
-        // Apply translations to dynamically created modals
         if (window.I18n) {
             I18n.applyTranslations();
         }
 
-        // Listen for language changes
         window.addEventListener('languageChanged', () => {
             if (window.I18n) {
                 I18n.applyTranslations();
@@ -48,46 +46,35 @@ const Teams = {
                                 id="team-name"
                                 data-i18n-placeholder="teams.teamNamePlaceholder"
                                 placeholder="FC Barcelona"
+                                minlength="3"
+                                maxlength="100"
                                 required
                             >
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                            <div class="form-group">
-                                <label class="form-label" data-i18n="teams.logo">Logo (2-3 letters)</label>
-                                <input
-                                    type="text"
-                                    class="form-input"
-                                    id="team-logo"
-                                    data-i18n-placeholder="teams.logoPlaceholder"
-                                    placeholder="FCB"
-                                    maxlength="3"
-                                    style="text-transform: uppercase;"
-                                    required
-                                >
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label" data-i18n="teams.logoColor">Logo Color</label>
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="teams.logoColor">Team Color</label>
+                            <div style="display: flex; align-items: center; gap: 16px;">
                                 <input
                                     type="color"
                                     class="form-input"
                                     id="team-color"
                                     value="#2ecc71"
-                                    required
+                                    style="width: 60px; height: 40px; padding: 2px; cursor: pointer;"
                                 >
+                                <div id="team-logo-preview" style="
+                                    width: 50px;
+                                    height: 50px;
+                                    border-radius: 50%;
+                                    background: #2ecc71;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 20px;
+                                    font-weight: bold;
+                                    color: white;
+                                ">FC</div>
                             </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" data-i18n="teams.stadium">Stadium</label>
-                            <input
-                                type="text"
-                                class="form-input"
-                                id="team-stadium"
-                                data-i18n-placeholder="teams.stadiumPlaceholder"
-                                placeholder="Camp Nou"
-                            >
                         </div>
 
                         <div class="form-group">
@@ -97,19 +84,8 @@ const Teams = {
                                 id="team-description"
                                 data-i18n-placeholder="tournaments.descriptionPlaceholder"
                                 placeholder="Tell about your team..."
-                                rows="4"
+                                rows="3"
                             ></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" data-i18n="teams.maxPlayers">Maximum Players</label>
-                            <select class="form-select" id="team-max-players" required>
-                                <option value="11">11</option>
-                                <option value="15">15</option>
-                                <option value="18">18</option>
-                                <option value="20">20</option>
-                                <option value="25" selected>25</option>
-                            </select>
                         </div>
 
                         <div style="display: flex; gap: 16px; margin-top: 24px;">
@@ -145,51 +121,46 @@ const Teams = {
                                 font-weight: bold;
                                 color: white;
                                 background: #2ecc71;
+                                flex-shrink: 0;
                             "
-                        >
-                            T
-                        </div>
+                        >T</div>
                         <div>
                             <h2 style="color: white; margin: 0 0 8px 0;" id="modal-team-name">Team Name</h2>
-                            <p style="color: #b0b0b0; margin: 0;">
+                            <p style="color: #b0b0b0; margin: 0 0 4px 0;">
                                 <i class="fas fa-user"></i>
                                 <span data-i18n="teams.coach">Coach</span>: <span id="modal-team-coach">Unknown</span>
                             </p>
+                            <p style="color: #b0b0b0; margin: 0;" id="modal-team-tournament-info"></p>
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
-                        <div style="display: flex; align-items: center; gap: 8px; color: #b0b0b0;">
-                            <i class="fas fa-building"></i>
-                            <span><span data-i18n="teams.stadium">Stadium</span>: <span id="modal-team-stadium">Not specified</span></span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px; color: #b0b0b0;">
-                            <i class="fas fa-users"></i>
-                            <span><span data-i18n="teams.players">Players</span>: <span id="modal-team-players">0</span></span>
-                        </div>
-                    </div>
+                    <p style="color: #b0b0b0; line-height: 1.6; margin-bottom: 24px;" id="modal-team-description"></p>
 
-                    <p style="color: #b0b0b0; line-height: 1.6; margin-bottom: 32px;" id="modal-team-description">
-                        No description provided
-                    </p>
-
-                    <!-- Team Stats -->
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px;">
-                        <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid rgba(46, 204, 113, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
-                            <div style="font-size: 32px; font-weight: bold; color: #2ecc71;" id="modal-team-stat-matches">0</div>
-                            <div style="color: #b0b0b0; font-size: 14px; margin-top: 8px;" data-i18n="teams.matches">Matches</div>
+                    <!-- Team Stats: 6 cards -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 32px;">
+                        <div class="stat-card-mini">
+                            <div class="stat-card-mini-number" id="modal-team-stat-matches">0</div>
+                            <div class="stat-card-mini-label" data-i18n="teams.matches">Matches</div>
                         </div>
-                        <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid rgba(46, 204, 113, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
-                            <div style="font-size: 32px; font-weight: bold; color: #2ecc71;" id="modal-team-stat-wins">0</div>
-                            <div style="color: #b0b0b0; font-size: 14px; margin-top: 8px;" data-i18n="teams.wins">Wins</div>
+                        <div class="stat-card-mini">
+                            <div class="stat-card-mini-number" id="modal-team-stat-wins">0</div>
+                            <div class="stat-card-mini-label" data-i18n="teams.wins">Wins</div>
                         </div>
-                        <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid rgba(46, 204, 113, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
-                            <div style="font-size: 32px; font-weight: bold; color: #2ecc71;" id="modal-team-stat-draws">0</div>
-                            <div style="color: #b0b0b0; font-size: 14px; margin-top: 8px;" data-i18n="teams.draws">Draws</div>
+                        <div class="stat-card-mini">
+                            <div class="stat-card-mini-number" id="modal-team-stat-draws">0</div>
+                            <div class="stat-card-mini-label" data-i18n="teams.draws">Draws</div>
                         </div>
-                        <div style="background: rgba(46, 204, 113, 0.1); border: 2px solid rgba(46, 204, 113, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
-                            <div style="font-size: 32px; font-weight: bold; color: #2ecc71;" id="modal-team-stat-losses">0</div>
-                            <div style="color: #b0b0b0; font-size: 14px; margin-top: 8px;" data-i18n="teams.losses">Losses</div>
+                        <div class="stat-card-mini">
+                            <div class="stat-card-mini-number" id="modal-team-stat-losses">0</div>
+                            <div class="stat-card-mini-label" data-i18n="teams.losses">Losses</div>
+                        </div>
+                        <div class="stat-card-mini">
+                            <div class="stat-card-mini-number" id="modal-team-stat-gf">0</div>
+                            <div class="stat-card-mini-label" data-i18n="teams.goalsFor">Goals For</div>
+                        </div>
+                        <div class="stat-card-mini">
+                            <div class="stat-card-mini-number" id="modal-team-stat-ga">0</div>
+                            <div class="stat-card-mini-label" data-i18n="teams.goalsAgainst">Goals Against</div>
                         </div>
                     </div>
 
@@ -197,6 +168,7 @@ const Teams = {
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <h3 style="color: white; margin: 0;">
                             <i class="fas fa-users"></i> <span data-i18n="teams.teamPlayers">Team Players</span>
+                            (<span id="modal-team-players-count">0</span>/25)
                         </h3>
                         <button class="btn btn-primary btn-sm" id="add-player-btn" style="display: none;">
                             <i class="fas fa-plus"></i> <span data-i18n="teams.addPlayer">Add Player</span>
@@ -209,6 +181,13 @@ const Teams = {
                             <h3 class="empty-title" data-i18n="teams.noPlayers">No players yet</h3>
                             <p class="empty-subtitle" data-i18n="teams.addPlayersCta">Add players to your team!</p>
                         </div>
+                    </div>
+
+                    <!-- Delete Team Button (for coach, when allowed) -->
+                    <div id="team-actions-container" style="margin-top: 24px; text-align: center; display: none;">
+                        <button class="btn btn-danger btn-sm" id="delete-team-btn">
+                            <i class="fas fa-trash"></i> <span data-i18n="teams.deleteTeam">Delete Team</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -225,13 +204,14 @@ const Teams = {
 
                     <!-- Search Section -->
                     <div class="form-group">
-                        <label class="form-label" data-i18n="addPlayer.searchByEmail">Search Player by Email</label>
+                        <label class="form-label" data-i18n="addPlayer.searchPlayer">Search Player</label>
                         <input
-                            type="email"
+                            type="text"
                             class="form-input"
-                            id="search-player-email"
-                            data-i18n-placeholder="addPlayer.emailPlaceholder"
-                            placeholder="player@email.com"
+                            id="search-player-query"
+                            data-i18n-placeholder="addPlayer.searchPlaceholder"
+                            placeholder="Name or email..."
+                            minlength="2"
                         >
                         <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 8px;" onclick="Teams.searchPlayers()">
                             <i class="fas fa-search"></i> <span data-i18n="addPlayer.search">Search</span>
@@ -305,7 +285,7 @@ const Teams = {
     attachEventListeners() {
         const createBtn = document.getElementById('create-team-btn');
         if (createBtn) {
-            createBtn.addEventListener('click', () => this.openCreateModal());
+            createBtn.addEventListener('click', () => this.handleTeamButton());
         }
 
         document.getElementById('close-create-team')?.addEventListener('click', () => this.closeCreateModal());
@@ -318,14 +298,80 @@ const Teams = {
 
         document.getElementById('create-team-form')?.addEventListener('submit', (e) => this.handleCreate(e));
         document.getElementById('add-player-form')?.addEventListener('submit', (e) => this.handleAddPlayer(e));
-
         document.getElementById('add-player-btn')?.addEventListener('click', () => this.openAddPlayerModal());
+        document.getElementById('delete-team-btn')?.addEventListener('click', () => this.handleDeleteTeam());
 
-        const logoInput = document.getElementById('team-logo');
-        if (logoInput) {
-            logoInput.addEventListener('input', (e) => {
-                e.target.value = e.target.value.toUpperCase();
+        // Auto-update logo preview when name changes
+        const nameInput = document.getElementById('team-name');
+        const colorInput = document.getElementById('team-color');
+        if (nameInput) {
+            nameInput.addEventListener('input', () => this.updateLogoPreview());
+        }
+        if (colorInput) {
+            colorInput.addEventListener('input', () => this.updateLogoPreview());
+        }
+
+        // Search on Enter key
+        const searchInput = document.getElementById('search-player-query');
+        if (searchInput) {
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.searchPlayers();
+                }
             });
+        }
+    },
+
+    updateLogoPreview() {
+        const name = document.getElementById('team-name').value.trim();
+        const color = document.getElementById('team-color').value;
+        const preview = document.getElementById('team-logo-preview');
+        if (preview) {
+            preview.textContent = name.length >= 2 ? name.substring(0, 2).toUpperCase() : '--';
+            preview.style.background = color;
+        }
+    },
+
+    // Coach button: "Create Team" or "My Team"
+    handleTeamButton() {
+        if (!API.isAuthenticated()) {
+            UI.showNotification(I18n.t('messages.error.unauthorized'), 'error');
+            Auth.openAuthModal('login');
+            return;
+        }
+
+        const user = API.getUser();
+        if (user.role !== 'coach') {
+            UI.showNotification(I18n.t('messages.error.onlyCoaches'), 'error');
+            return;
+        }
+
+        // Check if coach already has a team
+        const myTeam = this.teams.find(t => t.coach_id === user.id);
+
+        if (myTeam) {
+            // Open "My Team" details
+            this.openDetailsModal(myTeam);
+        } else {
+            // Open create modal
+            this.openCreateModal();
+        }
+    },
+
+    updateTeamButton() {
+        const btn = document.getElementById('create-team-btn');
+        if (!btn) return;
+
+        const user = API.getUser();
+        if (!user || user.role !== 'coach') return;
+
+        const myTeam = this.teams.find(t => t.coach_id === user.id);
+
+        if (myTeam) {
+            btn.innerHTML = `<i class="fas fa-users"></i> <span data-i18n="teams.myTeam">${window.I18n ? I18n.t('teams.myTeam') : 'My Team'}</span>`;
+        } else {
+            btn.innerHTML = `<i class="fas fa-plus"></i> <span data-i18n="teams.createTeam">${window.I18n ? I18n.t('teams.createTeam') : 'Create Team'}</span>`;
         }
     },
 
@@ -337,11 +383,11 @@ const Teams = {
             this.teams = response.teams || [];
 
             this.updateStats();
+            this.updateTeamButton();
             this.render();
 
         } catch (error) {
             console.error('Failed to load teams:', error);
-            UI.showNotification(I18n.t('messages.error.loadTeams'), 'error');
             this.showEmpty();
         }
     },
@@ -349,11 +395,10 @@ const Teams = {
     updateStats() {
         const total = this.teams.length;
         const totalPlayers = this.teams.reduce((sum, team) => sum + parseInt(team.players_count || 0), 0);
-        const totalCoaches = this.teams.length;
 
         document.getElementById('total-teams').textContent = total;
         document.getElementById('total-players').textContent = totalPlayers;
-        document.getElementById('total-coaches').textContent = totalCoaches;
+        document.getElementById('total-coaches').textContent = total;
     },
 
     render() {
@@ -386,6 +431,13 @@ const Teams = {
         card.className = 'card team-card';
         card.onclick = () => this.openDetailsModal(team);
 
+        const tournamentHTML = team.tournament_name
+            ? `<div class="team-info-item">
+                    <i class="fas fa-trophy"></i>
+                    <span>${team.tournament_name}</span>
+                </div>`
+            : '';
+
         card.innerHTML = `
             <div class="team-logo" style="background: ${team.logo_color || '#2ecc71'}">
                 ${team.logo || team.name.substring(0, 2).toUpperCase()}
@@ -396,18 +448,13 @@ const Teams = {
             <div class="team-info">
                 <div class="team-info-item">
                     <i class="fas fa-user"></i>
-                    <span>${I18n.t('teams.coach')}: ${team.coach_name || I18n.t('common.unknown')}</span>
+                    <span>${team.coach_name || ''}</span>
                 </div>
                 <div class="team-info-item">
                     <i class="fas fa-users"></i>
-                    <span>${I18n.t('teams.players')}: ${I18n.t('teams.playerCount', { count: team.players_count || 0, max: team.max_players || 25 })}</span>
+                    <span>${team.players_count || 0}/25</span>
                 </div>
-                ${team.stadium ? `
-                    <div class="team-info-item">
-                        <i class="fas fa-building"></i>
-                        <span>${team.stadium}</span>
-                    </div>
-                ` : ''}
+                ${tournamentHTML}
             </div>
         `;
 
@@ -425,18 +472,10 @@ const Teams = {
     },
 
     openCreateModal() {
-        if (!API.isAuthenticated()) {
-            UI.showNotification(I18n.t('messages.error.unauthorized'), 'error');
-            Auth.openAuthModal('login');
-            return;
-        }
-
-        const user = API.getUser();
-        if (user.role !== 'coach') {
-            UI.showNotification(I18n.t('messages.error.onlyCoaches'), 'error');
-            return;
-        }
-
+        // Reset form
+        document.getElementById('create-team-form').reset();
+        document.getElementById('team-color').value = '#2ecc71';
+        this.updateLogoPreview();
         UI.openModal('create-team-modal');
     },
 
@@ -448,34 +487,143 @@ const Teams = {
     async openDetailsModal(team) {
         this.currentTeamId = team.id;
 
-        document.getElementById('modal-team-name').textContent = team.name;
-        document.getElementById('modal-team-coach').textContent = team.coach_name || I18n.t('common.unknown');
-        document.getElementById('modal-team-stadium').textContent = team.stadium || I18n.t('teams.notSpecified');
-        document.getElementById('modal-team-players').textContent = team.players_count || 0;
+        try {
+            // Load full team data
+            const response = await API.getTeamById(team.id);
+            const fullTeam = response.team;
 
-        const logo = document.getElementById('modal-team-logo');
-        logo.textContent = team.logo || team.name.substring(0, 2).toUpperCase();
-        logo.style.background = team.logo_color || '#2ecc71';
+            document.getElementById('modal-team-name').textContent = fullTeam.name;
+            document.getElementById('modal-team-coach').textContent = fullTeam.coach_name || '';
 
-        const description = team.description || I18n.t('teams.noDescriptionProvided');
-        document.getElementById('modal-team-description').textContent = description;
+            const logo = document.getElementById('modal-team-logo');
+            logo.textContent = fullTeam.logo || fullTeam.name.substring(0, 2).toUpperCase();
+            logo.style.background = fullTeam.logo_color || '#2ecc71';
 
-        document.getElementById('modal-team-stat-matches').textContent = 0;
-        document.getElementById('modal-team-stat-wins').textContent = 0;
-        document.getElementById('modal-team-stat-draws').textContent = 0;
-        document.getElementById('modal-team-stat-losses').textContent = 0;
+            // Tournament info
+            const tournamentInfo = document.getElementById('modal-team-tournament-info');
+            if (fullTeam.tournament_name) {
+                tournamentInfo.innerHTML = `<i class="fas fa-trophy"></i> ${fullTeam.tournament_name}`;
+                tournamentInfo.style.display = 'block';
+            } else {
+                tournamentInfo.style.display = 'none';
+            }
 
-        const user = API.getUser();
-        const addPlayerBtn = document.getElementById('add-player-btn');
-        if (user && user.role === 'coach' && team.coach_id === user.id) {
-            addPlayerBtn.style.display = 'inline-flex';
-        } else {
-            addPlayerBtn.style.display = 'none';
+            // Description
+            const descEl = document.getElementById('modal-team-description');
+            if (fullTeam.description) {
+                descEl.textContent = fullTeam.description;
+                descEl.style.display = 'block';
+            } else {
+                descEl.style.display = 'none';
+            }
+
+            // Stats
+            const stats = fullTeam.stats || {};
+            document.getElementById('modal-team-stat-matches').textContent = stats.total_matches || 0;
+            document.getElementById('modal-team-stat-wins').textContent = stats.total_wins || 0;
+            document.getElementById('modal-team-stat-draws').textContent = stats.total_draws || 0;
+            document.getElementById('modal-team-stat-losses').textContent = stats.total_losses || 0;
+            document.getElementById('modal-team-stat-gf').textContent = stats.total_goals_for || 0;
+            document.getElementById('modal-team-stat-ga').textContent = stats.total_goals_against || 0;
+
+            // Players count
+            const players = fullTeam.players || [];
+            document.getElementById('modal-team-players-count').textContent = players.length;
+
+            // Show add player / delete team buttons only for coach of this team
+            const user = API.getUser();
+            const isCoach = user && user.role === 'coach' && fullTeam.coach_id === user.id;
+            const isInActiveTournament = fullTeam.tournament_status === 'active';
+
+            const addPlayerBtn = document.getElementById('add-player-btn');
+            addPlayerBtn.style.display = (isCoach && !isInActiveTournament) ? 'inline-flex' : 'none';
+
+            // Delete team: only if 0 players and no tournament
+            const actionsContainer = document.getElementById('team-actions-container');
+            actionsContainer.style.display = (isCoach && players.length === 0 && !fullTeam.tournament_id) ? 'block' : 'none';
+
+            // Render players list (without email)
+            this.renderPlayersList(players, isCoach && !isInActiveTournament, team.id);
+
+            UI.openModal('team-details-modal');
+
+        } catch (error) {
+            console.error('Failed to load team details:', error);
+            UI.showNotification(error.message || 'Failed to load team details', 'error');
+        }
+    },
+
+    renderPlayersList(players, canRemove, teamId) {
+        const container = document.getElementById('players-container');
+
+        if (players.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-users"></i></div>
+                    <h3 class="empty-title">${window.I18n ? I18n.t('teams.noPlayers') : 'No players yet'}</h3>
+                </div>
+            `;
+            return;
         }
 
-        await this.loadTeamPlayers(team.id);
-
-        UI.openModal('team-details-modal');
+        container.innerHTML = `
+            <div style="display: grid; gap: 8px;">
+                ${players.map(player => `
+                    <div style="
+                        background: rgba(46, 204, 113, 0.1);
+                        border: 1px solid rgba(46, 204, 113, 0.3);
+                        border-radius: 8px;
+                        padding: 12px 16px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    ">
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <div style="
+                                width: 36px;
+                                height: 36px;
+                                background: var(--color-primary);
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                color: white;
+                                font-weight: bold;
+                                font-size: 14px;
+                                flex-shrink: 0;
+                            ">
+                                ${player.jersey_number}
+                            </div>
+                            <div style="color: white; font-weight: 500;">
+                                ${player.player_name}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span style="
+                                background: rgba(52, 152, 219, 0.2);
+                                color: #3498db;
+                                padding: 3px 10px;
+                                border-radius: 12px;
+                                font-size: 12px;
+                                font-weight: 600;
+                                text-transform: capitalize;
+                            ">
+                                ${player.position}
+                            </span>
+                            ${canRemove ? `
+                                <button
+                                    class="btn btn-secondary btn-sm"
+                                    onclick="Teams.handleRemovePlayer(${teamId}, ${player.player_id})"
+                                    style="padding: 6px 10px; min-width: auto;"
+                                >
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
     },
 
     closeDetailsModal() {
@@ -484,7 +632,8 @@ const Teams = {
     },
 
     openAddPlayerModal() {
-        document.getElementById('search-player-email').value = '';
+        const searchInput = document.getElementById('search-player-query');
+        if (searchInput) searchInput.value = '';
         document.getElementById('search-results').style.display = 'none';
         document.getElementById('add-player-form-container').style.display = 'none';
         document.getElementById('add-player-form').reset();
@@ -496,113 +645,16 @@ const Teams = {
         UI.closeModal('add-player-modal');
     },
 
-    async loadTeamPlayers(teamId) {
-        const container = document.getElementById('players-container');
-
-        try {
-            const response = await API.getTeamById(teamId);
-            const players = response.team.players || [];
-
-            if (players.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon"><i class="fas fa-users"></i></div>
-                        <h3 class="empty-title">${I18n.t('teams.noPlayers')}</h3>
-                        <p class="empty-subtitle">${I18n.t('teams.addPlayersCta')}</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const user = API.getUser();
-            const isCoach = user && user.role === 'coach' && response.team.coach_id === user.id;
-
-            container.innerHTML = `
-                <div style="display: grid; gap: 12px;">
-                    ${players.map(player => `
-                        <div style="
-                            background: rgba(46, 204, 113, 0.1);
-                            border: 1px solid rgba(46, 204, 113, 0.3);
-                            border-radius: 8px;
-                            padding: 16px;
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                        ">
-                            <div style="display: flex; gap: 16px; align-items: center;">
-                                <div style="
-                                    width: 40px;
-                                    height: 40px;
-                                    background: var(--color-primary);
-                                    border-radius: 50%;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    color: white;
-                                    font-weight: bold;
-                                    font-size: 16px;
-                                ">
-                                    ${player.jersey_number}
-                                </div>
-                                <div>
-                                    <div style="color: white; font-weight: 600; margin-bottom: 4px;">
-                                        ${player.player_name}
-                                    </div>
-                                    <div style="color: #b0b0b0; font-size: 14px;">
-                                        <i class="fas fa-envelope" style="margin-right: 4px;"></i>
-                                        ${player.player_email}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 12px; align-items: center;">
-                                <span style="
-                                    background: rgba(52, 152, 219, 0.2);
-                                    color: #3498db;
-                                    padding: 4px 12px;
-                                    border-radius: 12px;
-                                    font-size: 12px;
-                                    font-weight: 600;
-                                    text-transform: capitalize;
-                                ">
-                                    ${player.position}
-                                </span>
-                                ${isCoach ? `
-                                    <button
-                                        class="btn btn-secondary btn-sm"
-                                        onclick="Teams.handleRemovePlayer(${teamId}, ${player.player_id})"
-                                        style="padding: 8px 12px;"
-                                    >
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-
-        } catch (error) {
-            console.error('Failed to load players:', error);
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon"><i class="fas fa-exclamation-circle"></i></div>
-                    <h3 class="empty-title">${I18n.t('messages.error.loadPlayersFailed')}</h3>
-                    <p class="empty-subtitle">${error.message}</p>
-                </div>
-            `;
-        }
-    },
-
     async searchPlayers() {
-        const email = document.getElementById('search-player-email').value.trim();
+        const query = document.getElementById('search-player-query').value.trim();
 
-        if (!email) {
-            UI.showNotification(I18n.t('messages.error.enterEmail'), 'error');
+        if (query.length < 2) {
+            UI.showNotification(window.I18n ? I18n.t('addPlayer.minChars') : 'Enter at least 2 characters', 'error');
             return;
         }
 
         try {
-            const response = await API.searchPlayers(this.currentTeamId, email);
+            const response = await API.request(`/api/teams/${this.currentTeamId}/players/search?query=${encodeURIComponent(query)}`);
             const players = response.players || [];
 
             const resultsContainer = document.getElementById('search-results');
@@ -611,7 +663,7 @@ const Teams = {
             if (players.length === 0) {
                 playersList.innerHTML = `
                     <div style="padding: 16px; text-align: center; color: #b0b0b0;">
-                        ${I18n.t('addPlayer.noPlayersFound', { email: email })}
+                        ${window.I18n ? I18n.t('addPlayer.noPlayersFound') : 'No players found'}
                     </div>
                 `;
             } else {
@@ -629,14 +681,14 @@ const Teams = {
                         <div>
                             <div style="color: white; font-weight: 600;">${player.name}</div>
                             <div style="color: #b0b0b0; font-size: 14px;">${player.email}</div>
-                            ${player.has_team ? `<div style="color: #e74c3c; font-size: 12px; margin-top: 4px;"><i class="fas fa-exclamation-circle"></i> ${I18n.t('addPlayer.alreadyInTeam')}</div>` : ''}
+                            ${player.has_team ? `<div style="color: #e74c3c; font-size: 12px; margin-top: 4px;"><i class="fas fa-exclamation-circle"></i> ${window.I18n ? I18n.t('addPlayer.alreadyInTeam') : 'Already in a team'}</div>` : ''}
                         </div>
                         <button
                             class="btn btn-primary btn-sm"
-                            onclick='Teams.selectPlayer(${JSON.stringify(player)})'
+                            onclick='Teams.selectPlayer(${JSON.stringify(player).replace(/'/g, "\\'")})'
                             ${player.has_team ? 'disabled' : ''}
                         >
-                            ${I18n.t('addPlayer.select')}
+                            ${window.I18n ? I18n.t('addPlayer.select') : 'Select'}
                         </button>
                     </div>
                 `).join('');
@@ -646,7 +698,7 @@ const Teams = {
 
         } catch (error) {
             console.error('Search failed:', error);
-            UI.showNotification(error.message || I18n.t('messages.error.searchFailed'), 'error');
+            UI.showNotification(error.message || 'Search failed', 'error');
         }
     },
 
@@ -676,37 +728,73 @@ const Teams = {
 
             await API.addPlayerToTeam(this.currentTeamId, playerData);
 
-            UI.showNotification(I18n.t('addPlayer.playerAdded'), 'success');
+            UI.showNotification(window.I18n ? I18n.t('addPlayer.playerAdded') : 'Player added', 'success');
 
             this.closeAddPlayerModal();
 
-            await this.loadTeamPlayers(this.currentTeamId);
+            // Reload team details
+            const response = await API.getTeamById(this.currentTeamId);
+            const fullTeam = response.team;
+            const user = API.getUser();
+            const isCoach = user && user.role === 'coach' && fullTeam.coach_id === user.id;
+            this.renderPlayersList(fullTeam.players || [], isCoach, this.currentTeamId);
+            document.getElementById('modal-team-players-count').textContent = (fullTeam.players || []).length;
+
             await this.load();
 
         } catch (error) {
             console.error('Failed to add player:', error);
-            UI.showNotification(error.message || I18n.t('messages.error.addPlayerFailed'), 'error');
+            UI.showNotification(error.message || 'Failed to add player', 'error');
         } finally {
             UI.hideButtonLoading(submitBtn);
         }
     },
 
     async handleRemovePlayer(teamId, playerId) {
-        if (!confirm(I18n.t('addPlayer.confirmRemove'))) {
+        if (!confirm(window.I18n ? I18n.t('addPlayer.confirmRemove') : 'Remove this player?')) {
             return;
         }
 
         try {
             await API.removePlayerFromTeam(teamId, playerId);
 
-            UI.showNotification(I18n.t('addPlayer.playerRemoved'), 'success');
+            UI.showNotification(window.I18n ? I18n.t('addPlayer.playerRemoved') : 'Player removed', 'success');
 
-            await this.loadTeamPlayers(teamId);
+            // Reload team details
+            const response = await API.getTeamById(teamId);
+            const fullTeam = response.team;
+            const user = API.getUser();
+            const isCoach = user && user.role === 'coach' && fullTeam.coach_id === user.id;
+            this.renderPlayersList(fullTeam.players || [], isCoach, teamId);
+            document.getElementById('modal-team-players-count').textContent = (fullTeam.players || []).length;
+
+            // Update delete button visibility
+            const actionsContainer = document.getElementById('team-actions-container');
+            actionsContainer.style.display = (isCoach && (fullTeam.players || []).length === 0 && !fullTeam.tournament_id) ? 'block' : 'none';
+
             await this.load();
 
         } catch (error) {
             console.error('Failed to remove player:', error);
-            UI.showNotification(error.message || I18n.t('messages.error.removePlayerFailed'), 'error');
+            UI.showNotification(error.message || 'Failed to remove player', 'error');
+        }
+    },
+
+    async handleDeleteTeam() {
+        if (!confirm(window.I18n ? I18n.t('teams.confirmDelete') : 'Are you sure you want to delete this team?')) {
+            return;
+        }
+
+        try {
+            await API.request(`/api/teams/${this.currentTeamId}`, { method: 'DELETE' });
+
+            UI.showNotification(window.I18n ? I18n.t('teams.teamDeleted') : 'Team deleted', 'success');
+            this.closeDetailsModal();
+            await this.load();
+
+        } catch (error) {
+            console.error('Failed to delete team:', error);
+            UI.showNotification(error.message || 'Failed to delete team', 'error');
         }
     },
 
@@ -721,23 +809,20 @@ const Teams = {
         try {
             const teamData = {
                 name: document.getElementById('team-name').value.trim(),
-                logo: document.getElementById('team-logo').value.trim().toUpperCase(),
                 logoColor: document.getElementById('team-color').value,
-                stadium: document.getElementById('team-stadium').value.trim(),
-                description: document.getElementById('team-description').value.trim(),
-                maxPlayers: parseInt(document.getElementById('team-max-players').value),
+                description: document.getElementById('team-description').value.trim() || null,
             };
 
             await API.createTeam(teamData);
 
-            UI.showNotification(I18n.t('messages.success.teamCreated'), 'success');
+            UI.showNotification(window.I18n ? I18n.t('messages.success.teamCreated') : 'Team created', 'success');
 
             this.closeCreateModal();
             await this.load();
 
         } catch (error) {
             console.error('Failed to create team:', error);
-            UI.showNotification(error.message || I18n.t('messages.error.createTeam'), 'error');
+            UI.showNotification(error.message || 'Failed to create team', 'error');
         } finally {
             UI.hideButtonLoading(submitBtn);
         }

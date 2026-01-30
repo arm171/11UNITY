@@ -5,6 +5,21 @@
 
 const db = require('../config/database');
 
+/**
+ * Check if a team is in an active tournament
+ * @param {number} teamId
+ * @returns {Promise<boolean>}
+ */
+const isTeamInActiveTournament = async (teamId) => {
+    const [rows] = await db.promise().query(
+        `SELECT tt.id FROM tournament_teams tt
+         INNER JOIN tournaments t ON tt.tournament_id = t.id
+         WHERE tt.team_id = ? AND t.status = 'active'`,
+        [teamId]
+    );
+    return rows.length > 0;
+};
+
 // Get all teams
 const getTeams = async (req, res) => {
     try {
@@ -12,10 +27,14 @@ const getTeams = async (req, res) => {
             SELECT
                 t.*,
                 u.name as coach_name,
-                COUNT(DISTINCT tp.player_id) as players_count
+                COUNT(DISTINCT tp.player_id) as players_count,
+                tn.name as tournament_name,
+                tn.id as tournament_id
             FROM teams t
             LEFT JOIN users u ON t.coach_id = u.id
             LEFT JOIN team_players tp ON t.id = tp.team_id
+            LEFT JOIN tournament_teams tt ON t.id = tt.team_id
+            LEFT JOIN tournaments tn ON tt.tournament_id = tn.id AND tn.status IN ('upcoming', 'active')
             GROUP BY t.id
             ORDER BY t.created_at DESC
         `;
@@ -39,10 +58,15 @@ const getTeamById = async (req, res) => {
             SELECT
                 t.*,
                 u.name as coach_name,
-                COUNT(DISTINCT tp.player_id) as players_count
+                COUNT(DISTINCT tp.player_id) as players_count,
+                tn.name as tournament_name,
+                tn.id as tournament_id,
+                tn.status as tournament_status
             FROM teams t
             LEFT JOIN users u ON t.coach_id = u.id
             LEFT JOIN team_players tp ON t.id = tp.team_id
+            LEFT JOIN tournament_teams tt ON t.id = tt.team_id
+            LEFT JOIN tournaments tn ON tt.tournament_id = tn.id AND tn.status IN ('upcoming', 'active')
             WHERE t.id = ?
             GROUP BY t.id
         `;
@@ -55,14 +79,14 @@ const getTeamById = async (req, res) => {
             });
         }
 
+        // Get players (without email)
         const [players] = await db.promise().query(
             `SELECT
                 tp.id as team_player_id,
                 tp.player_id,
                 tp.position,
                 tp.jersey_number,
-                u.name as player_name,
-                u.email as player_email
+                u.name as player_name
             FROM team_players tp
             LEFT JOIN users u ON tp.player_id = u.id
             WHERE tp.team_id = ?
@@ -70,8 +94,23 @@ const getTeamById = async (req, res) => {
             [id]
         );
 
+        // Get team stats from standings (all tournaments)
+        const [stats] = await db.promise().query(
+            `SELECT
+                COALESCE(SUM(s.played), 0) as total_matches,
+                COALESCE(SUM(s.won), 0) as total_wins,
+                COALESCE(SUM(s.drawn), 0) as total_draws,
+                COALESCE(SUM(s.lost), 0) as total_losses,
+                COALESCE(SUM(s.goals_for), 0) as total_goals_for,
+                COALESCE(SUM(s.goals_against), 0) as total_goals_against
+            FROM standings s
+            WHERE s.team_id = ?`,
+            [id]
+        );
+
         const team = teams[0];
         team.players = players;
+        team.stats = stats[0];
         res.json({ success: true, team });
     } catch (error) {
         console.error('Get team error:', error);
@@ -86,16 +125,18 @@ const getTeamById = async (req, res) => {
 // Create team
 const createTeam = async (req, res) => {
     try {
-        const { name, logo, logoColor, stadium, description, maxPlayers } = req.body;
+        const { name, logoColor, description } = req.body;
         const coachId = req.user.id;
 
-        if (!name) {
+        // Validate name
+        if (!name || name.trim().length < 3 || name.trim().length > 100) {
             return res.status(400).json({
                 success: false,
-                message: 'Team name is required'
+                message: 'Team name must be between 3 and 100 characters'
             });
         }
 
+        // Check coach already has a team
         const [existingTeams] = await db.promise().query(
             'SELECT id FROM teams WHERE coach_id = ?',
             [coachId]
@@ -104,15 +145,30 @@ const createTeam = async (req, res) => {
         if (existingTeams.length > 0) {
             return res.status(409).json({
                 success: false,
-                message: 'You already have a team. Delete it first to create a new one.'
+                message: 'You already have a team'
             });
         }
 
+        // Check unique team name
+        const [nameCheck] = await db.promise().query(
+            'SELECT id FROM teams WHERE LOWER(name) = LOWER(?)',
+            [name.trim()]
+        );
+
+        if (nameCheck.length > 0) {
+            return res.status(409).json({
+                success: false,
+                message: 'A team with this name already exists'
+            });
+        }
+
+        // Auto-generate logo from first 2 letters
+        const logo = name.trim().substring(0, 2).toUpperCase();
+
         const [result] = await db.promise().query(
-            `INSERT INTO teams
-            (name, logo, logo_color, stadium, description, max_players, coach_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [name, logo, logoColor, stadium, description, maxPlayers || 25, coachId]
+            `INSERT INTO teams (name, logo, logo_color, description, max_players, coach_id)
+            VALUES (?, ?, ?, ?, 25, ?)`,
+            [name.trim(), logo, logoColor || '#2ecc71', description || null, coachId]
         );
 
         const teamId = result.insertId;
@@ -121,12 +177,11 @@ const createTeam = async (req, res) => {
             message: 'Team created successfully',
             team: {
                 id: teamId,
-                name,
+                name: name.trim(),
                 logo,
-                logo_color: logoColor,
-                stadium,
+                logo_color: logoColor || '#2ecc71',
                 description,
-                max_players: maxPlayers || 25,
+                max_players: 25,
                 coach_id: coachId
             }
         });
@@ -144,7 +199,7 @@ const createTeam = async (req, res) => {
 const updateTeam = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, logo, logoColor, stadium, description, maxPlayers } = req.body;
+        const { name, logoColor, description } = req.body;
         const userId = req.user.id;
 
         const [teams] = await db.promise().query(
@@ -166,12 +221,41 @@ const updateTeam = async (req, res) => {
             });
         }
 
+        // Block edit during active tournament
+        if (await isTeamInActiveTournament(id)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Cannot edit team while in an active tournament'
+            });
+        }
+
+        // Validate name
+        if (!name || name.trim().length < 3 || name.trim().length > 100) {
+            return res.status(400).json({
+                success: false,
+                message: 'Team name must be between 3 and 100 characters'
+            });
+        }
+
+        // Check unique name (exclude current team)
+        const [nameCheck] = await db.promise().query(
+            'SELECT id FROM teams WHERE LOWER(name) = LOWER(?) AND id != ?',
+            [name.trim(), id]
+        );
+
+        if (nameCheck.length > 0) {
+            return res.status(409).json({
+                success: false,
+                message: 'A team with this name already exists'
+            });
+        }
+
+        // Auto-generate logo from first 2 letters
+        const logo = name.trim().substring(0, 2).toUpperCase();
+
         await db.promise().query(
-            `UPDATE teams
-            SET name = ?, logo = ?, logo_color = ?, stadium = ?,
-                description = ?, max_players = ?
-            WHERE id = ?`,
-            [name, logo, logoColor, stadium, description, maxPlayers, id]
+            `UPDATE teams SET name = ?, logo = ?, logo_color = ?, description = ? WHERE id = ?`,
+            [name.trim(), logo, logoColor, description, id]
         );
 
         res.json({
@@ -213,6 +297,32 @@ const deleteTeam = async (req, res) => {
             });
         }
 
+        // Check: must have 0 players
+        const [playerCount] = await db.promise().query(
+            'SELECT COUNT(*) as count FROM team_players WHERE team_id = ?',
+            [id]
+        );
+
+        if (playerCount[0].count > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete team with players. Remove all players first.'
+            });
+        }
+
+        // Check: must not be in any tournament
+        const [tournamentCount] = await db.promise().query(
+            'SELECT COUNT(*) as count FROM tournament_teams WHERE team_id = ?',
+            [id]
+        );
+
+        if (tournamentCount[0].count > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete team that is registered in a tournament'
+            });
+        }
+
         await db.promise().query('DELETE FROM teams WHERE id = ?', [id]);
         res.json({
             success: true,
@@ -228,17 +338,19 @@ const deleteTeam = async (req, res) => {
     }
 };
 
-// Search players by email
+// Search players by name or email
 const searchPlayers = async (req, res) => {
     try {
-        const { email } = req.query;
+        const { query } = req.query;
 
-        if (!email) {
+        if (!query || query.trim().length < 2) {
             return res.status(400).json({
                 success: false,
-                message: 'Email query parameter is required'
+                message: 'Search query must be at least 2 characters'
             });
         }
+
+        const searchTerm = `%${query.trim()}%`;
 
         const [players] = await db.promise().query(
             `SELECT
@@ -251,9 +363,9 @@ const searchPlayers = async (req, res) => {
                 END as has_team
             FROM users u
             LEFT JOIN team_players tp ON u.id = tp.player_id
-            WHERE u.role = 'player' AND u.email LIKE ?
+            WHERE u.role = 'player' AND (u.name LIKE ? OR u.email LIKE ?)
             LIMIT 10`,
-            [`%${email}%`]
+            [searchTerm, searchTerm]
         );
 
         res.json({ success: true, players });
@@ -300,6 +412,14 @@ const addPlayerToTeam = async (req, res) => {
             });
         }
 
+        // Block during active tournament
+        if (await isTeamInActiveTournament(teamId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Cannot add players while team is in an active tournament'
+            });
+        }
+
         const [players] = await db.promise().query(
             'SELECT id, role FROM users WHERE id = ?',
             [playerId]
@@ -319,6 +439,7 @@ const addPlayerToTeam = async (req, res) => {
             });
         }
 
+        // Check player not already in another team
         const [existingTeamPlayers] = await db.promise().query(
             'SELECT team_id FROM team_players WHERE player_id = ?',
             [playerId]
@@ -331,6 +452,7 @@ const addPlayerToTeam = async (req, res) => {
             });
         }
 
+        // Check team is not full
         const [currentPlayers] = await db.promise().query(
             'SELECT COUNT(*) as count FROM team_players WHERE team_id = ?',
             [teamId]
@@ -343,6 +465,7 @@ const addPlayerToTeam = async (req, res) => {
             });
         }
 
+        // Check jersey number unique
         const [existingJerseys] = await db.promise().query(
             'SELECT id FROM team_players WHERE team_id = ? AND jersey_number = ?',
             [teamId, jerseyNumber]
@@ -423,6 +546,14 @@ const removePlayerFromTeam = async (req, res) => {
             });
         }
 
+        // Block during active tournament
+        if (await isTeamInActiveTournament(teamId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Cannot remove players while team is in an active tournament'
+            });
+        }
+
         const [teamPlayers] = await db.promise().query(
             'SELECT id FROM team_players WHERE team_id = ? AND player_id = ?',
             [teamId, playerId]
@@ -454,6 +585,53 @@ const removePlayerFromTeam = async (req, res) => {
     }
 };
 
+// Player leaves their own team
+const leaveTeam = async (req, res) => {
+    try {
+        const playerId = req.user.id;
+
+        // Find player's team
+        const [teamPlayers] = await db.promise().query(
+            'SELECT tp.team_id FROM team_players tp WHERE tp.player_id = ?',
+            [playerId]
+        );
+
+        if (teamPlayers.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'You are not in any team'
+            });
+        }
+
+        const teamId = teamPlayers[0].team_id;
+
+        // Block during active tournament
+        if (await isTeamInActiveTournament(teamId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Cannot leave team while in an active tournament'
+            });
+        }
+
+        await db.promise().query(
+            'DELETE FROM team_players WHERE player_id = ?',
+            [playerId]
+        );
+
+        res.json({
+            success: true,
+            message: 'You have left the team'
+        });
+    } catch (error) {
+        console.error('Leave team error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to leave team',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getTeams,
     getTeamById,
@@ -462,5 +640,6 @@ module.exports = {
     deleteTeam,
     searchPlayers,
     addPlayerToTeam,
-    removePlayerFromTeam
+    removePlayerFromTeam,
+    leaveTeam
 };

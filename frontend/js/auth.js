@@ -7,7 +7,8 @@ const Auth = {
 
     init() {
         this.createAuthModal();
-        this.createProfileModal();
+        this.setupLanguageSwitcher();
+        this.setupFooterYear();
         this.attachEventListeners();
         this.updateUI();
     },
@@ -138,76 +139,44 @@ const Auth = {
 
         document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-        // Apply translations to dynamic content
         if (window.I18n) {
             I18n.applyTranslations();
         }
     },
 
-    createProfileModal() {
-        const modalHTML = `
-            <div class="modal" id="profile-modal">
-                <div class="modal-overlay"></div>
-                <div class="modal-content" style="max-width: 400px;">
-                    <button class="modal-close" id="close-profile-modal">&times;</button>
+    setupLanguageSwitcher() {
+        const langBtn = document.getElementById('lang-btn');
+        const langDropdown = document.getElementById('lang-dropdown');
 
-                    <div style="text-align: center; margin-bottom: 24px;">
-                        <div id="profile-avatar" style="
-                            width: 80px;
-                            height: 80px;
-                            border-radius: 50%;
-                            background: var(--color-primary);
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-size: 32px;
-                            font-weight: bold;
-                            color: white;
-                            margin: 0 auto 16px;
-                        ">
-                            U
-                        </div>
-                        <h2 style="color: white; margin: 0 0 4px 0;" id="profile-user-name">User Name</h2>
-                        <p style="color: #b0b0b0; margin: 0;" id="profile-user-email">user@email.com</p>
-                    </div>
+        if (!langBtn || !langDropdown) return;
 
-                    <div style="background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="color: #b0b0b0;" data-i18n="auth.role">Role</span>
-                            <span id="profile-user-role" style="
-                                background: var(--color-primary);
-                                color: white;
-                                padding: 4px 12px;
-                                border-radius: 12px;
-                                font-size: 14px;
-                                font-weight: 600;
-                            ">Player</span>
-                        </div>
-                    </div>
+        // Toggle dropdown
+        langBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            langDropdown.classList.toggle('active');
+        });
 
-                    <!-- Language Selector -->
-                    <div class="form-group" style="margin-bottom: 24px;">
-                        <label class="form-label" data-i18n="profile.language">Language</label>
-                        <select class="form-select" id="profile-language-select">
-                            <option value="en">English</option>
-                            <option value="ru">Русский</option>
-                            <option value="hy">Հայերdelays</option>
-                            <option value="ge">ქართული</option>
-                        </select>
-                    </div>
+        // Language option click
+        langDropdown.querySelectorAll('.lang-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                const lang = e.target.getAttribute('data-lang');
+                if (window.I18n) {
+                    I18n.setLanguage(lang);
+                }
+                langDropdown.classList.remove('active');
+            });
+        });
 
-                    <button class="btn btn-secondary" style="width: 100%;" id="profile-logout-btn">
-                        <i class="fas fa-sign-out-alt"></i> <span data-i18n="auth.logout">Logout</span>
-                    </button>
-                </div>
-            </div>
-        `;
+        // Close dropdown on outside click
+        document.addEventListener('click', () => {
+            langDropdown.classList.remove('active');
+        });
+    },
 
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-        // Apply translations
-        if (window.I18n) {
-            I18n.applyTranslations();
+    setupFooterYear() {
+        const yearEl = document.getElementById('footer-year');
+        if (yearEl) {
+            yearEl.textContent = new Date().getFullYear();
         }
     },
 
@@ -225,26 +194,24 @@ const Auth = {
         document.getElementById('close-auth-modal').addEventListener('click', () => this.closeAuthModal());
         document.querySelector('#auth-modal .modal-overlay').addEventListener('click', () => this.closeAuthModal());
 
-        // Profile modal events
+        // Profile button scrolls to home section (where profile dashboard is)
         const profileBtn = document.getElementById('profile-btn');
         if (profileBtn) {
-            profileBtn.addEventListener('click', () => this.openProfileModal());
-        }
-
-        document.getElementById('close-profile-modal')?.addEventListener('click', () => this.closeProfileModal());
-        document.querySelector('#profile-modal .modal-overlay')?.addEventListener('click', () => this.closeProfileModal());
-        document.getElementById('profile-logout-btn')?.addEventListener('click', () => this.logout());
-
-        // Language selector in profile
-        const languageSelect = document.getElementById('profile-language-select');
-        if (languageSelect) {
-            languageSelect.addEventListener('change', (e) => {
-                if (window.I18n) {
-                    I18n.setLanguage(e.target.value);
+            profileBtn.addEventListener('click', () => {
+                const homeSection = document.getElementById('home');
+                if (homeSection) {
+                    homeSection.scrollIntoView({ behavior: 'smooth' });
                 }
             });
         }
 
+        // Logout button in profile section
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => this.logout());
+        }
+
+        // Auth tabs
         const tabs = document.querySelectorAll('.auth-tab');
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -324,31 +291,125 @@ const Auth = {
         document.getElementById('password-match-error').style.display = 'none';
     },
 
-    openProfileModal() {
-        const user = API.getUser();
-        if (!user) return;
+    updateProfileSection() {
+        const heroSection = document.getElementById('hero-section');
+        const profileSection = document.getElementById('profile-section');
 
-        // Update profile info
-        document.getElementById('profile-user-name').textContent = user.name;
-        document.getElementById('profile-user-email').textContent = user.email;
+        if (!heroSection || !profileSection) return;
 
-        // Set avatar initials
-        const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-        document.getElementById('profile-avatar').textContent = initials;
+        if (API.isAuthenticated()) {
+            const user = API.getUser();
+            heroSection.style.display = 'none';
+            profileSection.style.display = 'block';
 
-        // Set role with translation
-        const roleKey = `auth.roles.${user.role}`;
-        document.getElementById('profile-user-role').textContent = I18n.t(roleKey);
+            // Update profile info
+            const nameEl = document.getElementById('profile-user-name');
+            const emailEl = document.getElementById('profile-user-email');
+            const roleEl = document.getElementById('profile-user-role');
+            const avatarEl = document.getElementById('profile-avatar');
 
-        // Set current language
-        const currentLang = I18n.getCurrentLanguage ? I18n.getCurrentLanguage() : 'en';
-        document.getElementById('profile-language-select').value = currentLang;
+            if (nameEl) nameEl.textContent = user.name;
+            if (emailEl) emailEl.textContent = user.email;
+            if (roleEl) {
+                const roleKey = `auth.roles.${user.role}`;
+                roleEl.textContent = window.I18n ? I18n.t(roleKey) : user.role;
+            }
+            if (avatarEl) {
+                const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                avatarEl.innerHTML = `<span>${initials}</span>`;
+            }
 
-        UI.openModal('profile-modal');
+            // Update profile stats based on role
+            this.updateProfileStats(user);
+        } else {
+            heroSection.style.display = 'block';
+            profileSection.style.display = 'none';
+        }
     },
 
-    closeProfileModal() {
-        UI.closeModal('profile-modal');
+    async updateProfileStats(user) {
+        const statsContainer = document.getElementById('profile-stats');
+        if (!statsContainer) return;
+
+        try {
+            if (user.role === 'coach') {
+                // Show team info
+                const response = await API.request('/api/teams');
+                const myTeam = response.teams?.find(t => t.coach_id === user.id);
+
+                if (myTeam) {
+                    statsContainer.innerHTML = `
+                        <div class="profile-stat-cards">
+                            <div class="profile-stat-card">
+                                <i class="fas fa-users"></i>
+                                <div>
+                                    <strong>${myTeam.name}</strong>
+                                    <span>${myTeam.players_count}/25 ${window.I18n ? I18n.t('teams.players') : 'Players'}</span>
+                                </div>
+                            </div>
+                            ${myTeam.tournament_name ? `
+                            <div class="profile-stat-card">
+                                <i class="fas fa-trophy"></i>
+                                <div>
+                                    <strong>${myTeam.tournament_name}</strong>
+                                    <span>${window.I18n ? I18n.t('tournaments.title') : 'Tournament'}</span>
+                                </div>
+                            </div>` : ''}
+                        </div>
+                    `;
+                } else {
+                    statsContainer.innerHTML = `
+                        <p class="profile-no-data">${window.I18n ? I18n.t('teams.noTeamYet') : 'You have not created a team yet'}</p>
+                    `;
+                }
+            } else if (user.role === 'organizer') {
+                const response = await API.request('/api/tournaments');
+                const myTournaments = response.tournaments?.filter(t => t.organizer_id === user.id) || [];
+
+                if (myTournaments.length > 0) {
+                    const active = myTournaments.filter(t => t.status === 'active').length;
+                    const upcoming = myTournaments.filter(t => t.status === 'upcoming').length;
+                    const finished = myTournaments.filter(t => t.status === 'finished').length;
+
+                    statsContainer.innerHTML = `
+                        <div class="profile-stat-cards">
+                            <div class="profile-stat-card">
+                                <i class="fas fa-trophy"></i>
+                                <div>
+                                    <strong>${myTournaments.length}</strong>
+                                    <span>${window.I18n ? I18n.t('tournaments.total') : 'Total'}</span>
+                                </div>
+                            </div>
+                            <div class="profile-stat-card">
+                                <i class="fas fa-play"></i>
+                                <div>
+                                    <strong>${active}</strong>
+                                    <span>${window.I18n ? I18n.t('tournaments.active') : 'Active'}</span>
+                                </div>
+                            </div>
+                            <div class="profile-stat-card">
+                                <i class="fas fa-flag-checkered"></i>
+                                <div>
+                                    <strong>${finished}</strong>
+                                    <span>${window.I18n ? I18n.t('tournaments.finished') : 'Finished'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    statsContainer.innerHTML = `
+                        <p class="profile-no-data">${window.I18n ? I18n.t('tournaments.noTournaments') : 'No tournaments yet'}</p>
+                    `;
+                }
+            } else {
+                // Player
+                statsContainer.innerHTML = '';
+                // Could add player's team info here if needed
+            }
+        } catch (error) {
+            console.error('Failed to load profile stats:', error);
+            statsContainer.innerHTML = '';
+        }
     },
 
     async handleLogin(e) {
@@ -369,7 +430,7 @@ const Auth = {
                 password: document.getElementById('login-password').value,
             };
 
-            const response = await API.login(credentials);
+            await API.login(credentials);
 
             UI.showNotification(I18n.t('messages.success.login'), 'success');
             this.closeAuthModal();
@@ -413,7 +474,7 @@ const Auth = {
                 role: document.getElementById('register-role').value,
             };
 
-            const response = await API.register(userData);
+            await API.register(userData);
 
             UI.showNotification(I18n.t('messages.success.register'), 'success');
             this.closeAuthModal();
@@ -433,10 +494,9 @@ const Auth = {
     },
 
     logout() {
-        if (confirm(I18n.t('common.confirmLogout'))) {
+        if (confirm(window.I18n ? I18n.t('common.confirmLogout') : 'Are you sure you want to logout?')) {
             API.logout();
-            this.closeProfileModal();
-            UI.showNotification(I18n.t('messages.success.logout'), 'success');
+            UI.showNotification(window.I18n ? I18n.t('messages.success.logout') : 'Logged out', 'success');
             this.updateUI();
 
             if (window.Tournaments) Tournaments.load();
@@ -454,9 +514,7 @@ const Auth = {
             const user = API.getUser();
 
             if (getStartedBtn) getStartedBtn.classList.remove('show');
-            if (profileBtn) {
-                profileBtn.classList.add('show');
-            }
+            if (profileBtn) profileBtn.classList.add('show');
 
             if (user.role === 'organizer' && createTournamentBtn) {
                 createTournamentBtn.style.display = 'inline-flex';
@@ -473,6 +531,9 @@ const Auth = {
             if (createTournamentBtn) createTournamentBtn.style.display = 'none';
             if (createTeamBtn) createTeamBtn.style.display = 'none';
         }
+
+        // Update hero/profile section
+        this.updateProfileSection();
     },
 
 };

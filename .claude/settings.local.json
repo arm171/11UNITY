@@ -11,7 +11,9 @@
       "Bash(find:*)",
       "Bash(dir:*)",
       "Bash(findstr:*)",
-      "Bash(findstr /r \"\\\\.js$ \\\\.css$ \\\\.html$ \\\\.json$ \\\\.sql$\")"
+      "Bash(findstr /r \"\\\\.js$ \\\\.css$ \\\\.html$ \\\\.json$ \\\\.sql$\")",
+      "Bash(tree:*)",
+      "Bash(wc:*)"
     ]
   }
 }

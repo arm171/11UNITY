@@ -30,7 +30,7 @@ router.delete('/:id',
     teamController.deleteTeam
 );
 
-// Player management routes
+// Player management routes (coach)
 router.get('/:teamId/players/search',
     verifyToken,
     checkRole('coach'),
@@ -47,6 +47,13 @@ router.delete('/:teamId/players/:playerId',
     verifyToken,
     checkRole('coach'),
     teamController.removePlayerFromTeam
+);
+
+// Player leaves team
+router.post('/leave',
+    verifyToken,
+    checkRole('player'),
+    teamController.leaveTeam
 );
 
 module.exports = router;

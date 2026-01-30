@@ -96,7 +96,6 @@ function generateSingleRound(teams) {
  * @param {string} settings.matchTime - Match time in HH:mm format
  * @param {number} settings.matchesPerDay - Maximum matches per day
  * @param {number} settings.daysBetweenRounds - Rest days between rounds
- * @param {string} settings.venue - Match venue
  * @returns {Array<Object>} Array of scheduled matches
  */
 function scheduleMatches(rounds, settings) {
@@ -105,8 +104,7 @@ function scheduleMatches(rounds, settings) {
         matchDays,
         matchTime,
         matchesPerDay,
-        daysBetweenRounds,
-        venue
+        daysBetweenRounds
     } = settings;
 
     const scheduledMatches = [];
@@ -126,8 +124,7 @@ function scheduleMatches(rounds, settings) {
                 round: roundNumber,
                 teamAId: match.teamA.id,
                 teamBId: match.teamB.id,
-                matchDate: formatDateTime(currentDate, matchTime),
-                venue: venue || 'TBD'
+                matchDate: formatDateTime(currentDate, matchTime)
             });
 
             matchesScheduledInRound++;
