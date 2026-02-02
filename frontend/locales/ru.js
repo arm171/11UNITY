@@ -45,7 +45,14 @@ I18n.registerTranslations('ru', {
     profile: {
         title: 'Профиль',
         language: 'Язык',
-        memberSince: 'На сайте с'
+        memberSince: 'На сайте с',
+        dashboard: 'Панель',
+        myTeam: 'Моя команда',
+        myTournament: 'Мой турнир',
+        noTeam: 'Команды пока нет',
+        noTournament: 'Нет активного турнира',
+        tournamentsCreated: 'Турниров создано',
+        activeTournaments: 'Активных турниров'
     },
 
     // Auth
@@ -76,29 +83,37 @@ I18n.registerTranslations('ru', {
         title: 'Турниры',
         total: 'Всего',
         active: 'Активные',
-        finished: 'Завершенные',
+        finished: 'Завершённые',
         upcoming: 'Предстоящие',
         createTournament: 'Создать турнир',
         noTournaments: 'Турниров пока нет',
         beFirst: 'Будьте первым, кто создаст турнир!',
         tournamentName: 'Название турнира',
-        tournamentNamePlaceholder: 'Лига Чемпионов 2024',
+        tournamentNamePlaceholder: 'Лига Чемпионов 2026',
+        category: 'Категория',
+        selectCategory: 'Выберите категорию',
+        categories: {
+            school: 'Школьный',
+            university: 'Университетский',
+            amateur: 'Любительский'
+        },
+        allCategories: 'Все категории',
         type: 'Тип',
         selectType: 'Выберите тип',
+        selectTypeFirst: 'Сначала выберите тип',
         types: {
             league: 'Лига (Все против всех)',
             playoff: 'Плей-офф (На вылет)',
             group_playoff: 'Группа + Плей-офф'
         },
         startDate: 'Дата начала',
-        endDate: 'Дата окончания',
-        location: 'Место проведения',
-        locationPlaceholder: 'Город, Стадион',
         maxTeams: 'Максимум команд',
+        minPlayersPerTeam: 'Мин. игроков в команде',
         teamsCount: '{count} команд',
         description: 'Описание',
         descriptionPlaceholder: 'Детали турнира...',
         joinTournament: 'Присоединиться',
+        leaveTournament: 'Покинуть турнир',
         generateFixtures: 'Создать расписание',
         standings: 'Таблица',
         statistics: 'Статистика',
@@ -113,6 +128,7 @@ I18n.registerTranslations('ru', {
         needTeamFirst: 'Сначала нужно создать команду',
         tournamentFull: 'Турнир заполнен',
         joinSuccess: 'Вы успешно присоединились к турниру!',
+        leaveSuccess: 'Вы покинули турнир!',
         round: 'Тур {num}',
         teamsJoined: '{current}/{max} команд'
     },
@@ -125,8 +141,6 @@ I18n.registerTranslations('ru', {
         matchesPerDay: 'Матчей в день',
         matchCount: '{count} матч',
         matchesCount: '{count} матчей',
-        venue: 'Стадион',
-        venuePlaceholder: 'Название стадиона',
         generate: 'Создать',
         selectAtLeastOneDay: 'Выберите хотя бы один день',
         days: {
@@ -142,33 +156,29 @@ I18n.registerTranslations('ru', {
 
     // Match
     match: {
-        enterResults: 'Ввести результаты матча',
-        finalScore: 'Финальный счет',
-        homeScore: 'Голы хозяев',
-        awayScore: 'Голы гостей',
-        updateScore: 'Обновить счет',
+        enterResults: 'Управление матчем',
         addGoal: 'Добавить гол',
         addCard: 'Добавить карточку',
         team: 'Команда',
         selectTeam: 'Выберите команду',
-        homeTeam: 'Хозяева',
-        awayTeam: 'Гости',
-        playerEmail: 'Игрок (email)',
-        playerEmailPlaceholder: 'player@example.com',
+        player: 'Игрок',
+        selectPlayer: 'Выберите игрока',
         minute: 'Минута',
-        assist: 'Ассист (необязательно - email)',
-        assistPlaceholder: 'assistant@example.com',
+        assist: 'Ассист',
+        ownGoal: 'Автогол',
         cardType: 'Тип карточки',
         selectCardType: 'Выберите тип',
-        yellowCard: 'Желтая карточка',
+        yellowCard: 'Жёлтая карточка',
         redCard: 'Красная карточка',
         matchEvents: 'События матча',
         noEvents: 'Событий пока нет',
         goal: 'Гол',
         card: 'Карточка',
-        scoreUpdated: 'Счет обновлен!',
+        finishMatch: 'Завершить матч',
+        matchFinished: 'Матч завершён!',
         goalAdded: 'Гол добавлен!',
-        cardAdded: 'Карточка добавлена!'
+        cardAdded: 'Карточка добавлена!',
+        eventDeleted: 'Событие удалено!'
     },
 
     // Teams
@@ -178,16 +188,12 @@ I18n.registerTranslations('ru', {
         players: 'Игроки',
         coaches: 'Тренеры',
         createTeam: 'Создать команду',
+        myTeam: 'Моя команда',
         noTeams: 'Команд пока нет',
         createTeamCta: 'Создайте команду и начните играть!',
         teamName: 'Название команды',
         teamNamePlaceholder: 'ФК Барселона',
-        logo: 'Логотип (2-3 буквы)',
-        logoPlaceholder: 'ФКБ',
-        logoColor: 'Цвет логотипа',
-        stadium: 'Стадион',
-        stadiumPlaceholder: 'Камп Ноу',
-        maxPlayers: 'Максимум игроков',
+        logoColor: 'Цвет команды',
         playersCount: '{count} игроков',
         coach: 'Тренер',
         notSpecified: 'Не указано',
@@ -200,18 +206,24 @@ I18n.registerTranslations('ru', {
         wins: 'Победы',
         draws: 'Ничьи',
         losses: 'Поражения',
-        playerCount: '{count}/{max}'
+        goalsFor: 'Забито',
+        goalsAgainst: 'Пропущено',
+        deleteTeam: 'Удалить команду',
+        deleteTeamConfirm: 'Вы уверены, что хотите удалить эту команду?',
+        teamDeleted: 'Команда удалена!',
+        tournament: 'Турнир',
+        noTournament: 'Не в турнире',
+        playerCount: '{count}/25'
     },
 
     // Add player modal
     addPlayer: {
         title: 'Добавить игрока',
-        searchByEmail: 'Поиск игрока по Email',
-        emailPlaceholder: 'player@email.com',
+        searchPlayer: 'Поиск игрока',
+        searchPlaceholder: 'Имя или email',
         search: 'Поиск',
-        searchPlaceholder: 'player@email.com',
         searchResults: 'Результаты поиска:',
-        noPlayersFound: 'Игроки с email "{email}" не найдены',
+        noPlayersFound: 'Игроки не найдены по запросу "{query}"',
         alreadyInTeam: 'Уже в команде',
         select: 'Выбрать',
         playerDetails: 'Данные игрока:',
@@ -229,7 +241,7 @@ I18n.registerTranslations('ru', {
         playerAdded: 'Игрок добавлен!',
         removePlayer: 'Удалить игрока',
         confirmRemove: 'Вы уверены, что хотите удалить этого игрока из команды?',
-        playerRemoved: 'Игрок удален!'
+        playerRemoved: 'Игрок удалён!'
     },
 
     // Statistics table headers
@@ -249,8 +261,8 @@ I18n.registerTranslations('ru', {
         cards: 'Карточки',
         topScorers: 'Лучшие бомбардиры',
         noGoalsScored: 'Голов пока нет',
-        yellowCards: 'Желтые карточки',
-        noYellowCards: 'Желтых карточек пока нет',
+        yellowCards: 'Жёлтые карточки',
+        noYellowCards: 'Жёлтых карточек пока нет',
         redCards: 'Красные карточки',
         noRedCards: 'Красных карточек пока нет'
     },
@@ -258,48 +270,39 @@ I18n.registerTranslations('ru', {
     // Matches section
     matches: {
         total: 'Всего',
-        finishedCount: 'Завершено',
-        scheduledCount: 'Запланировано',
+        upcoming: 'Предстоящие',
+        finished: 'Завершённые',
+        all: 'Все',
         allTournaments: 'Все турниры',
         noMatches: 'Матчей пока нет',
         noMatchesSubtitle: 'Матчи появятся здесь после создания расписания турниров!',
-        finished: 'Завершён',
-        scheduled: 'Запланирован',
         live: 'Live'
     },
 
     // Statistics section
     statistics: {
+        global: 'Общая статистика',
         tournaments: 'Турниры',
         teams: 'Команды',
         matches: 'Матчи',
         players: 'Игроки',
         goals: 'Всего голов',
         topScorers: 'Лучшие бомбардиры',
-        topTeams: 'Лучшие команды',
+        topAssists: 'Лучшие ассистенты',
         noData: 'Данных пока нет',
         noTeam: 'Без команды',
         gamesPlayed: 'игр',
         error: 'Не удалось загрузить статистику',
-        errorSubtitle: 'Попробуйте обновить страницу'
+        errorSubtitle: 'Попробуйте обновить страницу',
+        standings: 'Турнирная таблица'
     },
 
     // Footer
     footer: {
         description: 'Лучшая платформа для управления футбольными турнирами.',
         quickLinks: 'Навигация',
-        contact: 'Контакты',
-        location: 'Москва, Россия',
-        followUs: 'Мы в соцсетях',
         rights: 'Все права защищены.',
         madeWith: 'Сделано с <i class="fas fa-heart"></i> для футбола'
-    },
-
-    // Sections coming soon
-    comingSoon: {
-        title: 'Скоро',
-        matchesSubtitle: 'Календарь матчей скоро будет доступен!',
-        statisticsSubtitle: 'Статистика будет доступна после проведения матчей!'
     },
 
     // Messages
@@ -324,18 +327,20 @@ I18n.registerTranslations('ru', {
             onlyOrganizers: 'Только организаторы могут создавать турниры',
             onlyCoaches: 'Только тренеры могут создавать команды',
             joinFailed: 'Не удалось присоединиться к турниру',
+            leaveFailed: 'Не удалось покинуть турнир',
             generateFixturesFailed: 'Не удалось создать расписание',
             loadMatchDetails: 'Не удалось загрузить данные матча',
-            updateScoreFailed: 'Не удалось обновить счет',
+            finishMatchFailed: 'Не удалось завершить матч',
             addGoalFailed: 'Не удалось добавить гол',
             addCardFailed: 'Не удалось добавить карточку',
+            deleteEventFailed: 'Не удалось удалить событие',
             allFieldsRequired: 'Все поля обязательны',
             teamAndPlayerRequired: 'Укажите команду и игрока',
-            enterEmail: 'Введите email для поиска',
             searchFailed: 'Ошибка поиска игроков',
             addPlayerFailed: 'Не удалось добавить игрока',
             removePlayerFailed: 'Не удалось удалить игрока',
-            loadPlayersFailed: 'Не удалось загрузить игроков'
+            loadPlayersFailed: 'Не удалось загрузить игроков',
+            deleteTeamFailed: 'Не удалось удалить команду'
         }
     },
 

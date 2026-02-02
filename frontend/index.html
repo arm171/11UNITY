@@ -153,10 +153,10 @@
                 <div class="filters-row" style="text-align: center; margin-bottom: 32px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
                     <!-- Category filter -->
                     <select class="form-select" id="tournaments-category-filter" style="max-width: 200px;">
-                        <option value="all" data-i18n="tournaments.allCategories">All Categories</option>
-                        <option value="school" data-i18n="tournaments.school">School</option>
-                        <option value="university" data-i18n="tournaments.university">University</option>
-                        <option value="amateur" data-i18n="tournaments.amateur">Amateur</option>
+                        <option value="" data-i18n="tournaments.allCategories">All Categories</option>
+                        <option value="school" data-i18n="tournaments.categories.school">School</option>
+                        <option value="university" data-i18n="tournaments.categories.university">University</option>
+                        <option value="amateur" data-i18n="tournaments.categories.amateur">Amateur</option>
                     </select>
 
                     <!-- Create Tournament Button (only for organizers) -->
@@ -240,7 +240,7 @@
                     </div>
                     <div class="stat-card">
                         <span class="stat-number" id="finished-matches">0</span>
-                        <span class="stat-label" data-i18n="matches.finishedCount">Finished</span>
+                        <span class="stat-label" data-i18n="matches.finished">Finished</span>
                     </div>
                 </div>
 
@@ -250,9 +250,9 @@
                         <option value="all" data-i18n="matches.allTournaments">All Tournaments</option>
                     </select>
                     <select class="form-select" id="matches-status-filter" style="max-width: 200px;">
-                        <option value="all" data-i18n="matches.allStatuses">All</option>
+                        <option value="all" data-i18n="matches.all">All</option>
                         <option value="upcoming" data-i18n="matches.upcoming">Upcoming</option>
-                        <option value="finished" data-i18n="matches.finishedCount">Finished</option>
+                        <option value="finished" data-i18n="matches.finished">Finished</option>
                     </select>
                 </div>
 

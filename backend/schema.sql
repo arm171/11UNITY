@@ -4,14 +4,14 @@
 -- ===============================================
 
 -- Drop database if exists (CAREFUL IN PRODUCTION!)
--- DROP DATABASE IF EXISTS 11unity;
+-- DROP DATABASE IF EXISTS 11UNITY_db;
 
 -- Create database
-CREATE DATABASE IF NOT EXISTS 11unity
+CREATE DATABASE IF NOT EXISTS 11UNITY_db
 CHARACTER SET utf8mb4
 COLLATE utf8mb4_unicode_ci;
 
-USE 11unity;
+USE 11UNITY_db;
 
 -- ===============================================
 -- USERS TABLE

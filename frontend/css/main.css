@@ -210,6 +210,230 @@ section h2 {
     line-height: 1.6;
 }
 
+/* ========== PROFILE DASHBOARD (replaces hero for logged-in users) ========== */
+
+.profile-dashboard {
+    padding: var(--space-2xl);
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xl);
+    margin-bottom: var(--space-xl);
+}
+
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: white;
+    flex-shrink: 0;
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-info h2 {
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--space-xs);
+    text-align: left;
+}
+
+.profile-email {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-sm);
+}
+
+.profile-role-badge {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-md);
+    background: rgba(46, 204, 113, 0.2);
+    color: var(--color-primary);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    text-transform: capitalize;
+}
+
+.profile-stats {
+    margin-top: var(--space-lg);
+}
+
+.profile-stat-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-lg);
+}
+
+.profile-stat-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+}
+
+.profile-stat-card i {
+    font-size: var(--font-size-xl);
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.profile-stat-card strong {
+    display: block;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+}
+
+.profile-stat-card span {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.profile-no-data {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-base);
+    text-align: center;
+    padding: var(--space-lg);
+}
+
+/* ========== SECTION FILTERS ========== */
+
+.section-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xl);
+}
+
+.section-filter select {
+    padding: var(--space-sm) var(--space-lg);
+    padding-right: 36px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%232ecc71' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: all var(--transition-base);
+}
+
+.section-filter select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.section-filter select option {
+    background: #1a1a1a;
+    color: var(--color-text-primary);
+}
+
+/* ========== STAT CARD MINI (Team details modal) ========== */
+
+.stat-card-mini {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    text-align: center;
+}
+
+.stat-card-mini-number {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.stat-card-mini-label {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ========== STANDINGS TABLE (Statistics page) ========== */
+
+.standings-section {
+    margin-bottom: var(--space-2xl);
+}
+
+.standings-table-container {
+    overflow-x: auto;
+}
+
+.standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--color-text-primary);
+}
+
+.standings-table thead tr {
+    background: rgba(46, 204, 113, 0.15);
+}
+
+.standings-table th {
+    padding: var(--space-md);
+    text-align: center;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.standings-table th.team-col {
+    text-align: left;
+}
+
+.standings-table td {
+    padding: var(--space-md);
+    text-align: center;
+    font-size: var(--font-size-sm);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.standings-table td.team-col {
+    text-align: left;
+}
+
+.standings-table td.points-col {
+    color: var(--color-primary);
+    font-size: var(--font-size-base);
+}
+
+.standings-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.team-logo-tiny {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: var(--font-weight-bold);
+    color: white;
+    flex-shrink: 0;
+}
+
 /* ========== STATISTICS (УМЕНЬШЕННЫЕ) ========== */
 
 .stats-grid {
@@ -461,11 +685,13 @@ section h2 i {
     flex: 1;
 }
 
-.match-team.home {
+.match-team.home,
+.match-team.team1 {
     justify-content: flex-start;
 }
 
-.match-team.away {
+.match-team.away,
+.match-team.team2 {
     justify-content: flex-end;
 }
 
@@ -950,6 +1176,31 @@ section h2 i {
 
     .stat-number {
         font-size: 32px;
+    }
+
+    /* Profile responsive */
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .profile-info h2 {
+        text-align: center;
+    }
+
+    .profile-stat-cards {
+        grid-template-columns: 1fr;
+    }
+
+    /* Standings table responsive */
+    .standings-table-container {
+        margin: 0 calc(-1 * var(--space-md));
+    }
+
+    .standings-table th,
+    .standings-table td {
+        padding: var(--space-sm);
+        font-size: var(--font-size-xs);
     }
 
     /* Matches responsive */

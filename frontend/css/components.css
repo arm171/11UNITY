@@ -55,6 +55,53 @@
     border-color: var(--color-primary);
 }
 
+/* Danger кнопка */
+.btn-danger {
+    background: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+    border: 1px solid rgba(231, 76, 60, 0.4);
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #e74c3c;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Success кнопка */
+.btn-success {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+}
+
+.btn-success:hover:not(:disabled) {
+    background: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-primary);
+}
+
+/* Icon-only кнопка */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.btn-icon:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
 /* Outline кнопка */
 .btn-outline {
     background: transparent;
@@ -602,7 +649,7 @@
     transition: transform var(--transition-base);
 }
 
-.lang-dropdown.show + .lang-btn i:last-child,
+.lang-dropdown.active + .lang-btn i:last-child,
 .lang-btn:focus i:last-child {
     transform: rotate(180deg);
 }
@@ -624,7 +671,7 @@
     overflow: hidden;
 }
 
-.lang-dropdown.show {
+.lang-dropdown.active {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);

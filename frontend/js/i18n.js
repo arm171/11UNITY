@@ -194,7 +194,7 @@ const I18n = {
 
         langBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            langDropdown.classList.toggle('show');
+            langDropdown.classList.toggle('active');
         });
 
         document.querySelectorAll('.lang-option').forEach(btn => {
@@ -202,13 +202,13 @@ const I18n = {
                 e.stopPropagation();
                 const lang = btn.getAttribute('data-lang');
                 this.setLanguage(lang);
-                langDropdown.classList.remove('show');
+                langDropdown.classList.remove('active');
             });
         });
 
         // Close dropdown on outside click
         document.addEventListener('click', () => {
-            langDropdown.classList.remove('show');
+            langDropdown.classList.remove('active');
         });
     },
 

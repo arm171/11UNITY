@@ -334,7 +334,7 @@ const Auth = {
         try {
             if (user.role === 'coach') {
                 // Show team info
-                const response = await API.request('/api/teams');
+                const response = await API.request(CONFIG.ENDPOINTS.TEAMS);
                 const myTeam = response.teams?.find(t => t.coach_id === user.id);
 
                 if (myTeam) {
@@ -359,11 +359,11 @@ const Auth = {
                     `;
                 } else {
                     statsContainer.innerHTML = `
-                        <p class="profile-no-data">${window.I18n ? I18n.t('teams.noTeamYet') : 'You have not created a team yet'}</p>
+                        <p class="profile-no-data">${window.I18n ? I18n.t('profile.noTeam') : 'No team yet'}</p>
                     `;
                 }
             } else if (user.role === 'organizer') {
-                const response = await API.request('/api/tournaments');
+                const response = await API.request(CONFIG.ENDPOINTS.TOURNAMENTS);
                 const myTournaments = response.tournaments?.filter(t => t.organizer_id === user.id) || [];
 
                 if (myTournaments.length > 0) {

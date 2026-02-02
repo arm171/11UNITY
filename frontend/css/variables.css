@@ -15,6 +15,7 @@
     --color-bg-darker: #0f0f0f;         /* Очень тёмный фон */
     --color-bg-card: rgba(0, 0, 0, 0.7); /* Прозрачные карточки */
     --color-bg-modal: rgba(0, 0, 0, 0.9); /* Фон модалок */
+    --color-surface: #1e1e1e;           /* Surface (dropdown bg) */
     
     /* Текст */
     --color-text-primary: #ffffff;      /* Белый текст */

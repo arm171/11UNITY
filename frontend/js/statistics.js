@@ -199,15 +199,15 @@ const Statistics = {
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th class="team-col">${t('statistics.team')}</th>
-                            <th>${t('statistics.played_short')}</th>
-                            <th>${t('statistics.won_short')}</th>
-                            <th>${t('statistics.drawn_short')}</th>
-                            <th>${t('statistics.lost_short')}</th>
-                            <th>${t('statistics.gf_short')}</th>
-                            <th>${t('statistics.ga_short')}</th>
-                            <th>${t('statistics.gd_short')}</th>
-                            <th class="points-col">${t('statistics.pts')}</th>
+                            <th class="team-col">${t('stats.team')}</th>
+                            <th>${t('stats.played')}</th>
+                            <th>${t('stats.won')}</th>
+                            <th>${t('stats.drawn')}</th>
+                            <th>${t('stats.lost')}</th>
+                            <th>${t('stats.goalsFor')}</th>
+                            <th>${t('stats.goalsAgainst')}</th>
+                            <th>${t('stats.goalDifference')}</th>
+                            <th class="points-col">${t('stats.points')}</th>
                         </tr>
                     </thead>
                     <tbody>

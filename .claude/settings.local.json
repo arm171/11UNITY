@@ -13,7 +13,11 @@
       "Bash(findstr:*)",
       "Bash(findstr /r \"\\\\.js$ \\\\.css$ \\\\.html$ \\\\.json$ \\\\.sql$\")",
       "Bash(tree:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(mysql:*)",
+      "Bash(where:*)",
+      "Bash(powershell:*)",
+      "Bash(sc query:*)"
     ]
   }
 }
