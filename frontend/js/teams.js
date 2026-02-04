@@ -328,7 +328,7 @@ const Teams = {
         const color = document.getElementById('team-color').value;
         const preview = document.getElementById('team-logo-preview');
         if (preview) {
-            preview.textContent = name.length >= 2 ? name.substring(0, 2).toUpperCase() : '--';
+            preview.textContent = name.length >= 2 ? name.replace(/\s+/g, '').substring(0, 3).toUpperCase() : '--';
             preview.style.background = color;
         }
     },
@@ -440,7 +440,7 @@ const Teams = {
 
         card.innerHTML = `
             <div class="team-logo" style="background: ${team.logo_color || '#2ecc71'}">
-                ${team.logo || team.name.substring(0, 2).toUpperCase()}
+                ${team.logo || team.name.replace(/\s+/g, '').substring(0, 3).toUpperCase()}
             </div>
 
             <h3 class="team-name">${team.name}</h3>
@@ -496,7 +496,7 @@ const Teams = {
             document.getElementById('modal-team-coach').textContent = fullTeam.coach_name || '';
 
             const logo = document.getElementById('modal-team-logo');
-            logo.textContent = fullTeam.logo || fullTeam.name.substring(0, 2).toUpperCase();
+            logo.textContent = fullTeam.logo || fullTeam.name.replace(/\s+/g, '').substring(0, 3).toUpperCase();
             logo.style.background = fullTeam.logo_color || '#2ecc71';
 
             // Tournament info
@@ -654,7 +654,7 @@ const Teams = {
         }
 
         try {
-            const response = await API.request(`/api/teams/${this.currentTeamId}/players/search?query=${encodeURIComponent(query)}`);
+            const response = await API.request(`/teams/${this.currentTeamId}/players/search?query=${encodeURIComponent(query)}`);
             const players = response.players || [];
 
             const resultsContainer = document.getElementById('search-results');
@@ -742,6 +742,11 @@ const Teams = {
 
             await this.load();
 
+            // Refresh profile stats (player count)
+            if (window.Auth && Auth.updateProfileStats) {
+                Auth.updateProfileStats(API.getUser());
+            }
+
         } catch (error) {
             console.error('Failed to add player:', error);
             UI.showNotification(error.message || 'Failed to add player', 'error');
@@ -774,6 +779,11 @@ const Teams = {
 
             await this.load();
 
+            // Refresh profile stats (player count)
+            if (window.Auth && Auth.updateProfileStats) {
+                Auth.updateProfileStats(API.getUser());
+            }
+
         } catch (error) {
             console.error('Failed to remove player:', error);
             UI.showNotification(error.message || 'Failed to remove player', 'error');
@@ -786,7 +796,7 @@ const Teams = {
         }
 
         try {
-            await API.request(`/api/teams/${this.currentTeamId}`, { method: 'DELETE' });
+            await API.request(`/teams/${this.currentTeamId}`, { method: 'DELETE' });
 
             UI.showNotification(window.I18n ? I18n.t('teams.teamDeleted') : 'Team deleted', 'success');
             this.closeDetailsModal();
@@ -819,6 +829,16 @@ const Teams = {
 
             this.closeCreateModal();
             await this.load();
+
+            // Refresh profile section to show new team
+            if (window.Auth && Auth.updateProfileStats) {
+                Auth.updateProfileStats(API.getUser());
+            }
+
+            // Refresh statistics
+            if (window.Statistics && Statistics.load) {
+                Statistics.load();
+            }
 
         } catch (error) {
             console.error('Failed to create team:', error);

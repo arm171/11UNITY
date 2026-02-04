@@ -401,10 +401,57 @@ const Auth = {
                         <p class="profile-no-data">${window.I18n ? I18n.t('tournaments.noTournaments') : 'No tournaments yet'}</p>
                     `;
                 }
-            } else {
-                // Player
-                statsContainer.innerHTML = '';
-                // Could add player's team info here if needed
+            } else if (user.role === 'player') {
+                // Show player's team info
+                const response = await API.request(CONFIG.ENDPOINTS.TEAMS);
+                const allTeams = response.teams || [];
+                // Find team where this player is a member (need to check via team details)
+                let playerTeam = null;
+                for (const team of allTeams) {
+                    try {
+                        const teamResponse = await API.getTeamById(team.id);
+                        const players = teamResponse.team?.players || [];
+                        if (players.find(p => p.player_id === user.id)) {
+                            playerTeam = teamResponse.team;
+                            break;
+                        }
+                    } catch (e) { /* skip */ }
+                }
+
+                if (playerTeam) {
+                    const myPlayerInfo = playerTeam.players.find(p => p.player_id === user.id);
+                    statsContainer.innerHTML = `
+                        <div class="profile-stat-cards">
+                            <div class="profile-stat-card">
+                                <i class="fas fa-users"></i>
+                                <div>
+                                    <strong>${playerTeam.name}</strong>
+                                    <span>${window.I18n ? I18n.t('teams.title') : 'Team'}</span>
+                                </div>
+                            </div>
+                            ${myPlayerInfo?.position ? `
+                            <div class="profile-stat-card">
+                                <i class="fas fa-running"></i>
+                                <div>
+                                    <strong>${myPlayerInfo.position}</strong>
+                                    <span>${window.I18n ? I18n.t('addPlayer.position') : 'Position'}</span>
+                                </div>
+                            </div>` : ''}
+                            ${myPlayerInfo?.jersey_number ? `
+                            <div class="profile-stat-card">
+                                <i class="fas fa-tshirt"></i>
+                                <div>
+                                    <strong>#${myPlayerInfo.jersey_number}</strong>
+                                    <span>${window.I18n ? I18n.t('addPlayer.jerseyNumber') : 'Jersey'}</span>
+                                </div>
+                            </div>` : ''}
+                        </div>
+                    `;
+                } else {
+                    statsContainer.innerHTML = `
+                        <p class="profile-no-data">${window.I18n ? I18n.t('profile.noTeam') : 'No team yet'}</p>
+                    `;
+                }
             }
         } catch (error) {
             console.error('Failed to load profile stats:', error);
@@ -438,6 +485,7 @@ const Auth = {
 
             if (window.Tournaments) Tournaments.load();
             if (window.Teams) Teams.load();
+            if (window.Statistics) Statistics.load();
 
         } catch (error) {
             console.error('Login failed:', error);
@@ -482,6 +530,7 @@ const Auth = {
 
             if (window.Tournaments) Tournaments.load();
             if (window.Teams) Teams.load();
+            if (window.Statistics) Statistics.load();
 
         } catch (error) {
             console.error('Registration failed:', error);

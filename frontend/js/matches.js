@@ -235,7 +235,7 @@ const Matches = {
                 <div class="match-content">
                     <div class="match-team team1">
                         <div class="team-logo-small" style="background: ${match.team1_color || '#2ecc71'}">
-                            ${match.team1_logo || match.team1_name.substring(0, 2).toUpperCase()}
+                            ${match.team1_logo || match.team1_name.replace(/\s+/g, '').substring(0, 3).toUpperCase()}
                         </div>
                         <span class="team-name">${match.team1_name}</span>
                     </div>
@@ -257,7 +257,7 @@ const Matches = {
                     <div class="match-team team2">
                         <span class="team-name">${match.team2_name}</span>
                         <div class="team-logo-small" style="background: ${match.team2_color || '#3498db'}">
-                            ${match.team2_logo || match.team2_name.substring(0, 2).toUpperCase()}
+                            ${match.team2_logo || match.team2_name.replace(/\s+/g, '').substring(0, 3).toUpperCase()}
                         </div>
                     </div>
                 </div>
@@ -271,7 +271,7 @@ const Matches = {
 
     async openDetailsModal(tournamentId, matchId) {
         try {
-            const response = await API.request(`/api/tournaments/${tournamentId}/matches/${matchId}`);
+            const response = await API.request(`/tournaments/${tournamentId}/matches/${matchId}`);
             const match = response.match;
 
             if (!match) return;
@@ -297,7 +297,7 @@ const Matches = {
                 <div class="match-details-teams">
                     <div class="match-detail-team">
                         <div class="team-logo-large" style="background: ${match.team1_color || '#2ecc71'}">
-                            ${match.team1_logo || match.team1_name.substring(0, 2).toUpperCase()}
+                            ${match.team1_logo || match.team1_name.replace(/\s+/g, '').substring(0, 3).toUpperCase()}
                         </div>
                         <span class="team-name-large">${match.team1_name}</span>
                     </div>
@@ -323,7 +323,7 @@ const Matches = {
 
                     <div class="match-detail-team">
                         <div class="team-logo-large" style="background: ${match.team2_color || '#3498db'}">
-                            ${match.team2_logo || match.team2_name.substring(0, 2).toUpperCase()}
+                            ${match.team2_logo || match.team2_name.replace(/\s+/g, '').substring(0, 3).toUpperCase()}
                         </div>
                         <span class="team-name-large">${match.team2_name}</span>
                     </div>

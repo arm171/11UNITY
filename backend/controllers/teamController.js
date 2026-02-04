@@ -28,14 +28,14 @@ const getTeams = async (req, res) => {
                 t.*,
                 u.name as coach_name,
                 COUNT(DISTINCT tp.player_id) as players_count,
-                tn.name as tournament_name,
-                tn.id as tournament_id
+                MAX(tn.name) as tournament_name,
+                MAX(tn.id) as tournament_id
             FROM teams t
             LEFT JOIN users u ON t.coach_id = u.id
             LEFT JOIN team_players tp ON t.id = tp.team_id
             LEFT JOIN tournament_teams tt ON t.id = tt.team_id
             LEFT JOIN tournaments tn ON tt.tournament_id = tn.id AND tn.status IN ('upcoming', 'active')
-            GROUP BY t.id
+            GROUP BY t.id, u.name
             ORDER BY t.created_at DESC
         `;
         const [teams] = await db.promise().query(query);
@@ -59,16 +59,16 @@ const getTeamById = async (req, res) => {
                 t.*,
                 u.name as coach_name,
                 COUNT(DISTINCT tp.player_id) as players_count,
-                tn.name as tournament_name,
-                tn.id as tournament_id,
-                tn.status as tournament_status
+                MAX(tn.name) as tournament_name,
+                MAX(tn.id) as tournament_id,
+                MAX(tn.status) as tournament_status
             FROM teams t
             LEFT JOIN users u ON t.coach_id = u.id
             LEFT JOIN team_players tp ON t.id = tp.team_id
             LEFT JOIN tournament_teams tt ON t.id = tt.team_id
             LEFT JOIN tournaments tn ON tt.tournament_id = tn.id AND tn.status IN ('upcoming', 'active')
             WHERE t.id = ?
-            GROUP BY t.id
+            GROUP BY t.id, u.name
         `;
         const [teams] = await db.promise().query(query, [id]);
 
@@ -162,8 +162,8 @@ const createTeam = async (req, res) => {
             });
         }
 
-        // Auto-generate logo from first 2 letters
-        const logo = name.trim().substring(0, 2).toUpperCase();
+        // Auto-generate logo from first 3 letters
+        const logo = name.trim().replace(/\s+/g, '').substring(0, 3).toUpperCase();
 
         const [result] = await db.promise().query(
             `INSERT INTO teams (name, logo, logo_color, description, max_players, coach_id)
@@ -250,8 +250,8 @@ const updateTeam = async (req, res) => {
             });
         }
 
-        // Auto-generate logo from first 2 letters
-        const logo = name.trim().substring(0, 2).toUpperCase();
+        // Auto-generate logo from first 3 letters
+        const logo = name.trim().replace(/\s+/g, '').substring(0, 3).toUpperCase();
 
         await db.promise().query(
             `UPDATE teams SET name = ?, logo = ?, logo_color = ?, description = ? WHERE id = ?`,

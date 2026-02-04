@@ -805,7 +805,7 @@ const Tournaments = {
                                         justify-content: center;
                                         font-weight: bold;
                                         font-size: 12px;
-                                    ">${team.team_logo || team.team_name.substring(0, 2).toUpperCase()}</div>
+                                    ">${team.team_logo || team.team_name.replace(/\s+/g, '').substring(0, 3).toUpperCase()}</div>
                                     <span>${team.team_name}</span>
                                 </div>
                             </td>

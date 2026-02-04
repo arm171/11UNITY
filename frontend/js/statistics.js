@@ -35,7 +35,7 @@ const Statistics = {
 
     async loadTournamentsList() {
         try {
-            const response = await API.request('/api/statistics/tournaments');
+            const response = await API.request('/statistics/tournaments');
             const tournaments = response.tournaments || [];
 
             const select = document.getElementById('statistics-tournament-select');
@@ -84,7 +84,7 @@ const Statistics = {
         UI.showLoading('statistics-content');
 
         try {
-            const response = await API.request(`/api/statistics/tournament/${tournamentId}`);
+            const response = await API.request(`/statistics/tournament/${tournamentId}`);
             this.tournamentData = response;
             this.render();
 
@@ -217,7 +217,7 @@ const Statistics = {
                                 <td class="team-col">
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <div class="team-logo-tiny" style="background: ${row.team_color || '#2ecc71'}">
-                                            ${row.team_logo || row.team_name.substring(0, 2).toUpperCase()}
+                                            ${row.team_logo || row.team_name.replace(/\s+/g, '').substring(0, 3).toUpperCase()}
                                         </div>
                                         ${row.team_name}
                                     </div>

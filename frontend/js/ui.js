@@ -58,6 +58,11 @@ const UI = {
         if (loader) {
             loader.remove();
         }
+
+        // Reset inline styles set by showLoading
+        container.style.display = '';
+        container.style.justifyContent = '';
+        container.style.alignItems = '';
     },
 
     // Empty state
