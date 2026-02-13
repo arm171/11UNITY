@@ -58,12 +58,14 @@ const tournamentRoutes = require('./routes/tournaments');
 const teamRoutes = require('./routes/teams');
 const matchRoutes = require('./routes/matches');
 const statisticsRoutes = require('./routes/statistics');
+const profileRoutes = require('./routes/profile');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/statistics', statisticsRoutes);
+app.use('/api/profile', profileRoutes);
 
 /**
  * Root endpoint

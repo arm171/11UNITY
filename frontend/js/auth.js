@@ -331,132 +331,265 @@ const Auth = {
         const statsContainer = document.getElementById('profile-stats');
         if (!statsContainer) return;
 
+        const t = (key, fallback) => window.I18n ? I18n.t(key) : fallback;
+
         try {
-            if (user.role === 'coach') {
-                // Show team info
-                const response = await API.request(CONFIG.ENDPOINTS.TEAMS);
-                const myTeam = response.teams?.find(t => t.coach_id === user.id);
+            const data = await API.request(CONFIG.ENDPOINTS.PROFILE_STATS);
 
-                if (myTeam) {
-                    statsContainer.innerHTML = `
-                        <div class="profile-stat-cards">
-                            <div class="profile-stat-card">
-                                <i class="fas fa-users"></i>
-                                <div>
-                                    <strong>${myTeam.name}</strong>
-                                    <span>${myTeam.players_count}/25 ${window.I18n ? I18n.t('teams.players') : 'Players'}</span>
-                                </div>
-                            </div>
-                            ${myTeam.tournament_name ? `
-                            <div class="profile-stat-card">
-                                <i class="fas fa-trophy"></i>
-                                <div>
-                                    <strong>${myTeam.tournament_name}</strong>
-                                    <span>${window.I18n ? I18n.t('tournaments.title') : 'Tournament'}</span>
-                                </div>
-                            </div>` : ''}
-                        </div>
-                    `;
-                } else {
-                    statsContainer.innerHTML = `
-                        <p class="profile-no-data">${window.I18n ? I18n.t('profile.noTeam') : 'No team yet'}</p>
-                    `;
-                }
-            } else if (user.role === 'organizer') {
-                const response = await API.request(CONFIG.ENDPOINTS.TOURNAMENTS);
-                const myTournaments = response.tournaments?.filter(t => t.organizer_id === user.id) || [];
-
-                if (myTournaments.length > 0) {
-                    const active = myTournaments.filter(t => t.status === 'active').length;
-                    const upcoming = myTournaments.filter(t => t.status === 'upcoming').length;
-                    const finished = myTournaments.filter(t => t.status === 'finished').length;
-
-                    statsContainer.innerHTML = `
-                        <div class="profile-stat-cards">
-                            <div class="profile-stat-card">
-                                <i class="fas fa-trophy"></i>
-                                <div>
-                                    <strong>${myTournaments.length}</strong>
-                                    <span>${window.I18n ? I18n.t('tournaments.total') : 'Total'}</span>
-                                </div>
-                            </div>
-                            <div class="profile-stat-card">
-                                <i class="fas fa-play"></i>
-                                <div>
-                                    <strong>${active}</strong>
-                                    <span>${window.I18n ? I18n.t('tournaments.active') : 'Active'}</span>
-                                </div>
-                            </div>
-                            <div class="profile-stat-card">
-                                <i class="fas fa-flag-checkered"></i>
-                                <div>
-                                    <strong>${finished}</strong>
-                                    <span>${window.I18n ? I18n.t('tournaments.finished') : 'Finished'}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    statsContainer.innerHTML = `
-                        <p class="profile-no-data">${window.I18n ? I18n.t('tournaments.noTournaments') : 'No tournaments yet'}</p>
-                    `;
-                }
-            } else if (user.role === 'player') {
-                // Show player's team info
-                const response = await API.request(CONFIG.ENDPOINTS.TEAMS);
-                const allTeams = response.teams || [];
-                // Find team where this player is a member (need to check via team details)
-                let playerTeam = null;
-                for (const team of allTeams) {
-                    try {
-                        const teamResponse = await API.getTeamById(team.id);
-                        const players = teamResponse.team?.players || [];
-                        if (players.find(p => p.player_id === user.id)) {
-                            playerTeam = teamResponse.team;
-                            break;
-                        }
-                    } catch (e) { /* skip */ }
-                }
-
-                if (playerTeam) {
-                    const myPlayerInfo = playerTeam.players.find(p => p.player_id === user.id);
-                    statsContainer.innerHTML = `
-                        <div class="profile-stat-cards">
-                            <div class="profile-stat-card">
-                                <i class="fas fa-users"></i>
-                                <div>
-                                    <strong>${playerTeam.name}</strong>
-                                    <span>${window.I18n ? I18n.t('teams.title') : 'Team'}</span>
-                                </div>
-                            </div>
-                            ${myPlayerInfo?.position ? `
-                            <div class="profile-stat-card">
-                                <i class="fas fa-running"></i>
-                                <div>
-                                    <strong>${myPlayerInfo.position}</strong>
-                                    <span>${window.I18n ? I18n.t('addPlayer.position') : 'Position'}</span>
-                                </div>
-                            </div>` : ''}
-                            ${myPlayerInfo?.jersey_number ? `
-                            <div class="profile-stat-card">
-                                <i class="fas fa-tshirt"></i>
-                                <div>
-                                    <strong>#${myPlayerInfo.jersey_number}</strong>
-                                    <span>${window.I18n ? I18n.t('addPlayer.jerseyNumber') : 'Jersey'}</span>
-                                </div>
-                            </div>` : ''}
-                        </div>
-                    `;
-                } else {
-                    statsContainer.innerHTML = `
-                        <p class="profile-no-data">${window.I18n ? I18n.t('profile.noTeam') : 'No team yet'}</p>
-                    `;
-                }
+            if (data.role === 'player') {
+                this.renderPlayerProfile(statsContainer, data, t);
+            } else if (data.role === 'coach') {
+                this.renderCoachProfile(statsContainer, data, t);
+            } else if (data.role === 'organizer') {
+                this.renderOrganizerProfile(statsContainer, data, t);
             }
         } catch (error) {
             console.error('Failed to load profile stats:', error);
             statsContainer.innerHTML = '';
         }
+    },
+
+    renderPlayerProfile(container, data, t) {
+        const { team, stats, recentMatches } = data;
+
+        if (!team) {
+            container.innerHTML = `<p class="profile-no-data">${t('profile.noTeam', 'No team yet')}</p>`;
+            return;
+        }
+
+        // Team info section
+        let html = `
+            <div class="profile-section-label">
+                <i class="fas fa-shield-alt"></i> ${t('profile.myTeam', 'My Team')}
+            </div>
+            <div class="profile-stat-cards">
+                <div class="profile-stat-card">
+                    <i class="fas fa-users"></i>
+                    <div>
+                        <strong>${team.team_name}</strong>
+                        <span>${t('teams.title', 'Team')}</span>
+                    </div>
+                </div>
+                ${team.position ? `
+                <div class="profile-stat-card">
+                    <i class="fas fa-running"></i>
+                    <div>
+                        <strong style="text-transform: capitalize;">${team.position}</strong>
+                        <span>${t('profile.position', 'Position')}</span>
+                    </div>
+                </div>` : ''}
+                ${team.jersey_number ? `
+                <div class="profile-stat-card">
+                    <i class="fas fa-tshirt"></i>
+                    <div>
+                        <strong>#${team.jersey_number}</strong>
+                        <span>${t('profile.jersey', 'Jersey')}</span>
+                    </div>
+                </div>` : ''}
+            </div>
+        `;
+
+        // Personal stats section
+        html += `
+            <div class="profile-section-label">
+                <i class="fas fa-chart-bar"></i> ${t('profile.personalStats', 'Personal Stats')}
+            </div>
+            <div class="profile-stat-cards">
+                <div class="profile-stat-card">
+                    <i class="fas fa-futbol"></i>
+                    <div><strong>${stats.goals}</strong><span>${t('profile.goals', 'Goals')}</span></div>
+                </div>
+                <div class="profile-stat-card">
+                    <i class="fas fa-hands-helping"></i>
+                    <div><strong>${stats.assists}</strong><span>${t('profile.assists', 'Assists')}</span></div>
+                </div>
+                <div class="profile-stat-card">
+                    <i class="fas fa-square" style="color: #f1c40f;"></i>
+                    <div><strong>${stats.yellow_cards}</strong><span>${t('profile.yellowCards', 'Yellow Cards')}</span></div>
+                </div>
+                <div class="profile-stat-card">
+                    <i class="fas fa-square" style="color: #e74c3c;"></i>
+                    <div><strong>${stats.red_cards}</strong><span>${t('profile.redCards', 'Red Cards')}</span></div>
+                </div>
+            </div>
+        `;
+
+        // Recent matches section
+        if (recentMatches && recentMatches.length > 0) {
+            html += `
+                <div class="profile-section-label">
+                    <i class="fas fa-calendar-alt"></i> ${t('profile.recentMatches', 'Recent Matches')}
+                </div>
+                <div class="profile-recent-matches">
+            `;
+
+            recentMatches.forEach(match => {
+                const result = this.getMatchResult(match, team.team_id);
+                const resultLabel = result === 'win' ? 'W' : result === 'loss' ? 'L' : 'D';
+                const date = new Date(match.match_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+
+                html += `
+                    <div class="profile-match-item">
+                        <span class="profile-match-teams">${match.team1_name} ${match.team1_score} - ${match.team2_score} ${match.team2_name}</span>
+                        <span class="profile-match-result ${result}">${resultLabel}</span>
+                        <span class="profile-match-date">${date}</span>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+        }
+
+        container.innerHTML = html;
+    },
+
+    renderCoachProfile(container, data, t) {
+        const { team, record, players, tournaments } = data;
+
+        if (!team) {
+            container.innerHTML = `<p class="profile-no-data">${t('profile.noTeam', 'No team yet')}</p>`;
+            return;
+        }
+
+        // Team overview
+        let html = `
+            <div class="profile-section-label">
+                <i class="fas fa-shield-alt"></i> ${t('profile.teamOverview', 'Team Overview')}
+            </div>
+            <div class="profile-stat-cards">
+                <div class="profile-stat-card">
+                    <div class="profile-team-logo" style="background: ${team.logo_color || '#2ecc71'};">${team.logo || team.name.replace(/\\s+/g, '').substring(0, 3).toUpperCase()}</div>
+                    <div>
+                        <strong>${team.name}</strong>
+                        <span>${team.players_count}/25 ${t('teams.players', 'Players')}</span>
+                    </div>
+                </div>
+                ${tournaments.length > 0 ? `
+                <div class="profile-stat-card">
+                    <i class="fas fa-trophy"></i>
+                    <div>
+                        <strong>${tournaments[0].name}</strong>
+                        <span class="status-badge ${tournaments[0].status}">${tournaments[0].status}</span>
+                    </div>
+                </div>` : ''}
+            </div>
+        `;
+
+        // Team record
+        html += `
+            <div class="profile-section-label">
+                <i class="fas fa-chart-line"></i> ${t('profile.teamRecord', 'Team Record')}
+            </div>
+            <div class="profile-stat-cards">
+                <div class="profile-stat-card">
+                    <i class="fas fa-futbol"></i>
+                    <div><strong>${record.total_matches}</strong><span>${t('profile.matches', 'Matches')}</span></div>
+                </div>
+                <div class="profile-stat-card">
+                    <i class="fas fa-check-circle" style="color: #2ecc71;"></i>
+                    <div><strong>${record.wins}</strong><span>${t('profile.wins', 'Wins')}</span></div>
+                </div>
+                <div class="profile-stat-card">
+                    <i class="fas fa-minus-circle" style="color: #f1c40f;"></i>
+                    <div><strong>${record.draws}</strong><span>${t('profile.draws', 'Draws')}</span></div>
+                </div>
+                <div class="profile-stat-card">
+                    <i class="fas fa-times-circle" style="color: #e74c3c;"></i>
+                    <div><strong>${record.losses}</strong><span>${t('profile.losses', 'Losses')}</span></div>
+                </div>
+                <div class="profile-stat-card">
+                    <i class="fas fa-arrow-up" style="color: #2ecc71;"></i>
+                    <div><strong>${record.goals_for}</strong><span>${t('profile.goalsFor', 'Goals For')}</span></div>
+                </div>
+                <div class="profile-stat-card">
+                    <i class="fas fa-arrow-down" style="color: #e74c3c;"></i>
+                    <div><strong>${record.goals_against}</strong><span>${t('profile.goalsAgainst', 'Goals Against')}</span></div>
+                </div>
+            </div>
+        `;
+
+        // Roster
+        if (players.length > 0) {
+            html += `
+                <div class="profile-section-label">
+                    <i class="fas fa-list"></i> ${t('profile.roster', 'Roster')}
+                </div>
+                <div class="profile-roster">
+            `;
+            players.forEach(p => {
+                html += `
+                    <div class="profile-roster-item">
+                        <span class="profile-roster-number">${p.jersey_number ? '#' + p.jersey_number : '-'}</span>
+                        <span class="profile-roster-name">${p.player_name}</span>
+                        <span class="profile-roster-position">${p.position || '-'}</span>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+        }
+
+        container.innerHTML = html;
+    },
+
+    renderOrganizerProfile(container, data, t) {
+        const { tournaments, counts } = data;
+
+        if (counts.total === 0) {
+            container.innerHTML = `<p class="profile-no-data">${t('tournaments.noTournaments', 'No tournaments yet')}</p>`;
+            return;
+        }
+
+        // Summary counts
+        let html = `
+            <div class="profile-stat-cards">
+                <div class="profile-stat-card">
+                    <i class="fas fa-trophy"></i>
+                    <div><strong>${counts.total}</strong><span>${t('profile.totalTournaments', 'Total')}</span></div>
+                </div>
+                <div class="profile-stat-card">
+                    <i class="fas fa-play" style="color: #2ecc71;"></i>
+                    <div><strong>${counts.active}</strong><span>${t('tournaments.active', 'Active')}</span></div>
+                </div>
+                <div class="profile-stat-card">
+                    <i class="fas fa-clock" style="color: #3498db;"></i>
+                    <div><strong>${counts.upcoming}</strong><span>${t('tournaments.upcoming', 'Upcoming')}</span></div>
+                </div>
+                <div class="profile-stat-card">
+                    <i class="fas fa-flag-checkered"></i>
+                    <div><strong>${counts.finished}</strong><span>${t('tournaments.finished', 'Finished')}</span></div>
+                </div>
+            </div>
+        `;
+
+        // Tournament list
+        html += `
+            <div class="profile-section-label">
+                <i class="fas fa-list"></i> ${t('profile.myTournaments', 'My Tournaments')}
+            </div>
+            <div class="profile-tournament-list">
+        `;
+
+        tournaments.forEach(tn => {
+            html += `
+                <div class="profile-tournament-item">
+                    <span class="profile-tournament-name">${tn.name}</span>
+                    <span class="status-badge ${tn.status}">${tn.status}</span>
+                    <span class="profile-tournament-teams">${tn.teams_count}/${tn.max_teams} teams</span>
+                </div>
+            `;
+        });
+
+        html += `</div>`;
+        container.innerHTML = html;
+    },
+
+    getMatchResult(match, teamId) {
+        const isTeam1 = match.team1_id === teamId;
+        const myScore = isTeam1 ? match.team1_score : match.team2_score;
+        const oppScore = isTeam1 ? match.team2_score : match.team1_score;
+        if (myScore > oppScore) return 'win';
+        if (myScore < oppScore) return 'loss';
+        return 'draw';
     },
 
     async handleLogin(e) {
@@ -550,6 +683,8 @@ const Auth = {
 
             if (window.Tournaments) Tournaments.load();
             if (window.Teams) Teams.load();
+            if (window.Matches) Matches.load();
+            if (window.Statistics) Statistics.load();
         }
     },
 

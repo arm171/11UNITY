@@ -130,7 +130,7 @@ const Statistics = {
                     <span class="stat-number">${fn(this.data.players)}</span>
                     <span class="stat-label">${t('statistics.players')}</span>
                 </div>
-                <div class="stat-card stat-card-highlight">
+                <div class="stat-card">
                     <span class="stat-number">${fn(this.data.goals)}</span>
                     <span class="stat-label">${t('statistics.goals')}</span>
                 </div>

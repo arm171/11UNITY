@@ -746,6 +746,8 @@ const Teams = {
             if (window.Auth && Auth.updateProfileStats) {
                 Auth.updateProfileStats(API.getUser());
             }
+            if (window.Statistics) Statistics.load();
+            if (window.Tournaments) Tournaments.load();
 
         } catch (error) {
             console.error('Failed to add player:', error);
@@ -783,6 +785,8 @@ const Teams = {
             if (window.Auth && Auth.updateProfileStats) {
                 Auth.updateProfileStats(API.getUser());
             }
+            if (window.Statistics) Statistics.load();
+            if (window.Tournaments) Tournaments.load();
 
         } catch (error) {
             console.error('Failed to remove player:', error);
@@ -801,6 +805,9 @@ const Teams = {
             UI.showNotification(window.I18n ? I18n.t('teams.teamDeleted') : 'Team deleted', 'success');
             this.closeDetailsModal();
             await this.load();
+            if (window.Statistics) Statistics.load();
+            if (window.Tournaments) Tournaments.load();
+            if (window.Auth) Auth.updateProfileStats(API.getUser());
 
         } catch (error) {
             console.error('Failed to delete team:', error);

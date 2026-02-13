@@ -618,40 +618,31 @@
 
 .language-switcher {
     position: relative;
-    margin-right: var(--space-lg);
 }
 
 .lang-btn {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--radius-md);
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
     color: white;
     cursor: pointer;
-    font-size: var(--font-size-sm);
+    font-size: 18px;
     transition: all var(--transition-base);
 }
 
 .lang-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(46, 204, 113, 0.1);
     border-color: var(--color-primary);
 }
 
-.lang-btn i:first-child {
+.lang-btn i {
     color: var(--color-primary);
-}
-
-.lang-btn i:last-child {
-    font-size: 10px;
-    transition: transform var(--transition-base);
-}
-
-.lang-dropdown.active + .lang-btn i:last-child,
-.lang-btn:focus i:last-child {
-    transform: rotate(180deg);
 }
 
 .lang-dropdown {
@@ -700,3 +691,63 @@
     font-weight: var(--font-weight-semibold);
 }
 
+/* ========== RESPONSIVE COMPONENTS ========== */
+
+@media (max-width: 768px) {
+    .card {
+        padding: var(--space-lg);
+    }
+
+    .card:hover {
+        transform: none;
+    }
+
+    /* Tournament tabs in modal */
+    .tournament-tab {
+        padding: var(--space-sm) var(--space-md);
+        font-size: var(--font-size-sm);
+        flex: 1;
+    }
+
+    .tournament-tab i {
+        display: none;
+    }
+
+    /* Smaller buttons on mobile */
+    .btn {
+        padding: var(--space-sm) var(--space-lg);
+        font-size: var(--font-size-sm);
+    }
+
+    .btn-lg {
+        padding: var(--space-md) var(--space-xl);
+        font-size: var(--font-size-base);
+    }
+
+    /* Empty state */
+    .empty-icon {
+        font-size: 50px;
+    }
+
+    .empty-title {
+        font-size: var(--font-size-xl);
+    }
+
+    .empty-subtitle {
+        font-size: var(--font-size-base);
+    }
+}
+
+@media (max-width: 480px) {
+    .btn {
+        padding: var(--space-sm) var(--space-md);
+    }
+
+    .modal-close {
+        top: 10px;
+        right: 10px;
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+}

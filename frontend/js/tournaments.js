@@ -677,6 +677,8 @@ const Tournaments = {
 
             this.closeCreateModal();
             await this.load();
+            if (window.Statistics) Statistics.load();
+            if (window.Auth) Auth.updateProfileStats(API.getUser());
 
         } catch (error) {
             console.error('Failed to create tournament:', error);
@@ -1078,6 +1080,9 @@ const Tournaments = {
 
             this.closeDetailsModal();
             await this.load();
+            if (window.Statistics) Statistics.load();
+            if (window.Teams) Teams.load();
+            if (window.Auth) Auth.updateProfileStats(API.getUser());
 
         } catch (error) {
             console.error('Join error:', error);
@@ -1102,6 +1107,9 @@ const Tournaments = {
 
             this.closeDetailsModal();
             await this.load();
+            if (window.Statistics) Statistics.load();
+            if (window.Teams) Teams.load();
+            if (window.Auth) Auth.updateProfileStats(API.getUser());
 
         } catch (error) {
             console.error('Leave error:', error);
@@ -1149,6 +1157,8 @@ const Tournaments = {
             UI.showNotification(I18n.t('messages.success.fixturesGenerated'), 'success');
             this.closeFixturesSettingsModal();
             await this.load();
+            if (window.Matches) Matches.load();
+            if (window.Statistics) Statistics.load();
 
         } catch (error) {
             console.error('Generate fixtures error:', error);
@@ -1401,8 +1411,8 @@ const Tournaments = {
         const players = this.getTeamPlayers(teamId);
         players.forEach(p => {
             const option = document.createElement('option');
-            option.value = p.id;
-            option.textContent = `${p.jersey_number ? '#' + p.jersey_number + ' ' : ''}${p.name}`;
+            option.value = p.player_id;
+            option.textContent = `${p.jersey_number ? '#' + p.jersey_number + ' ' : ''}${p.player_name}`;
             playerSelect.appendChild(option);
         });
     },
@@ -1424,10 +1434,10 @@ const Tournaments = {
         assistSelect.disabled = false;
         const players = this.getTeamPlayers(teamId);
         players.forEach(p => {
-            if (String(p.id) === String(playerId)) return; // exclude scorer
+            if (String(p.player_id) === String(playerId)) return; // exclude scorer
             const option = document.createElement('option');
-            option.value = p.id;
-            option.textContent = `${p.jersey_number ? '#' + p.jersey_number + ' ' : ''}${p.name}`;
+            option.value = p.player_id;
+            option.textContent = `${p.jersey_number ? '#' + p.jersey_number + ' ' : ''}${p.player_name}`;
             assistSelect.appendChild(option);
         });
     },
@@ -1443,8 +1453,8 @@ const Tournaments = {
         const players = this.getTeamPlayers(teamId);
         players.forEach(p => {
             const option = document.createElement('option');
-            option.value = p.id;
-            option.textContent = `${p.jersey_number ? '#' + p.jersey_number + ' ' : ''}${p.name}`;
+            option.value = p.player_id;
+            option.textContent = `${p.jersey_number ? '#' + p.jersey_number + ' ' : ''}${p.player_name}`;
             playerSelect.appendChild(option);
         });
     },
@@ -1588,6 +1598,9 @@ const Tournaments = {
             form.reset();
             this.populateTeamDropdowns();
 
+            if (window.Statistics) Statistics.load();
+            if (window.Matches) Matches.load();
+
         } catch (error) {
             console.error('Add goal error:', error);
             UI.showNotification(error.message || I18n.t('messages.error.addGoalFailed'), 'error');
@@ -1635,6 +1648,9 @@ const Tournaments = {
             form.reset();
             this.populateTeamDropdowns();
 
+            if (window.Statistics) Statistics.load();
+            if (window.Matches) Matches.load();
+
         } catch (error) {
             console.error('Add card error:', error);
             UI.showNotification(error.message || I18n.t('messages.error.addCardFailed'), 'error');
@@ -1657,6 +1673,9 @@ const Tournaments = {
             this.currentMatch = response.match;
             this.updateScoreDisplay();
             this.loadMatchEvents();
+
+            if (window.Statistics) Statistics.load();
+            if (window.Matches) Matches.load();
 
         } catch (error) {
             console.error('Delete event error:', error);
@@ -1681,6 +1700,9 @@ const Tournaments = {
 
             this.closeMatchResultsModal();
             await this.load();
+            if (window.Matches) Matches.load();
+            if (window.Statistics) Statistics.load();
+            if (window.Auth) Auth.updateProfileStats(API.getUser());
 
         } catch (error) {
             console.error('Finish match error:', error);
