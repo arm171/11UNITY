@@ -71,7 +71,12 @@ I18n.registerTranslations('en', {
         draws: 'Draws',
         losses: 'Losses',
         goalsFor: 'Goals For',
-        goalsAgainst: 'Goals Against'
+        goalsAgainst: 'Goals Against',
+        editProfile: 'Edit Profile',
+        changePasswordHint: 'Leave password fields empty to keep current password',
+        currentPassword: 'Current Password',
+        newPassword: 'New Password',
+        currentPasswordRequired: 'Enter current password to change it'
     },
 
     // Auth
@@ -149,7 +154,10 @@ I18n.registerTranslations('en', {
         joinSuccess: 'Successfully joined the tournament!',
         leaveSuccess: 'Successfully left the tournament!',
         round: 'Round {num}',
-        teamsJoined: '{current}/{max} teams'
+        teamsJoined: '{current}/{max} teams',
+        editTournament: 'Edit Tournament',
+        deleteTournament: 'Delete Tournament',
+        deleteTournamentConfirm: 'Are you sure you want to delete this tournament?'
     },
 
     // Fixtures settings
@@ -227,6 +235,7 @@ I18n.registerTranslations('en', {
         losses: 'Losses',
         goalsFor: 'Goals For',
         goalsAgainst: 'Goals Against',
+        editTeam: 'Edit Team',
         deleteTeam: 'Delete Team',
         deleteTeamConfirm: 'Are you sure you want to delete this team?',
         teamDeleted: 'Team deleted!',
@@ -332,7 +341,11 @@ I18n.registerTranslations('en', {
             tournamentCreated: 'Tournament created successfully!',
             teamCreated: 'Team created successfully!',
             logout: 'Logged out successfully!',
-            fixturesGenerated: 'Fixtures generated successfully!'
+            fixturesGenerated: 'Fixtures generated successfully!',
+            tournamentUpdated: 'Tournament updated successfully!',
+            tournamentDeleted: 'Tournament deleted!',
+            teamUpdated: 'Team updated successfully!',
+            profileUpdated: 'Profile updated successfully!'
         },
         error: {
             loginFailed: 'Login failed. Please check your credentials.',

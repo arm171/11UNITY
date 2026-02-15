@@ -117,9 +117,14 @@
                             <p id="profile-user-email" class="profile-email"></p>
                             <span class="profile-role-badge" id="profile-user-role"></span>
                         </div>
-                        <button class="btn btn-outline btn-sm" id="logout-btn">
-                            <i class="fas fa-sign-out-alt"></i> <span data-i18n="auth.logout">Logout</span>
-                        </button>
+                        <div class="profile-actions">
+                            <button class="btn btn-outline btn-sm" id="edit-profile-btn" onclick="Auth.openEditProfileModal()">
+                                <i class="fas fa-edit"></i> <span data-i18n="profile.editProfile">Edit Profile</span>
+                            </button>
+                            <button class="btn btn-outline btn-sm" id="logout-btn">
+                                <i class="fas fa-sign-out-alt"></i> <span data-i18n="auth.logout">Logout</span>
+                            </button>
+                        </div>
                     </div>
                     <div class="profile-stats" id="profile-stats">
                         <!-- Dynamic content based on role -->

@@ -71,7 +71,12 @@ I18n.registerTranslations('ru', {
         draws: 'Ничьи',
         losses: 'Поражения',
         goalsFor: 'Голы забитые',
-        goalsAgainst: 'Голы пропущенные'
+        goalsAgainst: 'Голы пропущенные',
+        editProfile: 'Редактировать профиль',
+        changePasswordHint: 'Оставьте поля пароля пустыми, чтобы сохранить текущий',
+        currentPassword: 'Текущий пароль',
+        newPassword: 'Новый пароль',
+        currentPasswordRequired: 'Введите текущий пароль для его изменения'
     },
 
     // Auth
@@ -149,7 +154,10 @@ I18n.registerTranslations('ru', {
         joinSuccess: 'Вы успешно присоединились к турниру!',
         leaveSuccess: 'Вы покинули турнир!',
         round: 'Тур {num}',
-        teamsJoined: '{current}/{max} команд'
+        teamsJoined: '{current}/{max} команд',
+        editTournament: 'Редактировать турнир',
+        deleteTournament: 'Удалить турнир',
+        deleteTournamentConfirm: 'Вы уверены, что хотите удалить этот турнир?'
     },
 
     // Fixtures settings
@@ -227,6 +235,7 @@ I18n.registerTranslations('ru', {
         losses: 'Поражения',
         goalsFor: 'Забито',
         goalsAgainst: 'Пропущено',
+        editTeam: 'Редактировать команду',
         deleteTeam: 'Удалить команду',
         deleteTeamConfirm: 'Вы уверены, что хотите удалить эту команду?',
         teamDeleted: 'Команда удалена!',
@@ -332,7 +341,11 @@ I18n.registerTranslations('ru', {
             tournamentCreated: 'Турнир успешно создан!',
             teamCreated: 'Команда успешно создана!',
             logout: 'Вы вышли из системы!',
-            fixturesGenerated: 'Расписание успешно создано!'
+            fixturesGenerated: 'Расписание успешно создано!',
+            tournamentUpdated: 'Турнир успешно обновлён!',
+            tournamentDeleted: 'Турнир удалён!',
+            teamUpdated: 'Команда успешно обновлена!',
+            profileUpdated: 'Профиль успешно обновлён!'
         },
         error: {
             loginFailed: 'Ошибка входа. Проверьте данные.',

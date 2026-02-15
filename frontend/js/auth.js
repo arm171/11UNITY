@@ -688,6 +688,126 @@ const Auth = {
         }
     },
 
+    openEditProfileModal() {
+        const user = API.getUser();
+        if (!user) return;
+
+        // Create modal if it doesn't exist
+        let modal = document.getElementById('edit-profile-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.id = 'edit-profile-modal';
+            modal.innerHTML = `
+                <div class="modal-overlay"></div>
+                <div class="modal-content">
+                    <button class="modal-close" onclick="Auth.closeEditProfileModal()">&times;</button>
+                    <h2 style="margin-bottom: 32px; text-align: center; color: white;">
+                        <i class="fas fa-user-edit"></i> ${window.I18n ? I18n.t('profile.editProfile') : 'Edit Profile'}
+                    </h2>
+                    <form id="edit-profile-form" onsubmit="Auth.handleEditProfile(event)">
+                        <div class="form-group">
+                            <label class="form-label">${window.I18n ? I18n.t('auth.name') : 'Name'}</label>
+                            <input type="text" class="form-input" id="edit-profile-name" minlength="2" maxlength="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">${window.I18n ? I18n.t('auth.email') : 'Email'}</label>
+                            <input type="email" class="form-input" id="edit-profile-email" required>
+                        </div>
+                        <hr style="border-color: rgba(255,255,255,0.1); margin: 24px 0;">
+                        <p style="color: #b0b0b0; font-size: 14px; margin-bottom: 16px;">
+                            ${window.I18n ? I18n.t('profile.changePasswordHint') : 'Leave password fields empty to keep current password'}
+                        </p>
+                        <div class="form-group">
+                            <label class="form-label">${window.I18n ? I18n.t('profile.currentPassword') : 'Current Password'}</label>
+                            <input type="password" class="form-input" id="edit-profile-current-password" minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">${window.I18n ? I18n.t('profile.newPassword') : 'New Password'}</label>
+                            <input type="password" class="form-input" id="edit-profile-new-password" minlength="6">
+                        </div>
+                        <div style="display: flex; gap: 16px; margin-top: 24px;">
+                            <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="Auth.closeEditProfileModal()">
+                                ${window.I18n ? I18n.t('common.cancel') : 'Cancel'}
+                            </button>
+                            <button type="submit" class="btn btn-primary" style="flex: 1;">
+                                <span class="btn-text">${window.I18n ? I18n.t('common.save') : 'Save'}</span>
+                                <div class="spinner" style="display: none;"></div>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // Close on overlay click
+            modal.querySelector('.modal-overlay').addEventListener('click', () => this.closeEditProfileModal());
+        }
+
+        // Fill current values
+        document.getElementById('edit-profile-name').value = user.name || '';
+        document.getElementById('edit-profile-email').value = user.email || '';
+        document.getElementById('edit-profile-current-password').value = '';
+        document.getElementById('edit-profile-new-password').value = '';
+
+        UI.openModal('edit-profile-modal');
+    },
+
+    closeEditProfileModal() {
+        UI.closeModal('edit-profile-modal');
+    },
+
+    async handleEditProfile(e) {
+        e.preventDefault();
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        UI.showButtonLoading(submitBtn);
+
+        try {
+            const data = {
+                name: document.getElementById('edit-profile-name').value.trim(),
+                email: document.getElementById('edit-profile-email').value.trim(),
+            };
+
+            const currentPassword = document.getElementById('edit-profile-current-password').value;
+            const newPassword = document.getElementById('edit-profile-new-password').value;
+
+            if (newPassword) {
+                if (!currentPassword) {
+                    UI.showNotification(window.I18n ? I18n.t('profile.currentPasswordRequired') : 'Enter current password', 'error');
+                    UI.hideButtonLoading(submitBtn);
+                    return;
+                }
+                data.currentPassword = currentPassword;
+                data.newPassword = newPassword;
+            }
+
+            const response = await API.updateProfile(data);
+
+            // Update local user data
+            if (response.user) {
+                const stored = API.getUser() || {};
+                stored.name = response.user.name;
+                stored.email = response.user.email;
+                API.setUser(stored);
+            }
+
+            UI.showNotification(window.I18n ? I18n.t('messages.success.profileUpdated') : 'Profile updated', 'success');
+            this.closeEditProfileModal();
+
+            // Refresh profile display
+            const user = API.getUser();
+            this.updateUI(user);
+            this.updateProfileStats(user);
+
+        } catch (error) {
+            console.error('Failed to update profile:', error);
+            UI.showNotification(error.message || 'Failed to update profile', 'error');
+        } finally {
+            UI.hideButtonLoading(submitBtn);
+        }
+    },
+
     updateUI() {
         const getStartedBtn = document.getElementById('get-started-btn');
         const profileBtn = document.getElementById('profile-btn');

@@ -121,6 +121,103 @@ const Tournaments = {
                 </div>
             </div>
 
+            <!-- Edit Tournament Modal -->
+            <div class="modal" id="edit-tournament-modal">
+                <div class="modal-overlay"></div>
+                <div class="modal-content">
+                    <button class="modal-close" id="close-edit-tournament">&times;</button>
+
+                    <h2 style="margin-bottom: 32px; text-align: center; color: white;">
+                        <i class="fas fa-edit"></i> <span data-i18n="tournaments.editTournament">Edit Tournament</span>
+                    </h2>
+
+                    <form id="edit-tournament-form">
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="tournaments.tournamentName">Tournament Name</label>
+                            <input
+                                type="text"
+                                class="form-input"
+                                id="edit-tournament-name"
+                                data-i18n-placeholder="tournaments.tournamentNamePlaceholder"
+                                placeholder="Champions League 2026"
+                                minlength="3"
+                                maxlength="100"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="tournaments.category">Category</label>
+                            <select class="form-select" id="edit-tournament-category" required>
+                                <option value="" data-i18n="tournaments.selectCategory">Select category</option>
+                                <option value="school" data-i18n="tournaments.categories.school">School</option>
+                                <option value="university" data-i18n="tournaments.categories.university">University</option>
+                                <option value="amateur" data-i18n="tournaments.categories.amateur">Amateur</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="tournaments.type">Type</label>
+                            <select class="form-select" id="edit-tournament-type" required>
+                                <option value="" data-i18n="tournaments.selectType">Select type</option>
+                                <option value="league" data-i18n="tournaments.types.league">League (All vs All)</option>
+                                <option value="playoff" data-i18n="tournaments.types.playoff">Playoff (Knockout)</option>
+                                <option value="group_playoff" data-i18n="tournaments.types.group_playoff">Group + Playoff</option>
+                            </select>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="tournaments.startDate">Start Date</label>
+                                <input
+                                    type="date"
+                                    class="form-input"
+                                    id="edit-tournament-start-date"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="tournaments.maxTeams">Maximum Teams</label>
+                                <select class="form-select" id="edit-tournament-max-teams" required>
+                                    <option value="" data-i18n="tournaments.selectTypeFirst">Select type first</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="tournaments.minPlayersPerTeam">Min Players Per Team</label>
+                            <select class="form-select" id="edit-tournament-min-players" required>
+                                <option value="7">7</option>
+                                <option value="9">9</option>
+                                <option value="11" selected>11</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="tournaments.description">Description</label>
+                            <textarea
+                                class="form-textarea"
+                                id="edit-tournament-description"
+                                data-i18n-placeholder="tournaments.descriptionPlaceholder"
+                                placeholder="Tournament details..."
+                                rows="4"
+                            ></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 16px; margin-top: 24px;">
+                            <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="Tournaments.closeEditModal()">
+                                <span data-i18n="common.cancel">Cancel</span>
+                            </button>
+                            <button type="submit" class="btn btn-primary" style="flex: 1;">
+                                <span class="btn-text" data-i18n="tournaments.saveTournament">Save Changes</span>
+                                <div class="spinner" style="display: none;"></div>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <!-- Tournament Details Modal -->
             <div class="modal" id="tournament-details-modal">
                 <div class="modal-overlay"></div>
@@ -165,6 +262,17 @@ const Tournaments = {
                         <p id="join-tournament-status" style="margin-top: 16px; display: none; font-size: 16px; font-weight: 600;">
                             <i class="fas fa-check-circle"></i> <span id="join-status-text"></span>
                         </p>
+                    </div>
+
+                    <div id="tournament-owner-actions" style="display: none; margin-bottom: 24px; text-align: center;">
+                        <div style="display: flex; gap: 12px; justify-content: center;">
+                            <button class="btn btn-secondary" id="edit-tournament-btn">
+                                <i class="fas fa-edit"></i> <span data-i18n="tournaments.editTournament">Edit Tournament</span>
+                            </button>
+                            <button class="btn btn-danger" id="delete-tournament-btn">
+                                <i class="fas fa-trash"></i> <span data-i18n="tournaments.deleteTournament">Delete Tournament</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div style="text-align: center; margin-bottom: 32px;">
@@ -481,10 +589,22 @@ const Tournaments = {
         document.querySelector('#match-results-modal .modal-overlay')?.addEventListener('click', () => this.closeMatchResultsModal());
 
         document.getElementById('create-tournament-form')?.addEventListener('submit', (e) => this.handleCreate(e));
+        document.getElementById('edit-tournament-form')?.addEventListener('submit', (e) => this.handleEdit(e));
         document.getElementById('fixtures-settings-form')?.addEventListener('submit', (e) => this.handleGenerateFixtures(e));
         document.getElementById('add-goal-form')?.addEventListener('submit', (e) => this.handleAddGoal(e));
         document.getElementById('add-card-form')?.addEventListener('submit', (e) => this.handleAddCard(e));
         document.getElementById('finish-match-btn')?.addEventListener('click', () => this.handleFinishMatch());
+
+        // Edit/Delete tournament buttons
+        document.getElementById('edit-tournament-btn')?.addEventListener('click', () => this.openEditModal());
+        document.getElementById('delete-tournament-btn')?.addEventListener('click', () => this.handleDeleteTournament());
+
+        // Edit modal close
+        document.getElementById('close-edit-tournament')?.addEventListener('click', () => this.closeEditModal());
+        document.querySelector('#edit-tournament-modal .modal-overlay')?.addEventListener('click', () => this.closeEditModal());
+
+        // Edit tournament type change -> update max teams
+        document.getElementById('edit-tournament-type')?.addEventListener('change', () => this.updateEditMaxTeamsOptions());
     },
 
     updateMaxTeamsOptions() {
@@ -652,6 +772,115 @@ const Tournaments = {
         }
     },
 
+    updateEditMaxTeamsOptions(selectedValue) {
+        const type = document.getElementById('edit-tournament-type').value;
+        const maxTeamsSelect = document.getElementById('edit-tournament-max-teams');
+
+        if (!type || !this.VALID_MAX_TEAMS[type]) {
+            maxTeamsSelect.innerHTML = `<option value="" data-i18n="tournaments.selectTypeFirst">Select type first</option>`;
+            return;
+        }
+
+        const options = this.VALID_MAX_TEAMS[type];
+        maxTeamsSelect.innerHTML = options.map(val =>
+            `<option value="${val}" ${val === parseInt(selectedValue) ? 'selected' : ''}>${val}</option>`
+        ).join('');
+    },
+
+    openEditModal() {
+        if (!this.currentTournament) return;
+
+        const t = this.currentTournament;
+
+        document.getElementById('edit-tournament-name').value = t.name || '';
+        document.getElementById('edit-tournament-category').value = t.category || '';
+        document.getElementById('edit-tournament-type').value = t.type || '';
+
+        // Update max teams options based on type, then select the current value
+        this.updateEditMaxTeamsOptions(t.max_teams);
+
+        // Format date for the date input (YYYY-MM-DD)
+        if (t.start_date) {
+            const date = new Date(t.start_date);
+            const formatted = date.toISOString().split('T')[0];
+            document.getElementById('edit-tournament-start-date').value = formatted;
+        }
+
+        document.getElementById('edit-tournament-min-players').value = t.min_players_per_team || 11;
+        document.getElementById('edit-tournament-description').value = t.description || '';
+
+        UI.openModal('edit-tournament-modal');
+    },
+
+    closeEditModal() {
+        UI.closeModal('edit-tournament-modal');
+        document.getElementById('edit-tournament-form').reset();
+        // Reset max teams dropdown
+        const maxTeamsSelect = document.getElementById('edit-tournament-max-teams');
+        if (maxTeamsSelect) {
+            maxTeamsSelect.innerHTML = `<option value="" data-i18n="tournaments.selectTypeFirst">Select type first</option>`;
+        }
+    },
+
+    async handleEdit(e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        UI.showButtonLoading(submitBtn);
+
+        try {
+            const tournamentData = {
+                name: document.getElementById('edit-tournament-name').value.trim(),
+                category: document.getElementById('edit-tournament-category').value,
+                type: document.getElementById('edit-tournament-type').value,
+                startDate: document.getElementById('edit-tournament-start-date').value,
+                description: document.getElementById('edit-tournament-description').value.trim(),
+                maxTeams: parseInt(document.getElementById('edit-tournament-max-teams').value),
+                minPlayersPerTeam: parseInt(document.getElementById('edit-tournament-min-players').value),
+            };
+
+            await API.updateTournament(this.currentTournament.id, tournamentData);
+
+            UI.showNotification(I18n.t('messages.success.tournamentUpdated') || 'Tournament updated successfully', 'success');
+
+            this.closeEditModal();
+            this.closeDetailsModal();
+            await this.load();
+            if (window.Statistics) Statistics.load();
+            if (window.Auth) Auth.updateProfileStats(API.getUser());
+
+        } catch (error) {
+            console.error('Failed to update tournament:', error);
+            UI.showNotification(error.message || I18n.t('messages.error.updateTournament') || 'Failed to update tournament', 'error');
+        } finally {
+            UI.hideButtonLoading(submitBtn);
+        }
+    },
+
+    async handleDeleteTournament() {
+        if (!this.currentTournament) return;
+
+        const confirmMsg = I18n.t('tournaments.confirmDelete') || 'Are you sure you want to delete this tournament? This action cannot be undone.';
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            await API.deleteTournament(this.currentTournament.id);
+
+            UI.showNotification(I18n.t('messages.success.tournamentDeleted') || 'Tournament deleted successfully', 'success');
+
+            this.closeDetailsModal();
+            await this.load();
+            if (window.Statistics) Statistics.load();
+            if (window.Auth) Auth.updateProfileStats(API.getUser());
+
+        } catch (error) {
+            console.error('Failed to delete tournament:', error);
+            UI.showNotification(error.message || I18n.t('messages.error.deleteTournament') || 'Failed to delete tournament', 'error');
+        }
+    },
+
     async handleCreate(e) {
         e.preventDefault();
 
@@ -712,6 +941,14 @@ const Tournaments = {
 
         await this.updateJoinButton(tournament);
         await this.updateGenerateFixturesButton(tournament);
+
+        // Show/hide edit & delete buttons for tournament owner
+        const user = API.getUser();
+        const isOwner = user && user.role === 'organizer' && tournament.organizer_id === user.id;
+        const ownerActions = document.getElementById('tournament-owner-actions');
+        if (ownerActions) {
+            ownerActions.style.display = (isOwner && tournament.status === 'upcoming') ? 'block' : 'none';
+        }
 
         // Load all tabs data
         await Promise.all([

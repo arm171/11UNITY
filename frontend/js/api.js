@@ -265,6 +265,14 @@ const API = {
         return await this.request(endpoint);
     },
 
+    // Profile update
+    async updateProfile(profileData) {
+        return await this.request(CONFIG.ENDPOINTS.PROFILE_UPDATE, {
+            method: 'PUT',
+            body: JSON.stringify(profileData),
+        });
+    },
+
     // Global statistics
     async getStatistics() {
         return await this.request(CONFIG.ENDPOINTS.STATISTICS);

@@ -5,8 +5,8 @@ node_modules/
 .env
 _env
 
-# Database files (local է)
-*.sql
+# Database dumps (local data)
+*.dump
 
 # OS files (geriakarutyun che)
 .DS_Store

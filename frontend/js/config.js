@@ -18,6 +18,7 @@ const CONFIG = {
         MATCH_BY_ID: '/matches/:id',
         STATISTICS: '/statistics',
         PROFILE_STATS: '/profile/stats',
+        PROFILE_UPDATE: '/profile/update',
     },
 
     STORAGE: {

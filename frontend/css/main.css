@@ -223,6 +223,13 @@ section h2 {
     margin-bottom: var(--space-xl);
 }
 
+.profile-actions {
+    display: flex;
+    gap: var(--space-sm);
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
 .profile-avatar {
     width: 80px;
     height: 80px;

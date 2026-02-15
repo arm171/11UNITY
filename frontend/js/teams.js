@@ -101,6 +101,43 @@ const Teams = {
                 </div>
             </div>
 
+            <!-- Edit Team Modal -->
+            <div class="modal" id="edit-team-modal">
+                <div class="modal-overlay"></div>
+                <div class="modal-content">
+                    <button class="modal-close" id="close-edit-team">&times;</button>
+                    <h2 style="margin-bottom: 32px; text-align: center; color: white;">
+                        <i class="fas fa-edit"></i> <span data-i18n="teams.editTeam">Edit Team</span>
+                    </h2>
+                    <form id="edit-team-form">
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="teams.teamName">Team Name</label>
+                            <input type="text" class="form-input" id="edit-team-name" placeholder="FC Barcelona" minlength="3" maxlength="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="teams.logoColor">Team Color</label>
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <input type="color" class="form-input" id="edit-team-color" value="#2ecc71" style="width: 60px; height: 40px; padding: 2px; cursor: pointer;">
+                                <div id="edit-team-logo-preview" style="width: 50px; height: 50px; border-radius: 50%; background: #2ecc71; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; color: white;">FC</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="tournaments.description">Description</label>
+                            <textarea class="form-textarea" id="edit-team-description" placeholder="Tell about your team..." rows="3"></textarea>
+                        </div>
+                        <div style="display: flex; gap: 16px; margin-top: 24px;">
+                            <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="Teams.closeEditModal()">
+                                <span data-i18n="common.cancel">Cancel</span>
+                            </button>
+                            <button type="submit" class="btn btn-primary" style="flex: 1;">
+                                <span class="btn-text" data-i18n="common.save">Save</span>
+                                <div class="spinner" style="display: none;"></div>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <!-- Team Details Modal -->
             <div class="modal" id="team-details-modal">
                 <div class="modal-overlay"></div>
@@ -183,11 +220,16 @@ const Teams = {
                         </div>
                     </div>
 
-                    <!-- Delete Team Button (for coach, when allowed) -->
+                    <!-- Team Actions (for coach) -->
                     <div id="team-actions-container" style="margin-top: 24px; text-align: center; display: none;">
-                        <button class="btn btn-danger btn-sm" id="delete-team-btn">
-                            <i class="fas fa-trash"></i> <span data-i18n="teams.deleteTeam">Delete Team</span>
-                        </button>
+                        <div style="display: flex; gap: 12px; justify-content: center;">
+                            <button class="btn btn-secondary btn-sm" id="edit-team-btn">
+                                <i class="fas fa-edit"></i> <span data-i18n="teams.editTeam">Edit Team</span>
+                            </button>
+                            <button class="btn btn-danger btn-sm" id="delete-team-btn">
+                                <i class="fas fa-trash"></i> <span data-i18n="teams.deleteTeam">Delete Team</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -300,6 +342,20 @@ const Teams = {
         document.getElementById('add-player-form')?.addEventListener('submit', (e) => this.handleAddPlayer(e));
         document.getElementById('add-player-btn')?.addEventListener('click', () => this.openAddPlayerModal());
         document.getElementById('delete-team-btn')?.addEventListener('click', () => this.handleDeleteTeam());
+        document.getElementById('edit-team-btn')?.addEventListener('click', () => this.openEditModal());
+        document.getElementById('edit-team-form')?.addEventListener('submit', (e) => this.handleEdit(e));
+        document.getElementById('close-edit-team')?.addEventListener('click', () => this.closeEditModal());
+        document.querySelector('#edit-team-modal .modal-overlay')?.addEventListener('click', () => this.closeEditModal());
+
+        // Auto-update edit logo preview
+        const editNameInput = document.getElementById('edit-team-name');
+        const editColorInput = document.getElementById('edit-team-color');
+        if (editNameInput) {
+            editNameInput.addEventListener('input', () => this.updateEditLogoPreview());
+        }
+        if (editColorInput) {
+            editColorInput.addEventListener('input', () => this.updateEditLogoPreview());
+        }
 
         // Auto-update logo preview when name changes
         const nameInput = document.getElementById('team-name');
@@ -538,9 +594,13 @@ const Teams = {
             const addPlayerBtn = document.getElementById('add-player-btn');
             addPlayerBtn.style.display = (isCoach && !isInActiveTournament) ? 'inline-flex' : 'none';
 
-            // Delete team: only if 0 players and no tournament
+            // Team actions: edit (for coach) and delete (only if 0 players and no tournament)
             const actionsContainer = document.getElementById('team-actions-container');
-            actionsContainer.style.display = (isCoach && players.length === 0 && !fullTeam.tournament_id) ? 'block' : 'none';
+            const editTeamBtn = document.getElementById('edit-team-btn');
+            const deleteTeamBtn = document.getElementById('delete-team-btn');
+            if (editTeamBtn) editTeamBtn.style.display = isCoach ? 'inline-flex' : 'none';
+            if (deleteTeamBtn) deleteTeamBtn.style.display = (isCoach && players.length === 0 && !fullTeam.tournament_id) ? 'inline-flex' : 'none';
+            actionsContainer.style.display = isCoach ? 'block' : 'none';
 
             // Render players list (without email)
             this.renderPlayersList(players, isCoach && !isInActiveTournament, team.id);
@@ -775,9 +835,13 @@ const Teams = {
             this.renderPlayersList(fullTeam.players || [], isCoach, teamId);
             document.getElementById('modal-team-players-count').textContent = (fullTeam.players || []).length;
 
-            // Update delete button visibility
+            // Update action buttons visibility
             const actionsContainer = document.getElementById('team-actions-container');
-            actionsContainer.style.display = (isCoach && (fullTeam.players || []).length === 0 && !fullTeam.tournament_id) ? 'block' : 'none';
+            const editTeamBtn = document.getElementById('edit-team-btn');
+            const deleteTeamBtn = document.getElementById('delete-team-btn');
+            if (editTeamBtn) editTeamBtn.style.display = isCoach ? 'inline-flex' : 'none';
+            if (deleteTeamBtn) deleteTeamBtn.style.display = (isCoach && (fullTeam.players || []).length === 0 && !fullTeam.tournament_id) ? 'inline-flex' : 'none';
+            actionsContainer.style.display = isCoach ? 'block' : 'none';
 
             await this.load();
 
@@ -812,6 +876,69 @@ const Teams = {
         } catch (error) {
             console.error('Failed to delete team:', error);
             UI.showNotification(error.message || 'Failed to delete team', 'error');
+        }
+    },
+
+    openEditModal() {
+        // Get current team data from the details modal
+        const name = document.getElementById('modal-team-name').textContent;
+        const logo = document.getElementById('modal-team-logo');
+        const color = logo.style.background || '#2ecc71';
+        const desc = document.getElementById('modal-team-description').textContent || '';
+
+        document.getElementById('edit-team-name').value = name;
+        document.getElementById('edit-team-color').value = this.rgbToHex(color);
+        document.getElementById('edit-team-description').value = desc;
+        this.updateEditLogoPreview();
+        UI.openModal('edit-team-modal');
+    },
+
+    closeEditModal() {
+        UI.closeModal('edit-team-modal');
+    },
+
+    updateEditLogoPreview() {
+        const name = document.getElementById('edit-team-name').value.trim();
+        const color = document.getElementById('edit-team-color').value;
+        const preview = document.getElementById('edit-team-logo-preview');
+        if (preview) {
+            preview.textContent = name.length >= 2 ? name.replace(/\s+/g, '').substring(0, 3).toUpperCase() : '--';
+            preview.style.background = color;
+        }
+    },
+
+    rgbToHex(rgb) {
+        if (rgb.startsWith('#')) return rgb;
+        const match = rgb.match(/\d+/g);
+        if (!match || match.length < 3) return '#2ecc71';
+        return '#' + match.slice(0, 3).map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+    },
+
+    async handleEdit(e) {
+        e.preventDefault();
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        UI.showButtonLoading(submitBtn);
+
+        try {
+            const teamData = {
+                name: document.getElementById('edit-team-name').value.trim(),
+                logoColor: document.getElementById('edit-team-color').value,
+                description: document.getElementById('edit-team-description').value.trim(),
+            };
+
+            await API.updateTeam(this.currentTeamId, teamData);
+            UI.showNotification(window.I18n ? I18n.t('messages.success.teamUpdated') : 'Team updated successfully', 'success');
+            this.closeEditModal();
+            UI.closeModal('team-details-modal');
+            await this.load();
+            if (window.Statistics) Statistics.load();
+            if (window.Auth) Auth.updateProfileStats(API.getUser());
+        } catch (error) {
+            console.error('Failed to update team:', error);
+            UI.showNotification(error.message || 'Failed to update team', 'error');
+        } finally {
+            UI.hideButtonLoading(submitBtn);
         }
     },
 

@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
 const db = require('../config/database');
 const { verifyToken } = require('../middleware/auth');
 
@@ -163,6 +164,80 @@ router.get('/stats', verifyToken, async (req, res) => {
     } catch (error) {
         console.error('Profile stats error:', error);
         res.status(500).json({ success: false, message: 'Failed to load profile data' });
+    }
+});
+
+// PUT /api/profile/update - Update user profile
+router.put('/update', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { name, email, currentPassword, newPassword } = req.body;
+
+        // Get current user data
+        const [users] = await db.promise().query('SELECT * FROM users WHERE id = ?', [userId]);
+        if (users.length === 0) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        const user = users[0];
+
+        // If changing password, verify current password
+        if (newPassword) {
+            if (!currentPassword) {
+                return res.status(400).json({ success: false, message: 'Current password is required' });
+            }
+            const isValid = await bcrypt.compare(currentPassword, user.password);
+            if (!isValid) {
+                return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+            }
+            if (newPassword.length < 6) {
+                return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
+            }
+        }
+
+        // If changing email, check uniqueness
+        if (email && email !== user.email) {
+            const [emailCheck] = await db.promise().query('SELECT id FROM users WHERE email = ? AND id != ?', [email, userId]);
+            if (emailCheck.length > 0) {
+                return res.status(409).json({ success: false, message: 'Email already in use' });
+            }
+        }
+
+        // Build update query
+        let updateFields = [];
+        let updateValues = [];
+
+        if (name && name.trim()) {
+            updateFields.push('name = ?');
+            updateValues.push(name.trim());
+        }
+        if (email && email.trim()) {
+            updateFields.push('email = ?');
+            updateValues.push(email.trim());
+        }
+        if (newPassword) {
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            updateFields.push('password = ?');
+            updateValues.push(hashedPassword);
+        }
+
+        if (updateFields.length === 0) {
+            return res.status(400).json({ success: false, message: 'No fields to update' });
+        }
+
+        updateValues.push(userId);
+        await db.promise().query(`UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`, updateValues);
+
+        // Return updated user data (for frontend to update localStorage)
+        const [updatedUser] = await db.promise().query('SELECT id, name, email, role FROM users WHERE id = ?', [userId]);
+
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            user: updatedUser[0]
+        });
+    } catch (error) {
+        console.error('Update profile error:', error);
+        res.status(500).json({ success: false, message: 'Failed to update profile' });
     }
 });
 

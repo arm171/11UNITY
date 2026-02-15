@@ -45,6 +45,7 @@ const verifyToken = (req, res, next) => {
  * @returns {Function} Express middleware function
  */
 const checkRole = (roles) => {
+    const rolesArray = Array.isArray(roles) ? roles : [roles];
     return (req, res, next) => {
         if (!req.user) {
             return res.status(401).json({
@@ -53,10 +54,10 @@ const checkRole = (roles) => {
             });
         }
 
-        if (!roles.includes(req.user.role)) {
+        if (!rolesArray.includes(req.user.role)) {
             return res.status(403).json({
                 success: false,
-                message: `Access denied. Required role: ${roles.join(' or ')}`
+                message: `Access denied. Required role: ${rolesArray.join(' or ')}`
             });
         }
 
