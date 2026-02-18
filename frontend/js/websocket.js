@@ -35,7 +35,6 @@ const WebSocketManager = {
         });
 
         this.socket.on('connect', () => {
-            console.log('WebSocket connected');
             this.reconnectAttempts = 0;
 
             // Rejoin tournament room if we were viewing one
@@ -44,8 +43,7 @@ const WebSocketManager = {
             }
         });
 
-        this.socket.on('disconnect', (reason) => {
-            console.log('WebSocket disconnected:', reason);
+        this.socket.on('disconnect', () => {
         });
 
         this.socket.on('connect_error', (error) => {
@@ -60,25 +58,21 @@ const WebSocketManager = {
     setupEventHandlers() {
         // Match score update
         this.socket.on('match:score-update', (data) => {
-            console.log('Received score update:', data);
             this.handleScoreUpdate(data);
         });
 
         // Match event (goal, card)
         this.socket.on('match:event', (data) => {
-            console.log('Received match event:', data);
             this.handleMatchEvent(data);
         });
 
         // Standings update
         this.socket.on('standings:update', (data) => {
-            console.log('Received standings update:', data);
             this.handleStandingsUpdate(data);
         });
 
         // Statistics update
         this.socket.on('statistics:update', (data) => {
-            console.log('Received statistics update:', data);
             this.handleStatisticsUpdate(data);
         });
     },
@@ -89,7 +83,6 @@ const WebSocketManager = {
      */
     joinTournament(tournamentId) {
         if (!this.socket || !this.socket.connected) {
-            console.warn('Socket not connected, queuing join request');
             this.currentTournamentId = tournamentId;
             return;
         }
@@ -101,7 +94,6 @@ const WebSocketManager = {
 
         this.currentTournamentId = tournamentId;
         this.socket.emit('tournament:join', tournamentId);
-        console.log('Joined tournament room:', tournamentId);
     },
 
     /**
@@ -112,7 +104,6 @@ const WebSocketManager = {
         if (!this.socket || !this.socket.connected) return;
 
         this.socket.emit('tournament:leave', tournamentId);
-        console.log('Left tournament room:', tournamentId);
 
         if (this.currentTournamentId === tournamentId) {
             this.currentTournamentId = null;

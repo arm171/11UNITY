@@ -10,7 +10,7 @@ const I18n = {
     // Supported languages configuration
     languages: {
         en: { name: 'English', nativeName: 'English', dir: 'ltr' },
-        hy: { name: 'Armenian', nativeName: 'Հայերdelays', dir: 'ltr' },
+        hy: { name: 'Armenian', nativeName: 'Հայերեն', dir: 'ltr' },
         ru: { name: 'Russian', nativeName: 'Русский', dir: 'ltr' },
         ge: { name: 'Georgian', nativeName: 'ქართული', dir: 'ltr' }
     },

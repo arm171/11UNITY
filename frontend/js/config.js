@@ -44,7 +44,6 @@ const CONFIG = {
         FINISHED: 'finished',
     },
 
-    // MESSAGES moved to I18n - use I18n.t('messages.success.login') etc.
 };
 
 window.CONFIG = CONFIG;
