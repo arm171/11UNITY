@@ -304,6 +304,7 @@ I18n.registerTranslations('ru', {
         allTournaments: 'Все турниры',
         noMatches: 'Матчей пока нет',
         noMatchesSubtitle: 'Матчи появятся здесь после создания расписания турниров!',
+        scheduled: 'Запланирован',
         live: 'Live'
     },
 

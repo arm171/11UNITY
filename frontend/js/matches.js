@@ -167,15 +167,44 @@ const Matches = {
         });
     },
 
+    getDateString(dateStr, lang) {
+        const d = new Date(dateStr);
+        const monthNames = {
+            hy: [
+                '\u0540\u0578\u0582\u0576\u057e\u0561\u0580',
+                '\u0553\u0565\u057f\u0580\u057e\u0561\u0580',
+                '\u0544\u0561\u0580\u057f',
+                '\u0531\u057a\u0580\u056b\u056c',
+                '\u0544\u0561\u0575\u056b\u057d',
+                '\u0540\u0578\u0582\u0576\u056b\u057d',
+                '\u0540\u0578\u0582\u056c\u056b\u057d',
+                '\u0555\u0563\u0578\u057d\u057f\u0578\u057d',
+                '\u054d\u0565\u057a\u057f\u0565\u0574\u0562\u0565\u0580',
+                '\u0540\u0578\u056f\u057f\u0565\u0574\u0562\u0565\u0580',
+                '\u0546\u0578\u0565\u0574\u0562\u0565\u0580',
+                '\u0534\u0565\u056f\u0565\u0574\u0562\u0565\u0580'
+            ],
+            ge: [
+                'იანვარი', 'თებერვალი', 'მარტი', 'აპრილი', 'მაისი', 'ივნისი',
+                'ივლისი', 'აგვისტო', 'სექტემბერი', 'ოქტომბერი', 'ნოემბერი', 'დეკემბერი'
+            ]
+        };
+
+        if (monthNames[lang]) {
+            const month = monthNames[lang][d.getMonth()];
+            return `${d.getDate()} ${month} ${d.getFullYear()}`;
+        }
+
+        const localeMap = { en: 'en-US', ru: 'ru-RU' };
+        return d.toLocaleDateString(localeMap[lang] || 'en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    },
+
     groupMatchesByDate(matches) {
         const groups = {};
         const lang = window.I18n ? I18n.getCurrentLanguage() : 'en';
-        const locale = lang === 'ru' ? 'ru-RU' : lang === 'hy' ? 'hy-AM' : lang === 'ge' ? 'ka-GE' : 'en-US';
 
         matches.forEach(match => {
-            const date = new Date(match.match_date).toLocaleDateString(locale, {
-                year: 'numeric', month: 'long', day: 'numeric'
-            });
+            const date = this.getDateString(match.match_date, lang);
 
             if (!groups[date]) {
                 groups[date] = [];
@@ -218,7 +247,7 @@ const Matches = {
         if (match.round) {
             const roundNum = parseInt(match.round);
             if (!isNaN(roundNum)) {
-                roundText = `${t('matches.round')} ${roundNum}`;
+                roundText = window.I18n ? I18n.t('tournaments.round', {num: roundNum}) : `Round ${roundNum}`;
             } else {
                 roundText = match.round;
             }
@@ -277,6 +306,7 @@ const Matches = {
             if (!match) return;
 
             const t = (key) => window.I18n ? I18n.t(key) : key;
+            const lang = window.I18n ? I18n.getCurrentLanguage() : 'en';
 
             // Tournament & round
             document.getElementById('match-detail-tournament').innerHTML =
@@ -285,7 +315,7 @@ const Matches = {
             let roundText = '';
             if (match.round) {
                 const roundNum = parseInt(match.round);
-                roundText = !isNaN(roundNum) ? `${t('matches.round')} ${roundNum}` : match.round;
+                roundText = !isNaN(roundNum) ? (window.I18n ? I18n.t('tournaments.round', {num: roundNum}) : `Round ${roundNum}`) : match.round;
             }
             document.getElementById('match-detail-round').textContent = roundText;
 
@@ -315,7 +345,7 @@ const Matches = {
                                 ${new Date(match.match_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
                             </div>
                             <div class="detail-date">
-                                ${new Date(match.match_date).toLocaleDateString()}
+                                ${this.getDateString(match.match_date, lang)}
                             </div>
                             <div class="detail-status scheduled">${t('matches.scheduled')}</div>
                         `}
@@ -337,7 +367,7 @@ const Matches = {
             if (events.length === 0) {
                 eventsContainer.innerHTML = `
                     <p style="text-align: center; color: #b0b0b0; padding: 24px;">
-                        ${t('matches.noEvents')}
+                        ${t('match.noEvents')}
                     </p>
                 `;
             } else {
@@ -360,9 +390,6 @@ const Matches = {
                     if (event.event_type === 'goal' && event.is_own_goal) {
                         text += ' (OG)';
                     }
-                    if (event.event_type === 'goal' && event.assist_player_name) {
-                        text += ` <span style="color: #888; font-size: 12px;">(${event.assist_player_name})</span>`;
-                    }
 
                     return `
                         <div class="event-item">
@@ -375,7 +402,7 @@ const Matches = {
 
                 eventsContainer.innerHTML = `
                     <h4 style="color: white; margin-bottom: 16px; text-align: center;">
-                        <i class="fas fa-list"></i> ${t('matches.events')}
+                        <i class="fas fa-list"></i> ${t('match.matchEvents')}
                     </h4>
                     <div class="events-two-columns">
                         <div class="events-column events-left">

@@ -304,6 +304,7 @@ I18n.registerTranslations('en', {
         allTournaments: 'All Tournaments',
         noMatches: 'No matches yet',
         noMatchesSubtitle: 'Matches will appear here once tournaments generate fixtures!',
+        scheduled: 'Scheduled',
         live: 'Live'
     },
 

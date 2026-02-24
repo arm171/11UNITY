@@ -469,7 +469,7 @@ const Auth = {
                     <i class="fas fa-trophy"></i>
                     <div>
                         <strong>${tournaments[0].name}</strong>
-                        <span class="status-badge ${tournaments[0].status}">${tournaments[0].status}</span>
+                        <span class="status-badge ${tournaments[0].status}">${t('tournaments.' + tournaments[0].status, tournaments[0].status)}</span>
                     </div>
                 </div>` : ''}
             </div>
@@ -573,7 +573,7 @@ const Auth = {
             html += `
                 <div class="profile-tournament-item">
                     <span class="profile-tournament-name">${tn.name}</span>
-                    <span class="status-badge ${tn.status}">${tn.status}</span>
+                    <span class="status-badge ${tn.status}">${t('tournaments.' + tn.status, tn.status)}</span>
                     <span class="profile-tournament-teams">${tn.teams_count}/${tn.max_teams} teams</span>
                 </div>
             `;

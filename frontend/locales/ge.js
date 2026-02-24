@@ -292,6 +292,7 @@ I18n.registerTranslations('ge', {
         allTournaments: 'ყველა ტურნირი',
         noMatches: 'მატჩები ჯერ არ არის',
         noMatchesSubtitle: 'მატჩები გამოჩნდება აქ, როგორც კი ტურნირები შეადგენენ გრაფიკს!',
+        scheduled: 'დაგეგმილია',
         live: 'პირდაპირ ეთერში'
     },
 

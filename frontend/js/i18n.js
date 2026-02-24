@@ -213,29 +213,36 @@ const I18n = {
     },
 
     // Date formatting with locale support
+    // Month names for locales not supported by Windows (hy, ge)
+    MONTH_NAMES: {
+        hy: [
+            '\u0540\u0578\u0582\u0576\u057e\u0561\u0580', '\u0553\u0565\u057f\u0580\u057e\u0561\u0580',
+            '\u0544\u0561\u0580\u057f', '\u0531\u057a\u0580\u056b\u056c',
+            '\u0544\u0561\u0575\u056b\u057d', '\u0540\u0578\u0582\u0576\u056b\u057d',
+            '\u0540\u0578\u0582\u056c\u056b\u057d', '\u0555\u0563\u0578\u057d\u057f\u0578\u057d',
+            '\u054d\u0565\u057a\u057f\u0565\u0574\u0562\u0565\u0580', '\u0540\u0578\u056f\u057f\u0565\u0574\u0562\u0565\u0580',
+            '\u0546\u0578\u0565\u0574\u0562\u0565\u0580', '\u0534\u0565\u056f\u0565\u0574\u0562\u0565\u0580'
+        ],
+        ge: [
+            'იანვარი', 'თებერვალი', 'მარტი', 'აპრილი', 'მაისი', 'ივნისი',
+            'ივლისი', 'აგვისტო', 'სექტემბერი', 'ოქტომბერი', 'ნოემბერი', 'დეკემბერი'
+        ]
+    },
+
     formatDate(dateString, options = {}) {
         if (!dateString) return '';
 
         const date = new Date(dateString);
         if (isNaN(date.getTime())) return dateString;
 
-        const localeMap = {
-            en: 'en-US',
-            hy: 'hy-AM',
-            ru: 'ru-RU',
-            ge: 'ka-GE'
-        };
+        if (this.MONTH_NAMES[this.currentLang]) {
+            const month = this.MONTH_NAMES[this.currentLang][date.getMonth()];
+            return `${date.getDate()} ${month} ${date.getFullYear()}`;
+        }
 
-        const defaultOptions = {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        };
-
-        return date.toLocaleDateString(
-            localeMap[this.currentLang] || 'en-US',
-            { ...defaultOptions, ...options }
-        );
+        const localeMap = { en: 'en-US', ru: 'ru-RU' };
+        const defaultOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+        return date.toLocaleDateString(localeMap[this.currentLang] || 'en-US', { ...defaultOptions, ...options });
     },
 
     // DateTime formatting with locale support
@@ -245,13 +252,15 @@ const I18n = {
         const date = new Date(dateString);
         if (isNaN(date.getTime())) return dateString;
 
-        const localeMap = {
-            en: 'en-US',
-            hy: 'hy-AM',
-            ru: 'ru-RU',
-            ge: 'ka-GE'
-        };
+        if (this.MONTH_NAMES[this.currentLang]) {
+            const month = this.MONTH_NAMES[this.currentLang][date.getMonth()];
+            const dateStr = `${date.getDate()} ${month} ${date.getFullYear()}`;
+            const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const connector = this.t('common.at');
+            return `${dateStr} ${connector} ${timeStr}`;
+        }
 
+        const localeMap = { en: 'en-US', ru: 'ru-RU' };
         const locale = localeMap[this.currentLang] || 'en-US';
 
         const dateStr = date.toLocaleDateString(locale, {
