@@ -17,7 +17,15 @@
       "Bash(mysql:*)",
       "Bash(where:*)",
       "Bash(powershell:*)",
-      "Bash(sc query:*)"
+      "Bash(sc query:*)",
+      "WebSearch",
+      "WebFetch(domain:armenian.english-dictionary.help)",
+      "WebFetch(domain:www.english2armenian.com)",
+      "WebFetch(domain:translate.googleapis.com)",
+      "WebFetch(domain:www.nayiri.com)",
+      "WebFetch(domain:translate.glosbe.com)",
+      "WebFetch(domain:www.armsoft.am)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

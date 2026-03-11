@@ -82,6 +82,7 @@ I18n.registerTranslations('ge', {
         email: 'ელ. ფოსტა',
         password: 'პაროლი',
         confirmPassword: 'გაიმეორეთ პაროლი',
+        name: 'სახელი',
         fullName: 'სრული სახელი',
         role: 'როლი',
         selectRole: 'აირჩიეთ თქვენი როლი',
@@ -150,6 +151,7 @@ I18n.registerTranslations('ge', {
         round: '{num} ტური',
         teamsJoined: '{current}/{max} გუნდი',
         editTournament: 'ტურნირის რედაქტირება',
+        saveTournament: 'ცვლილებების შენახვა',
         deleteTournament: 'ტურნირის წაშლა',
         deleteTournamentConfirm: 'დარწმუნებული ხართ, რომ ამ ტურნირის წაშლა გსურთ?'
     },

@@ -160,6 +160,10 @@
     display: flex;
 }
 
+#edit-tournament-modal {
+    z-index: calc(var(--z-modal) + 10);
+}
+
 .modal-overlay {
     position: absolute;
     top: 0;

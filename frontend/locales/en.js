@@ -87,6 +87,7 @@ I18n.registerTranslations('en', {
         email: 'Email',
         password: 'Password',
         confirmPassword: 'Confirm Password',
+        name: 'Name',
         fullName: 'Full Name',
         role: 'Role',
         selectRole: 'Select your role',
@@ -156,6 +157,7 @@ I18n.registerTranslations('en', {
         round: 'Round {num}',
         teamsJoined: '{current}/{max} teams',
         editTournament: 'Edit Tournament',
+        saveTournament: 'Save Changes',
         deleteTournament: 'Delete Tournament',
         deleteTournamentConfirm: 'Are you sure you want to delete this tournament?'
     },
