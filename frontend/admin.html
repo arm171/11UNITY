@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>11UNITY — Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0d0d1a; color: #fff; font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+
+        /* ── LOGIN ── */
+        #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .login-box { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 16px; padding: 48px 40px; width: 100%; max-width: 400px; text-align: center; }
+        .login-box h1 { color: #2ecc71; font-size: 28px; margin-bottom: 8px; }
+        .login-box p { color: #888; margin-bottom: 32px; font-size: 14px; }
+        .form-group { margin-bottom: 16px; text-align: left; }
+        .form-group label { display: block; color: #aaa; font-size: 13px; margin-bottom: 6px; }
+        .form-group input { width: 100%; background: #0d0d1a; border: 1px solid #2a2a4a; color: #fff; padding: 12px 16px; border-radius: 8px; font-size: 14px; }
+        .form-group input:focus { outline: none; border-color: #2ecc71; }
+        .btn-login { width: 100%; background: #2ecc71; color: #000; border: none; padding: 14px; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+        .btn-login:hover { background: #27ae60; }
+        .login-error { color: #e74c3c; font-size: 13px; margin-top: 12px; display: none; }
+
+        /* ── PANEL ── */
+        #admin-panel { display: none; }
+        .admin-header { background: #1a1a2e; border-bottom: 1px solid #2a2a4a; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+        .admin-header h1 { color: #2ecc71; font-size: 22px; }
+        .admin-header-right { display: flex; align-items: center; gap: 16px; }
+        .admin-user { color: #aaa; font-size: 14px; }
+        .admin-user strong { color: #fff; }
+        .btn-back { color: #aaa; text-decoration: none; font-size: 14px; }
+        .btn-back:hover { color: #fff; }
+        .btn-logout { background: #e74c3c; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .btn-logout:hover { background: #c0392b; }
+        .admin-wrapper { max-width: 1300px; margin: 0 auto; padding: 32px 24px; }
+
+        /* ── STATS ── */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 40px; }
+        .stat-card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 12px; padding: 24px 16px; text-align: center; }
+        .stat-number { font-size: 40px; font-weight: 700; color: #2ecc71; }
+        .stat-label { font-size: 13px; color: #888; margin-top: 4px; }
+        .stat-card.warn .stat-number { color: #f39c12; }
+
+        /* ── TABS ── */
+        .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid #2a2a4a; }
+        .tab-btn { background: none; border: none; color: #888; padding: 12px 20px; cursor: pointer; font-size: 14px; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+        .tab-btn:hover { color: #fff; }
+        .tab-btn.active { color: #2ecc71; border-bottom-color: #2ecc71; font-weight: 600; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ── TOOLBAR ── */
+        .toolbar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .search-box { position: relative; flex: 1; min-width: 200px; }
+        .search-box input { width: 100%; background: #1a1a2e; border: 1px solid #2a2a4a; color: #fff; padding: 10px 16px 10px 38px; border-radius: 8px; font-size: 14px; }
+        .search-box input:focus { outline: none; border-color: #2ecc71; }
+        .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #555; }
+        .filter-select { background: #1a1a2e; border: 1px solid #2a2a4a; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; }
+        .filter-select:focus { outline: none; border-color: #2ecc71; }
+
+        /* ── TABLE ── */
+        .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #fff; }
+        .section-title i { color: #2ecc71; margin-right: 8px; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { background: #1a1a2e; padding: 12px 16px; text-align: left; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #2a2a4a; white-space: nowrap; }
+        tbody td { padding: 13px 16px; border-bottom: 1px solid #1a1a2e; font-size: 14px; background: #0f0f20; }
+        tbody tr:hover td { background: #1a1a2e; }
+
+        /* ── BADGES ── */
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge.player    { background: rgba(52,152,219,0.2);  color: #3498db; }
+        .badge.coach     { background: rgba(46,204,113,0.2);  color: #2ecc71; }
+        .badge.organizer { background: rgba(155,89,182,0.2);  color: #9b59b6; }
+        .badge.admin     { background: rgba(231,76,60,0.2);   color: #e74c3c; }
+        .badge.active    { background: rgba(46,204,113,0.2);  color: #2ecc71; }
+        .badge.upcoming  { background: rgba(52,152,219,0.2);  color: #3498db; }
+        .badge.finished  { background: rgba(127,140,141,0.2); color: #7f8c8d; }
+        .verified-yes { color: #2ecc71; }
+        .verified-no  { color: #e74c3c; }
+
+        /* ── ACTION BUTTONS ── */
+        .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .btn-action { border: 1px solid; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; white-space: nowrap; }
+        .btn-delete  { background: rgba(231,76,60,0.1);  border-color: rgba(231,76,60,0.5);  color: #e74c3c; }
+        .btn-delete:hover  { background: #e74c3c; color: #fff; border-color: #e74c3c; }
+        .btn-verify  { background: rgba(46,204,113,0.1); border-color: rgba(46,204,113,0.5); color: #2ecc71; }
+        .btn-verify:hover  { background: #2ecc71; color: #000; border-color: #2ecc71; }
+        .btn-role    { background: rgba(52,152,219,0.1); border-color: rgba(52,152,219,0.5); color: #3498db; }
+        .btn-role:hover    { background: #3498db; color: #fff; border-color: #3498db; }
+
+        /* ── ROLE MODAL ── */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-box { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 12px; padding: 32px; width: 100%; max-width: 340px; }
+        .modal-box h3 { margin-bottom: 20px; font-size: 18px; }
+        .modal-box select { width: 100%; background: #0d0d1a; border: 1px solid #2a2a4a; color: #fff; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 20px; }
+        .modal-btns { display: flex; gap: 12px; }
+        .modal-btns button { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .btn-confirm { background: #3498db; color: #fff; }
+        .btn-confirm:hover { background: #2980b9; }
+        .btn-cancel  { background: #2a2a4a; color: #aaa; }
+        .btn-cancel:hover  { background: #333355; color: #fff; }
+
+        /* ── MISC ── */
+        .loading { text-align: center; padding: 48px; color: #888; font-size: 15px; }
+        .empty   { text-align: center; padding: 32px; color: #555; font-size: 14px; }
+        .notification { position: fixed; top: 20px; right: 20px; padding: 14px 20px; border-radius: 8px; font-size: 14px; z-index: 9999; animation: fadeIn 0.3s; }
+        .notification.success { background: #2ecc71; color: #000; }
+        .notification.error   { background: #e74c3c; color: #fff; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN SCREEN ══════════════ -->
+<div id="login-screen">
+    <div class="login-box">
+        <h1><i class="fas fa-shield-alt"></i> Admin Panel</h1>
+        <p>11UNITY Administration</p>
+        <form id="login-form" onsubmit="adminLogin(event)">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="login-email" placeholder="admin@11unity.com" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="login-password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-login" id="login-btn">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+            <div class="login-error" id="login-error"></div>
+        </form>
+    </div>
+</div>
+
+<!-- ══════════════ ADMIN PANEL ══════════════ -->
+<div id="admin-panel">
+    <div class="admin-header">
+        <h1><i class="fas fa-shield-alt"></i> Admin Panel</h1>
+        <div class="admin-header-right">
+            <span class="admin-user">Logged in as <strong id="admin-name"></strong></span>
+            <a href="index.html" class="btn-back"><i class="fas fa-home"></i> Main Site</a>
+            <button class="btn-logout" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </div>
+
+    <div class="admin-wrapper">
+
+        <!-- Stats -->
+        <div class="stats-grid" id="stats-grid">
+            <div class="loading"><i class="fas fa-spinner fa-spin"></i></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('users', this)">
+                <i class="fas fa-users"></i> Users
+            </button>
+            <button class="tab-btn" onclick="switchTab('tournaments', this)">
+                <i class="fas fa-trophy"></i> Tournaments
+            </button>
+            <button class="tab-btn" onclick="switchTab('teams', this)">
+                <i class="fas fa-shield-alt"></i> Teams
+            </button>
+        </div>
+
+        <!-- ── USERS TAB ── -->
+        <div id="tab-users" class="tab-content active">
+            <div class="section-title"><i class="fas fa-users"></i> All Users</div>
+            <div class="toolbar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="user-search" placeholder="Search by name or email..." oninput="loadUsers()">
+                </div>
+                <select class="filter-select" id="user-role-filter" onchange="loadUsers()">
+                    <option value="all">All Roles</option>
+                    <option value="player">Player</option>
+                    <option value="coach">Coach</option>
+                    <option value="organizer">Organizer</option>
+                </select>
+            </div>
+            <div class="table-wrap" id="users-table">
+                <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+            </div>
+        </div>
+
+        <!-- ── TOURNAMENTS TAB ── -->
+        <div id="tab-tournaments" class="tab-content">
+            <div class="section-title"><i class="fas fa-trophy"></i> All Tournaments</div>
+            <div class="table-wrap" id="tournaments-table">
+                <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+            </div>
+        </div>
+
+        <!-- ── TEAMS TAB ── -->
+        <div id="tab-teams" class="tab-content">
+            <div class="section-title"><i class="fas fa-shield-alt"></i> All Teams</div>
+            <div class="table-wrap" id="teams-table">
+                <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ══════════════ CHANGE ROLE MODAL ══════════════ -->
+<div id="role-modal" style="display:none;">
+    <div class="modal-overlay" onclick="closeRoleModal()">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <h3><i class="fas fa-user-tag"></i> Change Role</h3>
+            <p style="color:#aaa;font-size:13px;margin-bottom:8px;">User: <strong id="role-modal-name" style="color:#fff;"></strong></p>
+            <p style="color:#f39c12;font-size:12px;margin-bottom:16px;"><i class="fas fa-exclamation-triangle"></i> The user must log out and log back in for the new role to take effect.</p>
+            <select id="role-modal-select">
+                <option value="player">Player</option>
+                <option value="coach">Coach</option>
+                <option value="organizer">Organizer</option>
+            </select>
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="closeRoleModal()">Cancel</button>
+                <button class="btn-confirm" onclick="confirmChangeRole()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const API_URL = 'http://localhost:3000/api';
+let authToken = null;
+let pendingRoleUserId = null;
+
+// Escape HTML to prevent XSS
+function esc(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function notify(msg, type = 'success') {
+    const el = document.createElement('div');
+    el.className = 'notification ' + type;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+}
+
+// Generic API helper
+async function api(endpoint, options = {}) {
+    const res = await fetch(API_URL + endpoint, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + authToken,
+            ...(options.headers || {})
+        }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Request failed');
+    return data;
+}
+
+// ── LOGIN / LOGOUT ──────────────────────────────────────────────────────────
+
+async function adminLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    const errorEl = document.getElementById('login-error');
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    btn.textContent = 'Logging in...';
+    btn.disabled = true;
+    errorEl.style.display = 'none';
+
+    try {
+        const res = await fetch(API_URL + '/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.message || 'Login failed');
+        if (data.user.role !== 'admin') throw new Error('Access denied. Admin only.');
+
+        authToken = data.token;
+        document.getElementById('admin-name').textContent = data.user.name;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'block';
+        loadAll();
+    } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.style.display = 'block';
+    } finally {
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+        btn.disabled = false;
+    }
+}
+
+function adminLogout() {
+    authToken = null;
+    document.getElementById('admin-panel').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('login-password').value = '';
+}
+
+// ── TABS ────────────────────────────────────────────────────────────────────
+
+function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// ── LOAD ALL ────────────────────────────────────────────────────────────────
+
+function loadAll() {
+    loadStats();
+    loadUsers();
+    loadTournaments();
+    loadTeams();
+}
+
+// ── STATS ───────────────────────────────────────────────────────────────────
+
+async function loadStats() {
+    try {
+        const data = await api('/admin/stats');
+        const s = data.stats;
+        document.getElementById('stats-grid').innerHTML = `
+            <div class="stat-card"><div class="stat-number">${s.users}</div><div class="stat-label">Total Users</div></div>
+            <div class="stat-card"><div class="stat-number">${s.teams}</div><div class="stat-label">Teams</div></div>
+            <div class="stat-card"><div class="stat-number">${s.tournaments}</div><div class="stat-label">Tournaments</div></div>
+            <div class="stat-card"><div class="stat-number">${s.matches}</div><div class="stat-label">Matches</div></div>
+            <div class="stat-card warn"><div class="stat-number">${s.unverified}</div><div class="stat-label">Unverified Emails</div></div>
+        `;
+    } catch(e) {
+        document.getElementById('stats-grid').innerHTML = '<div class="loading">Failed to load stats</div>';
+    }
+}
+
+// ── USERS ───────────────────────────────────────────────────────────────────
+
+async function loadUsers() {
+    const search = document.getElementById('user-search').value.trim();
+    const role   = document.getElementById('user-role-filter').value;
+
+    let endpoint = '/admin/users?';
+    if (search) endpoint += `search=${encodeURIComponent(search)}&`;
+    if (role !== 'all') endpoint += `role=${role}`;
+
+    try {
+        const data = await api(endpoint);
+
+        if (!data.users.length) {
+            document.getElementById('users-table').innerHTML = '<div class="empty">No users found</div>';
+            return;
+        }
+
+        const rows = data.users.map(u => `
+            <tr>
+                <td>${u.id}</td>
+                <td>${esc(u.name)}</td>
+                <td>${esc(u.email)}</td>
+                <td><span class="badge ${u.role}">${u.role}</span></td>
+                <td>${u.is_verified
+                    ? '<span class="verified-yes"><i class="fas fa-check-circle"></i> Yes</span>'
+                    : '<span class="verified-no"><i class="fas fa-times-circle"></i> No</span>'}</td>
+                <td>${new Date(u.created_at).toLocaleDateString('ru-RU')}</td>
+                <td>
+                    ${u.role !== 'admin' ? `
+                    <div class="actions">
+                        ${!u.is_verified ? `<button class="btn-action btn-verify" onclick="verifyUser(${u.id})"><i class="fas fa-check"></i> Verify</button>` : ''}
+                        <button class="btn-action btn-role" onclick="openRoleModal(${u.id},'${esc(u.name)}','${u.role}')"><i class="fas fa-user-tag"></i> Role</button>
+                        <button class="btn-action btn-delete" onclick="deleteUser(${u.id},'${esc(u.name)}')"><i class="fas fa-trash"></i> Delete</button>
+                    </div>` : '—'}
+                </td>
+            </tr>
+        `).join('');
+
+        document.getElementById('users-table').innerHTML = `
+            <table>
+                <thead><tr>
+                    <th>ID</th><th>Name</th><th>Email</th><th>Role</th>
+                    <th>Verified</th><th>Registered</th><th>Actions</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+    } catch(e) {
+        document.getElementById('users-table').innerHTML = '<div class="loading">Failed to load users</div>';
+    }
+}
+
+async function deleteUser(id, name) {
+    if (!confirm(`Delete user "${name}"?\nThis will also delete their team and tournaments.`)) return;
+    try {
+        await api('/admin/users/' + id, { method: 'DELETE' });
+        notify('User deleted successfully');
+        loadUsers();
+        loadStats();
+    } catch(e) {
+        notify('Error: ' + e.message, 'error');
+    }
+}
+
+async function verifyUser(id) {
+    try {
+        await api('/admin/users/' + id + '/verify', { method: 'PATCH' });
+        notify('User verified successfully');
+        loadUsers();
+        loadStats();
+    } catch(e) {
+        notify('Error: ' + e.message, 'error');
+    }
+}
+
+// ── CHANGE ROLE MODAL ───────────────────────────────────────────────────────
+
+function openRoleModal(id, name, currentRole) {
+    pendingRoleUserId = id;
+    document.getElementById('role-modal-name').textContent = name;
+    document.getElementById('role-modal-select').value = currentRole;
+    document.getElementById('role-modal').style.display = 'block';
+}
+
+function closeRoleModal() {
+    document.getElementById('role-modal').style.display = 'none';
+    pendingRoleUserId = null;
+}
+
+async function confirmChangeRole() {
+    const role = document.getElementById('role-modal-select').value;
+    try {
+        await api('/admin/users/' + pendingRoleUserId + '/role', {
+            method: 'PATCH',
+            body: JSON.stringify({ role })
+        });
+        notify('Role updated successfully');
+        closeRoleModal();
+        loadUsers();
+    } catch(e) {
+        notify('Error: ' + e.message, 'error');
+    }
+}
+
+// ── TOURNAMENTS ─────────────────────────────────────────────────────────────
+
+async function loadTournaments() {
+    try {
+        const data = await api('/admin/tournaments');
+
+        if (!data.tournaments.length) {
+            document.getElementById('tournaments-table').innerHTML = '<div class="empty">No tournaments found</div>';
+            return;
+        }
+
+        const rows = data.tournaments.map(t => `
+            <tr>
+                <td>${t.id}</td>
+                <td>${esc(t.name)}</td>
+                <td><span class="badge ${t.status}">${t.status}</span></td>
+                <td>${esc(t.type)}</td>
+                <td>${esc(t.organizer_name || '—')}</td>
+                <td>${t.teams_count}</td>
+                <td>${new Date(t.created_at).toLocaleDateString('ru-RU')}</td>
+                <td>
+                    <button class="btn-action btn-delete" onclick="deleteTournament(${t.id},'${esc(t.name)}')">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+        document.getElementById('tournaments-table').innerHTML = `
+            <table>
+                <thead><tr>
+                    <th>ID</th><th>Name</th><th>Status</th><th>Type</th>
+                    <th>Organizer</th><th>Teams</th><th>Created</th><th>Action</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+    } catch(e) {
+        document.getElementById('tournaments-table').innerHTML = '<div class="loading">Failed to load</div>';
+    }
+}
+
+async function deleteTournament(id, name) {
+    if (!confirm(`Delete tournament "${name}"?\nAll matches and standings will be deleted too.`)) return;
+    try {
+        await api('/admin/tournaments/' + id, { method: 'DELETE' });
+        notify('Tournament deleted successfully');
+        loadTournaments();
+        loadStats();
+    } catch(e) {
+        notify('Error: ' + e.message, 'error');
+    }
+}
+
+// ── TEAMS ───────────────────────────────────────────────────────────────────
+
+async function loadTeams() {
+    try {
+        const data = await api('/admin/teams');
+
+        if (!data.teams.length) {
+            document.getElementById('teams-table').innerHTML = '<div class="empty">No teams found</div>';
+            return;
+        }
+
+        const rows = data.teams.map(t => `
+            <tr>
+                <td>${t.id}</td>
+                <td>${esc(t.name)}</td>
+                <td>${esc(t.coach_name || '—')}</td>
+                <td>${esc(t.coach_email || '—')}</td>
+                <td>${t.players_count}</td>
+                <td>${new Date(t.created_at).toLocaleDateString('ru-RU')}</td>
+                <td>
+                    <button class="btn-action btn-delete" onclick="deleteTeam(${t.id},'${esc(t.name)}')">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+        document.getElementById('teams-table').innerHTML = `
+            <table>
+                <thead><tr>
+                    <th>ID</th><th>Team Name</th><th>Coach</th><th>Coach Email</th>
+                    <th>Players</th><th>Created</th><th>Action</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+    } catch(e) {
+        document.getElementById('teams-table').innerHTML = '<div class="loading">Failed to load</div>';
+    }
+}
+
+async function deleteTeam(id, name) {
+    if (!confirm(`Delete team "${name}"?\nAll players will be removed from this team.`)) return;
+    try {
+        await api('/admin/teams/' + id, { method: 'DELETE' });
+        notify('Team deleted successfully');
+        loadTeams();
+        loadStats();
+    } catch(e) {
+        notify('Error: ' + e.message, 'error');
+    }
+}
+</script>
+</body>
+</html>

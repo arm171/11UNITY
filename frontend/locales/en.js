@@ -76,7 +76,13 @@ I18n.registerTranslations('en', {
         changePasswordHint: 'Leave password fields empty to keep current password',
         currentPassword: 'Current Password',
         newPassword: 'New Password',
-        currentPasswordRequired: 'Enter current password to change it'
+        currentPasswordRequired: 'Enter current password to change it',
+        systemOverview: 'System Overview'
+    },
+
+    // Admin
+    admin: {
+        users: 'Users'
     },
 
     // Auth
@@ -99,7 +105,8 @@ I18n.registerTranslations('en', {
         roles: {
             player: 'Player',
             coach: 'Coach',
-            organizer: 'Organizer'
+            organizer: 'Organizer',
+            admin: 'Admin'
         }
     },
 
@@ -122,6 +129,7 @@ I18n.registerTranslations('en', {
             university: 'University',
             amateur: 'Amateur'
         },
+        allStatuses: 'All Statuses',
         allCategories: 'All Categories',
         type: 'Type',
         selectType: 'Select type',

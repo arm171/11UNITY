@@ -76,7 +76,13 @@ I18n.registerTranslations('ru', {
         changePasswordHint: 'Оставьте поля пароля пустыми, чтобы сохранить текущий',
         currentPassword: 'Текущий пароль',
         newPassword: 'Новый пароль',
-        currentPasswordRequired: 'Введите текущий пароль для его изменения'
+        currentPasswordRequired: 'Введите текущий пароль для его изменения',
+        systemOverview: 'Обзор системы'
+    },
+
+    // Admin
+    admin: {
+        users: 'Пользователи'
     },
 
     // Auth
@@ -99,7 +105,8 @@ I18n.registerTranslations('ru', {
         roles: {
             player: 'Игрок',
             coach: 'Тренер',
-            organizer: 'Организатор'
+            organizer: 'Организатор',
+            admin: 'Администратор'
         }
     },
 
@@ -122,6 +129,7 @@ I18n.registerTranslations('ru', {
             university: 'Университетский',
             amateur: 'Любительский'
         },
+        allStatuses: 'Все статусы',
         allCategories: 'Все категории',
         type: 'Тип',
         selectType: 'Выберите тип',

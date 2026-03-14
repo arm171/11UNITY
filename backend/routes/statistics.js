@@ -83,7 +83,6 @@ router.get('/', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch statistics',
-            error: error.message
         });
     }
 });
@@ -168,7 +167,6 @@ router.get('/tournament/:id', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch tournament statistics',
-            error: error.message
         });
     }
 });
@@ -194,7 +192,6 @@ router.get('/tournaments', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch tournaments',
-            error: error.message
         });
     }
 });

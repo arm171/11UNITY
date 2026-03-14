@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const db = require('../config/database');
 const { verifyToken } = require('../middleware/auth');
 
@@ -133,6 +134,26 @@ router.get('/stats', verifyToken, async (req, res) => {
                 tournaments
             });
 
+        } else if (role === 'admin') {
+            // Admin: return system-wide counts
+            const [[users], [teams], [tournaments], [matches]] = await Promise.all([
+                db.promise().query('SELECT COUNT(*) as count FROM users WHERE role != "admin"'),
+                db.promise().query('SELECT COUNT(*) as count FROM teams'),
+                db.promise().query('SELECT COUNT(*) as count FROM tournaments'),
+                db.promise().query('SELECT COUNT(*) as count FROM matches')
+            ]);
+
+            res.json({
+                success: true,
+                role: 'admin',
+                stats: {
+                    users: users[0].count,
+                    teams: teams[0].count,
+                    tournaments: tournaments[0].count,
+                    matches: matches[0].count
+                }
+            });
+
         } else if (role === 'organizer') {
             // Tournaments with team counts
             const [tournaments] = await db.promise().query(`
@@ -224,16 +245,29 @@ router.put('/update', verifyToken, async (req, res) => {
             return res.status(400).json({ success: false, message: 'No fields to update' });
         }
 
+        const emailChanged = email && email.trim() !== user.email;
+
         updateValues.push(userId);
         await db.promise().query(`UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`, updateValues);
 
         // Return updated user data (for frontend to update localStorage)
         const [updatedUser] = await db.promise().query('SELECT id, name, email, role FROM users WHERE id = ?', [userId]);
 
+        // If email changed, issue a new JWT with the updated email
+        let newToken = null;
+        if (emailChanged) {
+            newToken = jwt.sign(
+                { id: updatedUser[0].id, email: updatedUser[0].email, role: updatedUser[0].role },
+                process.env.JWT_SECRET,
+                { expiresIn: '7d' }
+            );
+        }
+
         res.json({
             success: true,
             message: 'Profile updated successfully',
-            user: updatedUser[0]
+            user: updatedUser[0],
+            ...(newToken && { token: newToken })
         });
     } catch (error) {
         console.error('Update profile error:', error);

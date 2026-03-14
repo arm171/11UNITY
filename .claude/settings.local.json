@@ -25,7 +25,8 @@
       "WebFetch(domain:www.nayiri.com)",
       "WebFetch(domain:translate.glosbe.com)",
       "WebFetch(domain:www.armsoft.am)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(grep -n \"CREATE TABLE matches\\\\|team1_id\\\\|team2_id\\\\|round\\\\|bracket\\\\|status\" /c/Users/arman/Desktop/11UNITY/backend/scripts/*.sql)"
     ]
   }
 }

@@ -45,7 +45,6 @@ const getTeams = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch teams',
-            error: error.message
         });
     }
 };
@@ -117,7 +116,6 @@ const getTeamById = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch team',
-            error: error.message
         });
     }
 };
@@ -190,7 +188,6 @@ const createTeam = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to create team',
-            error: error.message
         });
     }
 };
@@ -267,7 +264,6 @@ const updateTeam = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to update team',
-            error: error.message
         });
     }
 };
@@ -310,19 +306,25 @@ const deleteTeam = async (req, res) => {
             });
         }
 
-        // Check: must not be in any tournament
-        const [tournamentCount] = await db.promise().query(
-            'SELECT COUNT(*) as count FROM tournament_teams WHERE team_id = ?',
+        // Check: must not be in any active or upcoming tournament
+        const [activeTournaments] = await db.promise().query(
+            `SELECT COUNT(*) as count FROM tournament_teams tt
+             INNER JOIN tournaments t ON tt.tournament_id = t.id
+             WHERE tt.team_id = ? AND t.status IN ('upcoming', 'active')`,
             [id]
         );
 
-        if (tournamentCount[0].count > 0) {
+        if (activeTournaments[0].count > 0) {
             return res.status(400).json({
                 success: false,
-                message: 'Cannot delete team that is registered in a tournament'
+                message: 'Cannot delete team that is registered in an active or upcoming tournament'
             });
         }
 
+        // Clean up finished tournament references before deleting
+        await db.promise().query('DELETE FROM tournament_teams WHERE team_id = ?', [id]);
+        await db.promise().query('DELETE FROM standings WHERE team_id = ?', [id]);
+        await db.promise().query('DELETE FROM player_statistics WHERE team_id = ?', [id]);
         await db.promise().query('DELETE FROM teams WHERE id = ?', [id]);
         res.json({
             success: true,
@@ -333,7 +335,6 @@ const deleteTeam = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to delete team',
-            error: error.message
         });
     }
 };
@@ -363,7 +364,7 @@ const searchPlayers = async (req, res) => {
                 END as has_team
             FROM users u
             LEFT JOIN team_players tp ON u.id = tp.player_id
-            WHERE u.role = 'player' AND (u.name LIKE ? OR u.email LIKE ?)
+            WHERE u.role = 'player' AND u.is_verified = 1 AND (u.name LIKE ? OR u.email LIKE ?)
             LIMIT 10`,
             [searchTerm, searchTerm]
         );
@@ -374,7 +375,6 @@ const searchPlayers = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to search players',
-            error: error.message
         });
     }
 };
@@ -465,7 +465,15 @@ const addPlayerToTeam = async (req, res) => {
             });
         }
 
-        // Check jersey number unique
+        // Validate jersey number range first
+        if (jerseyNumber < 1 || jerseyNumber > 99) {
+            return res.status(400).json({
+                success: false,
+                message: 'Jersey number must be between 1 and 99'
+            });
+        }
+
+        // Check jersey number unique within team
         const [existingJerseys] = await db.promise().query(
             'SELECT id FROM team_players WHERE team_id = ? AND jersey_number = ?',
             [teamId, jerseyNumber]
@@ -475,13 +483,6 @@ const addPlayerToTeam = async (req, res) => {
             return res.status(409).json({
                 success: false,
                 message: `Jersey number ${jerseyNumber} is already taken`
-            });
-        }
-
-        if (jerseyNumber < 1 || jerseyNumber > 99) {
-            return res.status(400).json({
-                success: false,
-                message: 'Jersey number must be between 1 and 99'
             });
         }
 
@@ -516,7 +517,6 @@ const addPlayerToTeam = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to add player to team',
-            error: error.message
         });
     }
 };
@@ -580,7 +580,6 @@ const removePlayerFromTeam = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to remove player from team',
-            error: error.message
         });
     }
 };
@@ -627,7 +626,6 @@ const leaveTeam = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to leave team',
-            error: error.message
         });
     }
 };

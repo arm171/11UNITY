@@ -55,7 +55,6 @@ const getTournaments = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch tournaments',
-            error: error.message
         });
     }
 };
@@ -194,7 +193,6 @@ const createTournament = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to create tournament',
-            error: error.message
         });
     }
 };
@@ -261,7 +259,17 @@ const updateTournament = async (req, res) => {
             SET name = ?, type = ?, category = ?, start_date = ?,
                 location = ?, description = ?, max_teams = ?, min_players_per_team = ?
             WHERE id = ?`,
-            [name, type, category, startDate, location, description, maxTeams, minPlayersPerTeam || 11, id]
+            [
+                name,
+                type,
+                category,
+                startDate,
+                location !== undefined ? location : null,
+                description !== undefined ? description : null,
+                maxTeams,
+                minPlayersPerTeam || 11,
+                id
+            ]
         );
 
         res.json({
@@ -274,7 +282,6 @@ const updateTournament = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to update tournament',
-            error: error.message
         });
     }
 };
@@ -325,7 +332,6 @@ const deleteTournament = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to delete tournament',
-            error: error.message
         });
     }
 };
@@ -417,7 +423,6 @@ const joinTournament = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to join tournament',
-            error: error.message
         });
     }
 };
@@ -493,7 +498,6 @@ const leaveTournament = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to leave tournament',
-            error: error.message
         });
     }
 };
@@ -537,7 +541,6 @@ const checkUserJoined = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to check join status',
-            error: error.message
         });
     }
 };
@@ -587,15 +590,17 @@ const previewFixtures = async (req, res) => {
             });
         }
 
-        // Check min players for each team
+        // Check min players for each team (skip if force=true)
         const minPlayers = tournamentInfo[0].min_players_per_team;
-        const teamsWithTooFewPlayers = teams.filter(t => t.player_count < minPlayers);
-        if (teamsWithTooFewPlayers.length > 0) {
-            const teamNames = teamsWithTooFewPlayers.map(t => `${t.name} (${t.player_count}/${minPlayers})`).join(', ');
-            return res.status(400).json({
-                success: false,
-                message: `These teams don't have enough players: ${teamNames}`
-            });
+        if (!req.body.force) {
+            const teamsWithTooFewPlayers = teams.filter(t => t.player_count < minPlayers);
+            if (teamsWithTooFewPlayers.length > 0) {
+                const teamNames = teamsWithTooFewPlayers.map(t => `${t.name} (${t.player_count}/${minPlayers})`).join(', ');
+                return res.status(400).json({
+                    success: false,
+                    message: `These teams don't have enough players: ${teamNames}`
+                });
+            }
         }
 
         const rounds = fixturesGenerator.generateRoundRobinDouble(teams);
@@ -670,7 +675,7 @@ const generateFixtures = async (req, res) => {
 
         // Check tournament is upcoming
         const [tournamentInfo] = await db.promise().query(
-            'SELECT status, min_players_per_team, organizer_id FROM tournaments WHERE id = ?',
+            'SELECT status, min_players_per_team, organizer_id, type FROM tournaments WHERE id = ?',
             [tournamentId]
         );
 
@@ -721,56 +726,93 @@ const generateFixtures = async (req, res) => {
             });
         }
 
-        // Check min players for each team
+        // Check min players for each team (skip if force=true)
         const minPlayers = tournamentInfo[0].min_players_per_team;
-        const teamsWithTooFewPlayers = teams.filter(t => t.player_count < minPlayers);
-        if (teamsWithTooFewPlayers.length > 0) {
-            const teamNames = teamsWithTooFewPlayers.map(t => `${t.name} (${t.player_count}/${minPlayers})`).join(', ');
-            return res.status(400).json({
-                success: false,
-                message: `These teams don't have enough players: ${teamNames}`
-            });
+        if (!req.body.force) {
+            const teamsWithTooFewPlayers = teams.filter(t => t.player_count < minPlayers);
+            if (teamsWithTooFewPlayers.length > 0) {
+                const teamNames = teamsWithTooFewPlayers.map(t => `${t.name} (${t.player_count}/${minPlayers})`).join(', ');
+                return res.status(400).json({
+                    success: false,
+                    message: `These teams don't have enough players: ${teamNames}`
+                });
+            }
         }
 
-        const rounds = fixturesGenerator.generateRoundRobinDouble(teams);
+        const tournamentType = tournamentInfo[0].type;
         const settings = {
             startDate,
             matchDays,
             matchTime,
-            matchesPerDay,
+            matchesPerDay: parseInt(matchesPerDay),
             daysBetweenRounds: daysBetweenRounds || 0
         };
 
-        const scheduledMatches = fixturesGenerator.scheduleMatches(rounds, settings);
+        // Generate matches based on tournament type
+        let scheduledMatches = [];
+
+        if (tournamentType === 'league') {
+            const rounds = fixturesGenerator.generateRoundRobinDouble(teams);
+            scheduledMatches = fixturesGenerator.scheduleMatches(rounds, settings);
+
+        } else if (tournamentType === 'playoff') {
+            const validSizes = [4, 8, 16, 32];
+            if (!validSizes.includes(teams.length)) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Playoff requires exactly 4, 8, 16, or 32 teams. Currently: ${teams.length}`
+                });
+            }
+            const rounds = fixturesGenerator.generatePlayoff(teams);
+            scheduledMatches = fixturesGenerator.schedulePlayoffMatches(rounds, settings);
+
+        } else if (tournamentType === 'group_playoff') {
+            const validSizes = [8, 16, 32];
+            if (!validSizes.includes(teams.length)) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Group+Playoff requires exactly 8, 16, or 32 teams. Currently: ${teams.length}`
+                });
+            }
+            const { groupMatches, playoffMatches } = fixturesGenerator.generateGroupPlayoff(teams);
+            scheduledMatches = fixturesGenerator.scheduleGroupPlayoffMatches(groupMatches, playoffMatches, settings);
+        }
 
         for (const match of scheduledMatches) {
             await db.promise().query(
                 `INSERT INTO matches
-                (tournament_id, round, team1_id, team2_id, match_date, status)
-                VALUES (?, ?, ?, ?, ?, 'scheduled')`,
-                [tournamentId, match.round, match.teamAId, match.teamBId, match.matchDate]
+                (tournament_id, round, team1_id, team2_id, match_date, status, bracket_slot)
+                VALUES (?, ?, ?, ?, ?, 'scheduled', ?)`,
+                [tournamentId, match.round, match.teamAId, match.teamBId, match.matchDate, match.bracketSlot || null]
             );
         }
 
         // Initialize standings for all teams
         await initializeStandings(tournamentId);
 
-        // Change tournament status to 'active'
+        // Set status: 'active' only if start date has already arrived, else keep 'upcoming'
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const firstMatchDate = new Date(startDate);
+        firstMatchDate.setHours(0, 0, 0, 0);
+
+        const newStatus = firstMatchDate <= today ? 'active' : 'upcoming';
         await db.promise().query(
-            `UPDATE tournaments SET status = 'active' WHERE id = ?`,
-            [tournamentId]
+            `UPDATE tournaments SET status = ? WHERE id = ?`,
+            [newStatus, tournamentId]
         );
 
         const [savedMatches] = await db.promise().query(`
-            SELECT m.*, t1.name as team1_name, t2.name as team2_name
+            SELECT m.*,
+                   t1.name as team1_name, t2.name as team2_name
             FROM matches m
-            INNER JOIN teams t1 ON m.team1_id = t1.id
-            INNER JOIN teams t2 ON m.team2_id = t2.id
+            LEFT JOIN teams t1 ON m.team1_id = t1.id
+            LEFT JOIN teams t2 ON m.team2_id = t2.id
             WHERE m.tournament_id = ?
-            ORDER BY m.round, m.match_date
+            ORDER BY m.match_date, m.id
         `, [tournamentId]);
 
-        console.log('Generated', scheduledMatches.length, 'matches and initialized standings');
+        console.log(`Generated ${scheduledMatches.length} matches (type: ${tournamentType}, status: ${newStatus})`);
 
         res.json({
             success: true,
@@ -829,9 +871,13 @@ const getAllMatches = async (req, res) => {
             }
         }
 
-        // Upcoming matches first, then by date
+        // Live first, then upcoming, then finished — each group sorted by date
         query += ` ORDER BY
-            CASE WHEN m.status = 'scheduled' THEN 0 ELSE 1 END,
+            CASE m.status
+                WHEN 'in_progress' THEN 0
+                WHEN 'scheduled'   THEN 1
+                ELSE                    2
+            END,
             m.match_date ASC, m.id ASC`;
 
         const [matches] = await db.promise().query(query, params);
@@ -846,7 +892,6 @@ const getAllMatches = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch matches',
-            error: error.message
         });
     }
 };
@@ -870,8 +915,8 @@ const getTournamentMatches = async (req, res) => {
                 t2.logo_color as team2_color
             FROM matches m
             INNER JOIN tournaments t ON m.tournament_id = t.id
-            INNER JOIN teams t1 ON m.team1_id = t1.id
-            INNER JOIN teams t2 ON m.team2_id = t2.id
+            LEFT JOIN teams t1 ON m.team1_id = t1.id
+            LEFT JOIN teams t2 ON m.team2_id = t2.id
             WHERE m.tournament_id = ?
             ORDER BY m.round, m.match_date
         `;
@@ -888,7 +933,6 @@ const getTournamentMatches = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch matches',
-            error: error.message
         });
     }
 };
@@ -976,7 +1020,6 @@ const getMatchDetails = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch match details',
-            error: error.message
         });
     }
 };
@@ -1017,6 +1060,16 @@ const updateMatchResult = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: 'Invalid status'
+            });
+        }
+
+        // Prevent status from going backwards
+        const currentStatus = matches[0].status;
+        const statusOrder = { scheduled: 0, in_progress: 1, finished: 2 };
+        if (statusOrder[status] < statusOrder[currentStatus]) {
+            return res.status(400).json({
+                success: false,
+                message: `Cannot change match status from '${currentStatus}' back to '${status}'`
             });
         }
 
@@ -1074,6 +1127,39 @@ const updateMatchResult = async (req, res) => {
             // Recalculate player statistics
             await recalculatePlayerStatistics(tournamentId);
 
+            // Advance winner in playoff bracket
+            const tournamentType2 = matches[0].tournament_type;
+            const matchRound = matches[0].round;
+            const matchBracketSlot = matches[0].bracket_slot;
+
+            const isPlayoffRound = tournamentType2 === 'playoff' ||
+                (tournamentType2 === 'group_playoff' && !String(matchRound).startsWith('Group'));
+
+            if (isPlayoffRound && matchBracketSlot !== null) {
+                const winnerId = team1Score > team2Score ? matches[0].team1_id : matches[0].team2_id;
+                const nextRoundNum = parseInt(matchRound) + 1;
+                const nextSlot = Math.ceil(matchBracketSlot / 2);
+                const isTeam1Slot = matchBracketSlot % 2 === 1;
+
+                const [nextMatch] = await db.promise().query(
+                    `SELECT id FROM matches WHERE tournament_id = ? AND round = ? AND bracket_slot = ?`,
+                    [tournamentId, String(nextRoundNum), nextSlot]
+                );
+
+                if (nextMatch.length > 0) {
+                    const field = isTeam1Slot ? 'team1_id' : 'team2_id';
+                    await db.promise().query(
+                        `UPDATE matches SET ${field} = ? WHERE id = ?`,
+                        [winnerId, nextMatch[0].id]
+                    );
+                }
+            }
+
+            // For group+playoff: check if group stage done → advance top 2 from each group
+            if (tournamentType2 === 'group_playoff' && String(matchRound).startsWith('Group')) {
+                await advanceGroupWinners(tournamentId, matchRound.split(' ')[1]);
+            }
+
             // Check if all matches are finished → auto-finish tournament
             await checkAndFinishTournament(tournamentId);
 
@@ -1103,7 +1189,6 @@ const updateMatchResult = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to update match result',
-            error: error.message
         });
     }
 };
@@ -1223,7 +1308,6 @@ const addMatchEvent = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to add match event',
-            error: error.message
         });
     }
 };
@@ -1303,7 +1387,6 @@ const getStandings = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch standings',
-            error: error.message
         });
     }
 };
@@ -1381,6 +1464,98 @@ const recalculateStandings = async (tournamentId) => {
 };
 
 /**
+ * After all matches in a group finish, assign top 2 teams to the playoff bracket.
+ * Cross-bracket seeding: A1 vs B2, B1 vs A2, C1 vs D2, D1 vs C2, ...
+ */
+const advanceGroupWinners = async (tournamentId, groupLetter) => {
+    try {
+        // Check if all group matches for this group are finished
+        const [groupMatches] = await db.promise().query(
+            `SELECT status FROM matches WHERE tournament_id = ? AND round = ?`,
+            [tournamentId, `Group ${groupLetter}`]
+        );
+
+        const allDone = groupMatches.every(m => m.status === 'finished');
+        if (!allDone) return; // Group not complete yet
+
+        // Get all groups for this tournament
+        const [allGroupMatches] = await db.promise().query(
+            `SELECT DISTINCT round FROM matches WHERE tournament_id = ? AND round LIKE 'Group %'`,
+            [tournamentId]
+        );
+        const groupLetters = allGroupMatches.map(r => r.round.replace('Group ', '')).sort();
+
+        // Check if ALL groups are done
+        for (const gl of groupLetters) {
+            const [gm] = await db.promise().query(
+                `SELECT status FROM matches WHERE tournament_id = ? AND round = ?`,
+                [tournamentId, `Group ${gl}`]
+            );
+            if (gm.some(m => m.status !== 'finished')) return; // Not all groups done
+        }
+
+        // All groups finished — determine top 2 from each group via standings
+        const groupStandings = {};
+        for (const gl of groupLetters) {
+            const [gTeams] = await db.promise().query(`
+                SELECT DISTINCT team1_id as team_id FROM matches
+                WHERE tournament_id = ? AND round = ?
+                UNION
+                SELECT DISTINCT team2_id FROM matches
+                WHERE tournament_id = ? AND round = ?
+            `, [tournamentId, `Group ${gl}`, tournamentId, `Group ${gl}`]);
+
+            const teamIds = gTeams.map(t => t.team_id);
+            const [standings] = await db.promise().query(`
+                SELECT team_id, points, goal_difference, goals_for
+                FROM standings WHERE tournament_id = ? AND team_id IN (?)
+                ORDER BY points DESC, goal_difference DESC, goals_for DESC
+            `, [tournamentId, teamIds]);
+
+            groupStandings[gl] = standings.map(s => s.team_id);
+        }
+
+        // Get playoff matches ordered by bracket_slot
+        const [playoffMatches] = await db.promise().query(`
+            SELECT id, round, bracket_slot FROM matches
+            WHERE tournament_id = ? AND round NOT LIKE 'Group %'
+            ORDER BY match_date ASC, bracket_slot ASC
+        `, [tournamentId]);
+
+        if (playoffMatches.length === 0) return;
+
+        // Find first playoff round matches (those with null team1_id and team2_id)
+        const firstPlayoffRound = playoffMatches[0].round;
+        const firstRoundMatches = playoffMatches
+            .filter(m => m.round === firstPlayoffRound)
+            .sort((a, b) => a.bracket_slot - b.bracket_slot);
+
+        // Cross-seeding: A1 vs B2, B1 vs A2, C1 vs D2, D1 vs C2, ...
+        // For N groups: pair group[i] winner with group[i+1] runner-up (alternating)
+        const seeds = [];
+        for (let i = 0; i < groupLetters.length; i += 2) {
+            const glA = groupLetters[i];
+            const glB = groupLetters[i + 1];
+            if (glB) {
+                seeds.push({ team1: groupStandings[glA][0], team2: groupStandings[glB][1] });
+                seeds.push({ team1: groupStandings[glB][0], team2: groupStandings[glA][1] });
+            }
+        }
+
+        for (let i = 0; i < firstRoundMatches.length && i < seeds.length; i++) {
+            await db.promise().query(
+                `UPDATE matches SET team1_id = ?, team2_id = ? WHERE id = ?`,
+                [seeds[i].team1, seeds[i].team2, firstRoundMatches[i].id]
+            );
+        }
+
+        console.log(`Group stage complete for tournament ${tournamentId} — playoff bracket populated`);
+    } catch (err) {
+        console.error('advanceGroupWinners error:', err);
+    }
+};
+
+/**
  * Check if all matches are finished and auto-finish tournament
  */
 const checkAndFinishTournament = async (tournamentId) => {
@@ -1431,7 +1606,6 @@ const getPlayerStatistics = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch player statistics',
-            error: error.message
         });
     }
 };

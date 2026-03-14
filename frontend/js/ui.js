@@ -18,7 +18,7 @@ const UI = {
 
         notification.innerHTML = `
             ${icons[type] || ''}
-            <span style="margin-left: 8px;">${message}</span>
+            <span style="margin-left: 8px;">${this.escapeHtml(message)}</span>
         `;
 
         document.body.appendChild(notification);
@@ -260,6 +260,22 @@ const UI = {
         };
         return date.toLocaleDateString('en-US', dateOptions) + ' at ' +
                date.toLocaleTimeString('en-US', timeOptions);
+    },
+
+    /**
+     * Escape HTML special characters to prevent XSS.
+     * Always use this when inserting user-provided text into innerHTML.
+     * @param {string} str
+     * @returns {string}
+     */
+    escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     },
 
     // Initialize

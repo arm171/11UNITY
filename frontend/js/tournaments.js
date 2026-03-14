@@ -9,6 +9,7 @@ const Tournaments = {
     currentTournament: null,
     currentMatch: null,
     currentCategoryFilter: '',
+    currentStatusFilter: '',
 
     VALID_MAX_TEAMS: {
         league: [4, 8, 12, 16, 32],
@@ -557,6 +558,15 @@ const Tournaments = {
             createBtn.addEventListener('click', () => this.openCreateModal());
         }
 
+        // Status filter (client-side)
+        const statusFilter = document.getElementById('tournaments-status-filter');
+        if (statusFilter) {
+            statusFilter.addEventListener('change', (e) => {
+                this.currentStatusFilter = e.target.value;
+                this.render();
+            });
+        }
+
         // Category filter
         const categoryFilter = document.getElementById('tournaments-category-filter');
         if (categoryFilter) {
@@ -647,10 +657,13 @@ const Tournaments = {
     updateStats() {
         const total = this.tournaments.length;
         const active = this.tournaments.filter(t => t.status === 'active').length;
+        const upcoming = this.tournaments.filter(t => t.status === 'upcoming').length;
         const finished = this.tournaments.filter(t => t.status === 'finished').length;
 
         document.getElementById('total-tournaments').textContent = total;
         document.getElementById('active-tournaments').textContent = active;
+        const upcomingEl = document.getElementById('upcoming-tournaments');
+        if (upcomingEl) upcomingEl.textContent = upcoming;
         document.getElementById('finished-tournaments').textContent = finished;
     },
 
@@ -673,7 +686,17 @@ const Tournaments = {
 
         container.innerHTML = '';
 
-        this.tournaments.forEach(tournament => {
+        const filtered = this.currentStatusFilter
+            ? this.tournaments.filter(t => t.status === this.currentStatusFilter)
+            : this.tournaments;
+
+        if (filtered.length === 0) {
+            container.style.display = 'none';
+            if (emptyState) emptyState.style.display = 'flex';
+            return;
+        }
+
+        filtered.forEach(tournament => {
             const card = this.createCard(tournament);
             container.appendChild(card);
         });
@@ -691,7 +714,7 @@ const Tournaments = {
 
         card.innerHTML = `
             <div class="tournament-header">
-                <h3 class="tournament-title">${tournament.name}</h3>
+                <h3 class="tournament-title">${UI.escapeHtml(tournament.name)}</h3>
                 <span class="badge ${statusClass}">${statusText}</span>
             </div>
 
@@ -714,13 +737,11 @@ const Tournaments = {
                 </div>
             </div>
 
-            <div class="tournament-description">
-                ${tournament.description || I18n.t('common.noDescription')}
-            </div>
+            ${tournament.description ? `<div class="tournament-description">${UI.escapeHtml(tournament.description)}</div>` : ''}
 
             <div class="tournament-footer">
                 <i class="fas fa-user"></i>
-                <span>${tournament.organizer_name || I18n.t('common.unknown')}</span>
+                <span>${UI.escapeHtml(tournament.organizer_name || I18n.t('common.unknown'))}</span>
             </div>
         `;
 
@@ -937,7 +958,14 @@ const Tournaments = {
         document.getElementById('modal-tournament-category').textContent = this.getCategoryLabel(tournament.category);
         document.getElementById('modal-tournament-teams').textContent = I18n.t('tournaments.teamsJoined', { current: tournament.teams_count || 0, max: tournament.max_teams });
         document.getElementById('modal-tournament-type').textContent = this.getTypeLabel(tournament.type);
-        document.getElementById('modal-tournament-description').textContent = tournament.description || I18n.t('common.noDescription');
+        const descEl = document.getElementById('modal-tournament-description');
+        if (tournament.description) {
+            descEl.textContent = tournament.description;
+            descEl.style.display = '';
+        } else {
+            descEl.textContent = '';
+            descEl.style.display = 'none';
+        }
 
         await this.updateJoinButton(tournament);
         await this.updateGenerateFixturesButton(tournament);
@@ -1044,8 +1072,8 @@ const Tournaments = {
                                         justify-content: center;
                                         font-weight: bold;
                                         font-size: 12px;
-                                    ">${team.team_logo || team.team_name.replace(/\s+/g, '').substring(0, 3).toUpperCase()}</div>
-                                    <span>${team.team_name}</span>
+                                    ">${UI.escapeHtml(team.team_logo || team.team_name.replace(/\s+/g, '').substring(0, 3).toUpperCase())}</div>
+                                    <span>${UI.escapeHtml(team.team_name)}</span>
                                 </div>
                             </td>
                             <td style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center;">${team.played}</td>
@@ -1130,8 +1158,8 @@ const Tournaments = {
                                     font-size: 12px;
                                 ">${index + 1}</span>
                                 <div>
-                                    <div style="color: white; font-weight: 600;">${player.player_name}</div>
-                                    <div style="color: #b0b0b0; font-size: 12px;">${player.team_name}</div>
+                                    <div style="color: white; font-weight: 600;">${UI.escapeHtml(player.player_name)}</div>
+                                    <div style="color: #b0b0b0; font-size: 12px;">${UI.escapeHtml(player.team_name)}</div>
                                 </div>
                             </div>
                             <div style="font-size: 20px; font-weight: bold; color: ${color};">${player[valueKey]}</div>
@@ -1166,8 +1194,8 @@ const Tournaments = {
                                 border-radius: 8px;
                             ">
                                 <div>
-                                    <div style="color: white; font-weight: 600;">${player.player_name}</div>
-                                    <div style="color: #b0b0b0; font-size: 12px;">${player.team_name}</div>
+                                    <div style="color: white; font-weight: 600;">${UI.escapeHtml(player.player_name)}</div>
+                                    <div style="color: #b0b0b0; font-size: 12px;">${UI.escapeHtml(player.team_name)}</div>
                                 </div>
                                 <div style="font-size: 18px; font-weight: bold; color: #f39c12;">${player.yellow_cards}</div>
                             </div>
@@ -1190,8 +1218,8 @@ const Tournaments = {
                                 border-radius: 8px;
                             ">
                                 <div>
-                                    <div style="color: white; font-weight: 600;">${player.player_name}</div>
-                                    <div style="color: #b0b0b0; font-size: 12px;">${player.team_name}</div>
+                                    <div style="color: white; font-weight: 600;">${UI.escapeHtml(player.player_name)}</div>
+                                    <div style="color: #b0b0b0; font-size: 12px;">${UI.escapeHtml(player.team_name)}</div>
                                 </div>
                                 <div style="font-size: 18px; font-weight: bold; color: #e74c3c;">${player.red_cards}</div>
                             </div>
@@ -1230,7 +1258,11 @@ const Tournaments = {
         const joinStatusText = document.getElementById('join-status-text');
 
         joinBtn.style.display = 'none';
+        joinBtn.disabled = false;
+        joinBtn.innerHTML = `<i class="fas fa-plus-circle"></i> <span data-i18n="tournaments.joinTournament">${I18n.t('tournaments.joinTournament', 'Join Tournament')}</span>`;
         leaveBtn.style.display = 'none';
+        leaveBtn.disabled = false;
+        leaveBtn.innerHTML = `<i class="fas fa-sign-out-alt"></i> <span data-i18n="tournaments.leaveTournament">${I18n.t('tournaments.leaveTournament', 'Leave Tournament')}</span>`;
         joinStatus.style.display = 'none';
 
         if (!API.isAuthenticated()) return;
@@ -1383,7 +1415,8 @@ const Tournaments = {
                 matchTime: document.getElementById('fixtures-match-time').value,
                 matchDays: matchDays,
                 matchesPerDay: parseInt(document.getElementById('fixtures-matches-per-day').value),
-                daysBetweenRounds: 0
+                daysBetweenRounds: 0,
+                force: true
             };
 
             await API.request(`/tournaments/${this.currentTournament.id}/fixtures/generate`, {
@@ -1465,12 +1498,19 @@ const Tournaments = {
         const user = API.getUser();
         const isOrganizer = user && user.role === 'organizer' && match.organizer_id === user.id;
 
+        const team1Name = match.team1_name || 'TBD';
+        const team2Name = match.team2_name || 'TBD';
+        const team1Logo = match.team1_logo || (match.team1_name ? '' : '?');
+        const team2Logo = match.team2_logo || (match.team2_name ? '' : '?');
+        const isTBD = !match.team1_id || !match.team2_id;
+
         return `
             <div data-match-id="${match.id}" style="
                 background: rgba(255, 255, 255, 0.05);
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 border-radius: 12px;
                 padding: 16px;
+                ${isTBD ? 'opacity: 0.6;' : ''}
             ">
                 <div style="display: flex; align-items: center; justify-content: space-between;">
                     <div style="flex: 1; display: flex; align-items: center; gap: 12px;">
@@ -1486,9 +1526,9 @@ const Tournaments = {
                             color: white;
                             font-size: 14px;
                         ">
-                            ${match.team1_logo || ''}
+                            ${team1Logo}
                         </div>
-                        <span style="color: white; font-weight: 600;">${match.team1_name}</span>
+                        <span style="color: white; font-weight: 600;">${team1Name}</span>
                     </div>
 
                     <div style="text-align: center; padding: 0 24px;">
@@ -1504,7 +1544,7 @@ const Tournaments = {
                     </div>
 
                     <div style="flex: 1; display: flex; align-items: center; gap: 12px; justify-content: flex-end;">
-                        <span style="color: white; font-weight: 600;">${match.team2_name}</span>
+                        <span style="color: white; font-weight: 600;">${team2Name}</span>
                         <div style="
                             width: 40px;
                             height: 40px;
@@ -1517,12 +1557,12 @@ const Tournaments = {
                             color: white;
                             font-size: 14px;
                         ">
-                            ${match.team2_logo || ''}
+                            ${team2Logo}
                         </div>
                     </div>
                 </div>
 
-                ${isOrganizer && match.status !== 'finished' ? `
+                ${isOrganizer && match.status !== 'finished' && !isTBD ? `
                     <div style="margin-top: 16px; text-align: center;">
                         <button
                             class="btn btn-primary btn-sm"
@@ -1540,6 +1580,13 @@ const Tournaments = {
         try {
             const response = await API.getMatchDetails(tournamentId, matchId);
             this.currentMatch = response.match;
+
+            // Reset finish button state
+            const finishBtn = document.getElementById('finish-match-btn');
+            if (finishBtn) {
+                finishBtn.disabled = false;
+                finishBtn.innerHTML = `<i class="fas fa-flag-checkered"></i> <span data-i18n="match.finishMatch">${I18n.t('match.finishMatch', 'Finish Match')}</span>`;
+            }
 
             // Team 1
             document.getElementById('match-team1-logo').textContent = this.currentMatch.team1_logo || '';
@@ -1724,7 +1771,7 @@ const Tournaments = {
             };
 
             const ownGoalLabel = event.is_own_goal ? ` <span style="color: #e74c3c; font-size: 12px;">(OG)</span>` : '';
-            const assistLabel = event.assist_player_name ? `<div style="color: #3498db; font-size: 12px;">${I18n.t('match.assist') || 'Assist'}: ${event.assist_player_name}</div>` : '';
+            const assistLabel = event.assist_player_name ? `<div style="color: #3498db; font-size: 12px;">${I18n.t('match.assist') || 'Assist'}: ${UI.escapeHtml(event.assist_player_name)}</div>` : '';
 
             const deleteBtn = isOrganizer && !isFinished && event.id ? `
                 <button
@@ -1773,8 +1820,8 @@ const Tournaments = {
                         <i class="fas ${iconMap[event.event_type] || 'fa-circle'}"></i>
                     </div>
                     <div style="flex: 1;">
-                        <div style="color: white; font-weight: 600;">${event.player_name}${ownGoalLabel}</div>
-                        <div style="color: #b0b0b0; font-size: 14px;">${event.team_name}</div>
+                        <div style="color: white; font-weight: 600;">${UI.escapeHtml(event.player_name)}${ownGoalLabel}</div>
+                        <div style="color: #b0b0b0; font-size: 14px;">${UI.escapeHtml(event.team_name)}</div>
                         ${assistLabel}
                     </div>
                     <div style="text-align: right; display: flex; align-items: center;">

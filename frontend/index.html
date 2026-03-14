@@ -147,6 +147,10 @@
                         <span class="stat-label" data-i18n="tournaments.active">Active</span>
                     </div>
                     <div class="stat-card">
+                        <span class="stat-number" id="upcoming-tournaments">0</span>
+                        <span class="stat-label" data-i18n="tournaments.upcoming">Upcoming</span>
+                    </div>
+                    <div class="stat-card">
                         <span class="stat-number" id="finished-tournaments">0</span>
                         <span class="stat-label" data-i18n="tournaments.finished">Finished</span>
                     </div>
@@ -154,6 +158,13 @@
 
                 <!-- Filters Row -->
                 <div class="filters-row" style="text-align: center; margin-bottom: 32px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+                    <!-- Status filter -->
+                    <select class="form-select" id="tournaments-status-filter" style="max-width: 200px;">
+                        <option value="" data-i18n="tournaments.allStatuses">All Statuses</option>
+                        <option value="active" data-i18n="tournaments.active">Active</option>
+                        <option value="upcoming" data-i18n="tournaments.upcoming">Upcoming</option>
+                        <option value="finished" data-i18n="tournaments.finished">Finished</option>
+                    </select>
                     <!-- Category filter -->
                     <select class="form-select" id="tournaments-category-filter" style="max-width: 200px;">
                         <option value="" data-i18n="tournaments.allCategories">All Categories</option>
@@ -242,6 +253,10 @@
                         <span class="stat-label" data-i18n="matches.upcoming">Upcoming</span>
                     </div>
                     <div class="stat-card">
+                        <span class="stat-number" id="live-matches" style="color: #e74c3c;">0</span>
+                        <span class="stat-label" data-i18n="matches.live">Live</span>
+                    </div>
+                    <div class="stat-card">
                         <span class="stat-number" id="finished-matches">0</span>
                         <span class="stat-label" data-i18n="matches.finished">Finished</span>
                     </div>
@@ -255,6 +270,7 @@
                     <select class="form-select" id="matches-status-filter" style="max-width: 200px;">
                         <option value="all" data-i18n="matches.all">All</option>
                         <option value="upcoming" data-i18n="matches.upcoming">Upcoming</option>
+                        <option value="live" data-i18n="matches.live">Live</option>
                         <option value="finished" data-i18n="matches.finished">Finished</option>
                     </select>
                 </div>

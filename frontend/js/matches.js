@@ -116,14 +116,17 @@ const Matches = {
         const total = this.matches.length;
         const finished = this.matches.filter(m => m.status === 'finished').length;
         const upcoming = this.matches.filter(m => m.status === 'scheduled').length;
+        const live = this.matches.filter(m => m.status === 'in_progress').length;
 
         const totalEl = document.getElementById('total-matches');
         const finishedEl = document.getElementById('finished-matches');
         const upcomingEl = document.getElementById('upcoming-matches');
+        const liveEl = document.getElementById('live-matches');
 
         if (totalEl) totalEl.textContent = total;
         if (finishedEl) finishedEl.textContent = finished;
         if (upcomingEl) upcomingEl.textContent = upcoming;
+        if (liveEl) liveEl.textContent = live;
     },
 
     render() {
@@ -143,6 +146,8 @@ const Matches = {
         // Filter by status
         if (this.currentStatusFilter === 'upcoming') {
             filteredMatches = filteredMatches.filter(m => m.status === 'scheduled');
+        } else if (this.currentStatusFilter === 'live') {
+            filteredMatches = filteredMatches.filter(m => m.status === 'in_progress');
         } else if (this.currentStatusFilter === 'finished') {
             filteredMatches = filteredMatches.filter(m => m.status === 'finished');
         }
@@ -161,8 +166,8 @@ const Matches = {
 
         container.innerHTML = '';
 
-        Object.entries(matchesByDate).forEach(([date, matches]) => {
-            const dateSection = this.createDateSection(date, matches);
+        Object.entries(matchesByDate).forEach(([isoKey, group]) => {
+            const dateSection = this.createDateSection(group.label, group.matches);
             container.appendChild(dateSection);
         });
     },
@@ -200,16 +205,20 @@ const Matches = {
     },
 
     groupMatchesByDate(matches) {
+        // Use ISO date (YYYY-MM-DD) as key for stable grouping regardless of language
         const groups = {};
         const lang = window.I18n ? I18n.getCurrentLanguage() : 'en';
 
         matches.forEach(match => {
-            const date = this.getDateString(match.match_date, lang);
+            const isoKey = new Date(match.match_date).toISOString().split('T')[0];
 
-            if (!groups[date]) {
-                groups[date] = [];
+            if (!groups[isoKey]) {
+                groups[isoKey] = {
+                    label: this.getDateString(match.match_date, lang),
+                    matches: []
+                };
             }
-            groups[date].push(match);
+            groups[isoKey].matches.push(match);
         });
 
         return groups;
@@ -233,14 +242,15 @@ const Matches = {
 
     createMatchCard(match) {
         const isFinished = match.status === 'finished';
+        const isLive = match.status === 'in_progress';
         const matchTime = new Date(match.match_date).toLocaleTimeString('en-US', {
             hour: '2-digit', minute: '2-digit', hour12: false
         });
 
         const t = (key) => window.I18n ? I18n.t(key) : key;
 
-        const team1Score = isFinished ? match.team1_score : '-';
-        const team2Score = isFinished ? match.team2_score : '-';
+        const team1Score = (isFinished || isLive) ? match.team1_score : '-';
+        const team2Score = (isFinished || isLive) ? match.team2_score : '-';
 
         // Round display
         let roundText = '';
@@ -253,20 +263,22 @@ const Matches = {
             }
         }
 
+        const statusClass = isFinished ? 'finished' : isLive ? 'in-progress' : 'scheduled';
+
         return `
-            <div class="match-card ${isFinished ? 'finished' : 'scheduled'}"
+            <div class="match-card ${statusClass}"
                  onclick="Matches.openDetailsModal(${match.tournament_id}, ${match.id})"
                  style="cursor: pointer;">
                 <div class="match-tournament-badge">
-                    <i class="fas fa-trophy"></i> ${match.tournament_name}
+                    <i class="fas fa-trophy"></i> ${UI.escapeHtml(match.tournament_name)}
                 </div>
 
                 <div class="match-content">
                     <div class="match-team team1">
                         <div class="team-logo-small" style="background: ${match.team1_color || '#2ecc71'}">
-                            ${match.team1_logo || match.team1_name.replace(/\s+/g, '').substring(0, 3).toUpperCase()}
+                            ${UI.escapeHtml(match.team1_logo || match.team1_name.replace(/\s+/g, '').substring(0, 3).toUpperCase())}
                         </div>
-                        <span class="team-name">${match.team1_name}</span>
+                        <span class="team-name">${UI.escapeHtml(match.team1_name)}</span>
                     </div>
 
                     <div class="match-score-section">
@@ -277,6 +289,16 @@ const Matches = {
                                 <span class="score">${team2Score}</span>
                             </div>
                             <div class="match-status finished">${t('matches.finished')}</div>
+                        ` : isLive ? `
+                            <div class="match-score" style="color: #e74c3c;">
+                                <span class="score">${team1Score}</span>
+                                <span class="score-separator">:</span>
+                                <span class="score">${team2Score}</span>
+                            </div>
+                            <div class="match-status" style="color: #e74c3c;">
+                                <i class="fas fa-circle" style="font-size: 8px; animation: pulse 1s infinite;"></i>
+                                ${t('matches.live') || 'LIVE'}
+                            </div>
                         ` : `
                             <div class="match-time">${matchTime}</div>
                             <div class="match-status scheduled">${t('matches.scheduled')}</div>
@@ -284,9 +306,9 @@ const Matches = {
                     </div>
 
                     <div class="match-team team2">
-                        <span class="team-name">${match.team2_name}</span>
+                        <span class="team-name">${UI.escapeHtml(match.team2_name)}</span>
                         <div class="team-logo-small" style="background: ${match.team2_color || '#3498db'}">
-                            ${match.team2_logo || match.team2_name.replace(/\s+/g, '').substring(0, 3).toUpperCase()}
+                            ${UI.escapeHtml(match.team2_logo || match.team2_name.replace(/\s+/g, '').substring(0, 3).toUpperCase())}
                         </div>
                     </div>
                 </div>
@@ -310,7 +332,7 @@ const Matches = {
 
             // Tournament & round
             document.getElementById('match-detail-tournament').innerHTML =
-                `<i class="fas fa-trophy"></i> ${match.tournament_name || ''}`;
+                `<i class="fas fa-trophy"></i> ${UI.escapeHtml(match.tournament_name || '')}`;
 
             let roundText = '';
             if (match.round) {
@@ -327,9 +349,9 @@ const Matches = {
                 <div class="match-details-teams">
                     <div class="match-detail-team">
                         <div class="team-logo-large" style="background: ${match.team1_color || '#2ecc71'}">
-                            ${match.team1_logo || match.team1_name.replace(/\s+/g, '').substring(0, 3).toUpperCase()}
+                            ${UI.escapeHtml(match.team1_logo || match.team1_name.replace(/\s+/g, '').substring(0, 3).toUpperCase())}
                         </div>
-                        <span class="team-name-large">${match.team1_name}</span>
+                        <span class="team-name-large">${UI.escapeHtml(match.team1_name)}</span>
                     </div>
 
                     <div class="match-detail-score-center">
@@ -353,9 +375,9 @@ const Matches = {
 
                     <div class="match-detail-team">
                         <div class="team-logo-large" style="background: ${match.team2_color || '#3498db'}">
-                            ${match.team2_logo || match.team2_name.replace(/\s+/g, '').substring(0, 3).toUpperCase()}
+                            ${UI.escapeHtml(match.team2_logo || match.team2_name.replace(/\s+/g, '').substring(0, 3).toUpperCase())}
                         </div>
-                        <span class="team-name-large">${match.team2_name}</span>
+                        <span class="team-name-large">${UI.escapeHtml(match.team2_name)}</span>
                     </div>
                 </div>
             `;
@@ -386,7 +408,7 @@ const Matches = {
                         icon = '<i class="fas fa-exchange-alt" style="color: #3498db;"></i>';
                     }
 
-                    let text = `${event.player_name}`;
+                    let text = UI.escapeHtml(event.player_name);
                     if (event.event_type === 'goal' && event.is_own_goal) {
                         text += ' (OG)';
                     }
@@ -406,11 +428,11 @@ const Matches = {
                     </h4>
                     <div class="events-two-columns">
                         <div class="events-column events-left">
-                            <div class="events-column-header">${match.team1_name}</div>
+                            <div class="events-column-header">${UI.escapeHtml(match.team1_name)}</div>
                             ${team1Events.length > 0 ? team1Events.map(formatEvent).join('') : '<p style="color: #666; text-align: center; padding: 8px;">-</p>'}
                         </div>
                         <div class="events-column events-right">
-                            <div class="events-column-header">${match.team2_name}</div>
+                            <div class="events-column-header">${UI.escapeHtml(match.team2_name)}</div>
                             ${team2Events.length > 0 ? team2Events.map(formatEvent).join('') : '<p style="color: #666; text-align: center; padding: 8px;">-</p>'}
                         </div>
                     </div>

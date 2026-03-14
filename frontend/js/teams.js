@@ -490,21 +490,21 @@ const Teams = {
         const tournamentHTML = team.tournament_name
             ? `<div class="team-info-item">
                     <i class="fas fa-trophy"></i>
-                    <span>${team.tournament_name}</span>
+                    <span>${UI.escapeHtml(team.tournament_name)}</span>
                 </div>`
             : '';
 
         card.innerHTML = `
             <div class="team-logo" style="background: ${team.logo_color || '#2ecc71'}">
-                ${team.logo || team.name.replace(/\s+/g, '').substring(0, 3).toUpperCase()}
+                ${UI.escapeHtml(team.logo || team.name.replace(/\s+/g, '').substring(0, 3).toUpperCase())}
             </div>
 
-            <h3 class="team-name">${team.name}</h3>
+            <h3 class="team-name">${UI.escapeHtml(team.name)}</h3>
 
             <div class="team-info">
                 <div class="team-info-item">
                     <i class="fas fa-user"></i>
-                    <span>${team.coach_name || ''}</span>
+                    <span>${UI.escapeHtml(team.coach_name || '')}</span>
                 </div>
                 <div class="team-info-item">
                     <i class="fas fa-users"></i>
@@ -558,7 +558,7 @@ const Teams = {
             // Tournament info
             const tournamentInfo = document.getElementById('modal-team-tournament-info');
             if (fullTeam.tournament_name) {
-                tournamentInfo.innerHTML = `<i class="fas fa-trophy"></i> ${fullTeam.tournament_name}`;
+                tournamentInfo.innerHTML = `<i class="fas fa-trophy"></i> ${UI.escapeHtml(fullTeam.tournament_name)}`;
                 tournamentInfo.style.display = 'block';
             } else {
                 tournamentInfo.style.display = 'none';
@@ -655,7 +655,7 @@ const Teams = {
                                 ${player.jersey_number}
                             </div>
                             <div style="color: white; font-weight: 500;">
-                                ${player.player_name}
+                                ${UI.escapeHtml(player.player_name)}
                             </div>
                         </div>
                         <div style="display: flex; gap: 8px; align-items: center;">
@@ -668,7 +668,7 @@ const Teams = {
                                 font-weight: 600;
                                 text-transform: capitalize;
                             ">
-                                ${player.position}
+                                ${UI.escapeHtml(player.position)}
                             </span>
                             ${canRemove ? `
                                 <button
@@ -739,8 +739,8 @@ const Teams = {
                         align-items: center;
                     ">
                         <div>
-                            <div style="color: white; font-weight: 600;">${player.name}</div>
-                            <div style="color: #b0b0b0; font-size: 14px;">${player.email}</div>
+                            <div style="color: white; font-weight: 600;">${UI.escapeHtml(player.name)}</div>
+                            <div style="color: #b0b0b0; font-size: 14px;">${UI.escapeHtml(player.email)}</div>
                             ${player.has_team ? `<div style="color: #e74c3c; font-size: 12px; margin-top: 4px;"><i class="fas fa-exclamation-circle"></i> ${window.I18n ? I18n.t('addPlayer.alreadyInTeam') : 'Already in a team'}</div>` : ''}
                         </div>
                         <button

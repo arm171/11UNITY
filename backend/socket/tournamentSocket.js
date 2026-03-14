@@ -14,8 +14,8 @@ const db = require('../config/database');
 const emitScoreUpdate = (tournamentId, matchData) => {
     emitToTournament(tournamentId, 'match:score-update', {
         matchId: matchData.id,
-        homeScore: matchData.home_score,
-        awayScore: matchData.away_score,
+        team1Score: matchData.team1_score,
+        team2Score: matchData.team2_score,
         status: matchData.status,
         timestamp: new Date().toISOString()
     });

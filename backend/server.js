@@ -20,8 +20,12 @@ const PORT = process.env.PORT || 3000;
  * MIDDLEWARE CONFIGURATION
  */
 
-// Enable CORS for frontend requests
-app.use(cors());
+// Enable CORS for frontend requests (only allow local frontend)
+app.use(cors({
+    origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'http://localhost:3000'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Parse JSON and URL-encoded bodies
 app.use(express.json());
@@ -59,8 +63,10 @@ const teamRoutes = require('./routes/teams');
 const matchRoutes = require('./routes/matches');
 const statisticsRoutes = require('./routes/statistics');
 const profileRoutes = require('./routes/profile');
+const adminRoutes = require('./routes/admin');
 
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/matches', matchRoutes);
@@ -102,6 +108,32 @@ app.use((err, req, res, next) => {
         message: 'Internal server error',
         error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
+});
+
+/**
+ * CRON JOBS
+ */
+const cron = require('node-cron');
+
+// Every day at midnight: activate tournaments whose first match date has arrived
+cron.schedule('0 0 * * *', async () => {
+    try {
+        const [result] = await db.promise().query(`
+            UPDATE tournaments t
+            SET t.status = 'active'
+            WHERE t.status = 'upcoming'
+              AND EXISTS (
+                  SELECT 1 FROM matches m
+                  WHERE m.tournament_id = t.id
+                    AND DATE(m.match_date) <= CURDATE()
+              )
+        `);
+        if (result.affectedRows > 0) {
+            console.log(`[Cron] Activated ${result.affectedRows} tournament(s)`);
+        }
+    } catch (err) {
+        console.error('[Cron] Failed to activate tournaments:', err.message);
+    }
 });
 
 /**

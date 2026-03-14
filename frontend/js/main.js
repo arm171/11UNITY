@@ -111,40 +111,42 @@ window.addEventListener('unhandledrejection', function(e) {
     console.error('Unhandled Promise Rejection:', e.reason);
 });
 
-// Debug utilities
-window.debug = {
-    config: CONFIG,
-    api: API,
-    ui: UI,
-    auth: Auth,
-    tournaments: Tournaments,
-    teams: Teams,
-    ws: WebSocketManager,
+// Debug utilities — only available on localhost
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    window.debug = {
+        config: CONFIG,
+        api: API,
+        ui: UI,
+        auth: Auth,
+        tournaments: Tournaments,
+        teams: Teams,
+        ws: WebSocketManager,
 
-    login: (email, password) => {
-        return API.login({ email, password });
-    },
+        login: (email, password) => {
+            return API.login({ email, password });
+        },
 
-    logout: () => {
-        API.logout();
-        Auth.updateUI();
-        UI.showNotification('Logged out', 'info');
-    },
+        logout: () => {
+            API.logout();
+            Auth.updateUI();
+            UI.showNotification('Logged out', 'info');
+        },
 
-    getUser: () => {
-        return API.getUser();
-    },
+        getUser: () => {
+            return API.getUser();
+        },
 
-    getTournaments: () => {
-        return Tournaments.tournaments;
-    },
+        getTournaments: () => {
+            return Tournaments.tournaments;
+        },
 
-    getTeams: () => {
-        return Teams.teams;
-    },
+        getTeams: () => {
+            return Teams.teams;
+        },
 
-    clearStorage: () => {
-        localStorage.clear();
-        location.reload();
-    },
-};
+        clearStorage: () => {
+            localStorage.clear();
+            location.reload();
+        },
+    };
+}

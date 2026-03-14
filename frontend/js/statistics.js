@@ -217,9 +217,9 @@ const Statistics = {
                                 <td class="team-col">
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <div class="team-logo-tiny" style="background: ${row.team_color || '#2ecc71'}">
-                                            ${row.team_logo || row.team_name.replace(/\s+/g, '').substring(0, 3).toUpperCase()}
+                                            ${UI.escapeHtml(row.team_logo || row.team_name.replace(/\s+/g, '').substring(0, 3).toUpperCase())}
                                         </div>
-                                        ${row.team_name}
+                                        ${UI.escapeHtml(row.team_name)}
                                     </div>
                                 </td>
                                 <td>${row.played}</td>
@@ -251,8 +251,8 @@ const Statistics = {
                     <li class="ranking-item">
                         <span class="ranking-position">${index + 1}</span>
                         <div class="ranking-info">
-                            <span class="ranking-name">${item.name}</span>
-                            <span class="ranking-team">${item.team_name || ''}</span>
+                            <span class="ranking-name">${UI.escapeHtml(item.name)}</span>
+                            <span class="ranking-team">${UI.escapeHtml(item.team_name || '')}</span>
                         </div>
                         <span class="ranking-value">${item[valueKey]} <i class="${iconClass}"></i></span>
                     </li>

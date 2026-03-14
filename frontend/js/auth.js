@@ -3,6 +3,42 @@
 // Authentication and registration
 // ============================================
 
+// XSS protection: escape user-provided data before inserting into HTML
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+/**
+ * Opens the user's webmail in a new tab based on their email domain,
+ * then removes the verification notice popup.
+ */
+function openMailAndClose(btn, email) {
+    const domain = email.split('@')[1] || '';
+    const mailUrls = {
+        'gmail.com':     'https://mail.google.com',
+        'mail.ru':       'https://mail.ru',
+        'inbox.ru':      'https://mail.ru',
+        'list.ru':       'https://mail.ru',
+        'bk.ru':         'https://mail.ru',
+        'yandex.ru':     'https://mail.yandex.ru',
+        'ya.ru':         'https://mail.yandex.ru',
+        'outlook.com':   'https://outlook.live.com',
+        'hotmail.com':   'https://outlook.live.com',
+        'yahoo.com':     'https://mail.yahoo.com',
+    };
+
+    const url = mailUrls[domain];
+    if (url) window.open(url, '_blank');
+
+    btn.parentElement.remove();
+}
+
 const Auth = {
 
     init() {
@@ -10,7 +46,44 @@ const Auth = {
         this.setupLanguageSwitcher();
         this.setupFooterYear();
         this.attachEventListeners();
+        this.setupLanguageChangeListener();
+        this.handleVerificationRedirect(); // check if returning from email verification
         this.updateUI();
+    },
+
+    /**
+     * After the user clicks the verification link in their email,
+     * the server redirects them to:
+     *   http://localhost:5500/?auth_token=JWT&auth_user=JSON
+     *
+     * This method picks up those URL params, saves them to localStorage
+     * (auto-login), cleans the URL, and shows a welcome message.
+     */
+    handleVerificationRedirect() {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('auth_token');
+        const userRaw = params.get('auth_user');
+
+        if (!token || !userRaw) return;
+
+        try {
+            const user = JSON.parse(decodeURIComponent(userRaw));
+
+            // Save to localStorage — same keys used by API module
+            localStorage.setItem(CONFIG.STORAGE.TOKEN, token);
+            localStorage.setItem(CONFIG.STORAGE.USER, JSON.stringify(user));
+
+            // Clean the URL so the token is not visible in the address bar
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            // Show welcome notification
+            setTimeout(() => {
+                UI.showNotification(`Email verified! Welcome, ${user.name}!`, 'success');
+            }, 300);
+
+        } catch (e) {
+            console.error('Failed to parse verification redirect params:', e);
+        }
     },
 
     createAuthModal() {
@@ -342,6 +415,8 @@ const Auth = {
                 this.renderCoachProfile(statsContainer, data, t);
             } else if (data.role === 'organizer') {
                 this.renderOrganizerProfile(statsContainer, data, t);
+            } else if (data.role === 'admin') {
+                this.renderAdminProfile(statsContainer, data, t);
             }
         } catch (error) {
             console.error('Failed to load profile stats:', error);
@@ -366,15 +441,15 @@ const Auth = {
                 <div class="profile-stat-card">
                     <i class="fas fa-users"></i>
                     <div>
-                        <strong>${team.team_name}</strong>
-                        <span>${t('teams.title', 'Team')}</span>
+                        <strong>${escapeHtml(team.team_name)}</strong>
+                        <span>${t('profile.myTeam', 'Team')}</span>
                     </div>
                 </div>
                 ${team.position ? `
                 <div class="profile-stat-card">
                     <i class="fas fa-running"></i>
                     <div>
-                        <strong style="text-transform: capitalize;">${team.position}</strong>
+                        <strong style="text-transform: capitalize;">${escapeHtml(team.position)}</strong>
                         <span>${t('profile.position', 'Position')}</span>
                     </div>
                 </div>` : ''}
@@ -430,7 +505,7 @@ const Auth = {
 
                 html += `
                     <div class="profile-match-item">
-                        <span class="profile-match-teams">${match.team1_name} ${match.team1_score} - ${match.team2_score} ${match.team2_name}</span>
+                        <span class="profile-match-teams">${escapeHtml(match.team1_name)} ${match.team1_score} - ${match.team2_score} ${escapeHtml(match.team2_name)}</span>
                         <span class="profile-match-result ${result}">${resultLabel}</span>
                         <span class="profile-match-date">${date}</span>
                     </div>
@@ -458,9 +533,9 @@ const Auth = {
             </div>
             <div class="profile-stat-cards">
                 <div class="profile-stat-card">
-                    <div class="profile-team-logo" style="background: ${team.logo_color || '#2ecc71'};">${team.logo || team.name.replace(/\\s+/g, '').substring(0, 3).toUpperCase()}</div>
+                    <div class="profile-team-logo" style="background: ${escapeHtml(team.logo_color || '#2ecc71')};">${escapeHtml(team.logo || team.name.replace(/\s+/g, '').substring(0, 3).toUpperCase())}</div>
                     <div>
-                        <strong>${team.name}</strong>
+                        <strong>${escapeHtml(team.name)}</strong>
                         <span>${team.players_count}/25 ${t('teams.players', 'Players')}</span>
                     </div>
                 </div>
@@ -468,7 +543,7 @@ const Auth = {
                 <div class="profile-stat-card">
                     <i class="fas fa-trophy"></i>
                     <div>
-                        <strong>${tournaments[0].name}</strong>
+                        <strong>${escapeHtml(tournaments[0].name)}</strong>
                         <span class="status-badge ${tournaments[0].status}">${t('tournaments.' + tournaments[0].status, tournaments[0].status)}</span>
                     </div>
                 </div>` : ''}
@@ -520,8 +595,8 @@ const Auth = {
                 html += `
                     <div class="profile-roster-item">
                         <span class="profile-roster-number">${p.jersey_number ? '#' + p.jersey_number : '-'}</span>
-                        <span class="profile-roster-name">${p.player_name}</span>
-                        <span class="profile-roster-position">${p.position || '-'}</span>
+                        <span class="profile-roster-name">${escapeHtml(p.player_name)}</span>
+                        <span class="profile-roster-position">${escapeHtml(p.position || '-')}</span>
                     </div>
                 `;
             });
@@ -572,14 +647,44 @@ const Auth = {
         tournaments.forEach(tn => {
             html += `
                 <div class="profile-tournament-item">
-                    <span class="profile-tournament-name">${tn.name}</span>
+                    <span class="profile-tournament-name">${escapeHtml(tn.name)}</span>
                     <span class="status-badge ${tn.status}">${t('tournaments.' + tn.status, tn.status)}</span>
-                    <span class="profile-tournament-teams">${tn.teams_count}/${tn.max_teams} teams</span>
+                    <span class="profile-tournament-teams">${tn.teams_count}/${tn.max_teams} ${t('teams.title', 'Teams')}</span>
                 </div>
             `;
         });
 
         html += `</div>`;
+        container.innerHTML = html;
+    },
+
+    renderAdminProfile(container, data, t) {
+        const { stats } = data;
+
+        const html = `
+            <div class="profile-section-label">
+                <i class="fas fa-chart-bar"></i> ${t('profile.systemOverview', 'System Overview')}
+            </div>
+            <div class="profile-stat-cards">
+                <div class="profile-stat-card">
+                    <i class="fas fa-users"></i>
+                    <div><strong>${stats.users}</strong><span>${t('admin.users', 'Users')}</span></div>
+                </div>
+                <div class="profile-stat-card">
+                    <i class="fas fa-shield-alt"></i>
+                    <div><strong>${stats.teams}</strong><span>${t('teams.title', 'Teams')}</span></div>
+                </div>
+                <div class="profile-stat-card">
+                    <i class="fas fa-trophy"></i>
+                    <div><strong>${stats.tournaments}</strong><span>${t('nav.tournaments', 'Tournaments')}</span></div>
+                </div>
+                <div class="profile-stat-card">
+                    <i class="fas fa-futbol"></i>
+                    <div><strong>${stats.matches}</strong><span>${t('nav.matches', 'Matches')}</span></div>
+                </div>
+            </div>
+        `;
+
         container.innerHTML = html;
     },
 
@@ -657,13 +762,32 @@ const Auth = {
 
             await API.register(userData);
 
-            UI.showNotification(I18n.t('messages.success.register'), 'success');
             this.closeAuthModal();
-            this.updateUI();
 
-            if (window.Tournaments) Tournaments.load();
-            if (window.Teams) Teams.load();
-            if (window.Statistics) Statistics.load();
+            // Show "check your email" popup
+            const notice = document.createElement('div');
+            notice.style.cssText = `
+                position:fixed;top:24px;left:50%;transform:translateX(-50%);
+                background:#1a1a2e;border:2px solid #2ecc71;border-radius:12px;
+                padding:28px 36px;z-index:9999;text-align:center;max-width:420px;width:90%;
+                color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.6);
+            `;
+            notice.innerHTML = `
+                <div style="font-size:40px;margin-bottom:12px;">📧</div>
+                <h3 style="color:#2ecc71;margin:0 0 10px;">Check your email!</h3>
+                <p style="color:#ccc;font-size:14px;line-height:1.7;margin:0 0 20px;">
+                    We sent a verification link to<br>
+                    <strong style="color:#fff;">${escapeHtml(userData.email)}</strong><br><br>
+                    Open your email and click the link.<br>
+                    You will be signed in automatically.
+                </p>
+                <button onclick="openMailAndClose(this, '${escapeHtml(userData.email)}')"
+                    style="background:#2ecc71;border:none;color:#000;padding:10px 32px;
+                           border-radius:8px;cursor:pointer;font-weight:bold;font-size:14px;">
+                    Open Email
+                </button>
+            `;
+            document.body.appendChild(notice);
 
         } catch (error) {
             console.error('Registration failed:', error);
@@ -792,6 +916,11 @@ const Auth = {
                 API.setUser(stored);
             }
 
+            // If email changed, update the stored JWT to the new one
+            if (response.token) {
+                API.setToken(response.token);
+            }
+
             UI.showNotification(window.I18n ? I18n.t('messages.success.profileUpdated') : 'Profile updated', 'success');
             this.closeEditProfileModal();
 
@@ -808,6 +937,20 @@ const Auth = {
         }
     },
 
+    setupLanguageChangeListener() {
+        window.addEventListener('languageChanged', () => {
+            if (API.isAuthenticated()) {
+                // applyTranslations() resets the nav link back to "Home" — restore it
+                const homeNavLink = document.querySelector('.nav-link[data-i18n="nav.home"]');
+                if (homeNavLink) {
+                    homeNavLink.innerHTML = '<i class="fas fa-user" style="margin-right:6px;"></i>Profile';
+                }
+                const user = API.getUser();
+                this.updateProfileStats(user);
+            }
+        });
+    },
+
     updateUI() {
         const getStartedBtn = document.getElementById('get-started-btn');
         const profileBtn = document.getElementById('profile-btn');
@@ -820,6 +963,12 @@ const Auth = {
             if (getStartedBtn) getStartedBtn.classList.remove('show');
             if (profileBtn) profileBtn.classList.add('show');
 
+            // Change "Home" nav link to "Profile" when logged in
+            const homeNavLink = document.querySelector('.nav-link[data-i18n="nav.home"]');
+            if (homeNavLink) {
+                homeNavLink.innerHTML = '<i class="fas fa-user" style="margin-right:6px;"></i>Profile';
+            }
+
             if (user.role === 'organizer' && createTournamentBtn) {
                 createTournamentBtn.style.display = 'inline-flex';
             }
@@ -828,9 +977,16 @@ const Auth = {
                 createTeamBtn.style.display = 'inline-flex';
             }
 
+
         } else {
             if (getStartedBtn) getStartedBtn.classList.add('show');
             if (profileBtn) profileBtn.classList.remove('show');
+
+            // Restore "Home" nav link when logged out
+            const homeNavLink = document.querySelector('.nav-link[data-i18n="nav.home"]');
+            if (homeNavLink) {
+                homeNavLink.innerHTML = window.I18n ? I18n.t('nav.home') : 'Home';
+            }
 
             if (createTournamentBtn) createTournamentBtn.style.display = 'none';
             if (createTeamBtn) createTeamBtn.style.display = 'none';

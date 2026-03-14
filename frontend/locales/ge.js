@@ -72,7 +72,13 @@ I18n.registerTranslations('ge', {
         changePasswordHint: 'პაროლის ველები შეავსეთ მხოლოდ პაროლის შეცვლის შემთხვევაში',
         currentPassword: 'მიმდინარე პაროლი',
         newPassword: 'ახალი პაროლი',
-        currentPasswordRequired: 'მიმდინარე პაროლი საჭიროა მისი შეცვლისთვის'
+        currentPasswordRequired: 'მიმდინარე პაროლი საჭიროა მისი შეცვლისთვის',
+        systemOverview: 'System Overview'
+    },
+
+    // Admin
+    admin: {
+        users: 'Users'
     },
 
     auth: {
@@ -94,7 +100,8 @@ I18n.registerTranslations('ge', {
         roles: {
             player: 'მოთამაშე',
             coach: 'მწვრთნელი',
-            organizer: 'ორგანიზატორი'
+            organizer: 'ორგანიზატორი',
+            admin: 'ადმინისტრატორი'
         }
     },
 
