@@ -230,7 +230,7 @@ function scheduleMatches(rounds, settings) {
  */
 function schedulePlayoffMatches(allRounds, settings) {
     const { startDate, matchDays, matchTime, matchesPerDay, daysBetweenRounds } = settings;
-    const restDays = daysBetweenRounds || 7;
+    const restDays = daysBetweenRounds || 3;
 
     const scheduledMatches = [];
     let currentDate = new Date(startDate);
@@ -303,8 +303,8 @@ function scheduleGroupPlayoffMatches(groupMatches, playoffMatches, settings) {
         if (restDays > 0) currentDate.setDate(currentDate.getDate() + restDays - 1);
     }
 
-    // Playoff starts after group stage + buffer
-    currentDate.setDate(currentDate.getDate() + 7);
+    // Playoff starts after group stage + 3 days buffer
+    currentDate.setDate(currentDate.getDate() + 3);
     while (!matchDays.includes(currentDate.getDay())) {
         currentDate.setDate(currentDate.getDate() + 1);
     }
@@ -314,8 +314,8 @@ function scheduleGroupPlayoffMatches(groupMatches, playoffMatches, settings) {
 
     for (const match of playoffMatches) {
         if (lastRound !== null && match.round !== lastRound) {
-            // New playoff round → add rest days
-            currentDate.setDate(currentDate.getDate() + 7);
+            // New playoff round → add 3 days rest
+            currentDate.setDate(currentDate.getDate() + 3);
             while (!matchDays.includes(currentDate.getDay())) {
                 currentDate.setDate(currentDate.getDate() + 1);
             }

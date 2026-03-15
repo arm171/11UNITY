@@ -77,7 +77,10 @@ I18n.registerTranslations('ru', {
         currentPassword: 'Текущий пароль',
         newPassword: 'Новый пароль',
         currentPasswordRequired: 'Введите текущий пароль для его изменения',
-        systemOverview: 'Обзор системы'
+        systemOverview: 'Обзор системы',
+        leaveTeam: 'Покинуть команду',
+        confirmLeaveTeam: 'Вы уверены, что хотите покинуть команду?',
+        leftTeam: 'Вы покинули команду'
     },
 
     // Admin
@@ -142,6 +145,8 @@ I18n.registerTranslations('ru', {
         startDate: 'Дата начала',
         maxTeams: 'Максимум команд',
         minPlayersPerTeam: 'Мин. игроков в команде',
+        venue: 'Стадион / место',
+        venuePlaceholder: 'Название стадиона или места',
         teamsCount: '{count} команд',
         description: 'Описание',
         descriptionPlaceholder: 'Детали турнира...',
@@ -160,14 +165,21 @@ I18n.registerTranslations('ru', {
         teamParticipating: 'Ваша команда участвует в этом турнире',
         needTeamFirst: 'Сначала нужно создать команду',
         tournamentFull: 'Турнир заполнен',
-        joinSuccess: 'Вы успешно присоединились к турниру!',
+        joinSuccess: 'Запрос отправлен! Ожидайте одобрения организатора.',
         leaveSuccess: 'Вы покинули турнир!',
+        pendingApproval: 'Ожидание одобрения организатора...',
+        cancelRequest: 'Отменить заявку',
+        registrationClosed: 'Регистрация закрыта (расписание уже создано)',
         round: 'Тур {num}',
         teamsJoined: '{current}/{max} команд',
         editTournament: 'Редактировать турнир',
         saveTournament: 'Сохранить изменения',
         deleteTournament: 'Удалить турнир',
-        deleteTournamentConfirm: 'Вы уверены, что хотите удалить этот турнир?'
+        deleteTournamentConfirm: 'Вы уверены, что хотите удалить этот турнир?',
+        bracketFinal: 'Финал',
+        bracketSF: 'Полуфинал',
+        bracketQF: 'Четвертьфинал',
+        bracketR16: '1/8 финала'
     },
 
     // Fixtures settings
@@ -215,7 +227,9 @@ I18n.registerTranslations('ru', {
         matchFinished: 'Матч завершён!',
         goalAdded: 'Гол добавлен!',
         cardAdded: 'Карточка добавлена!',
-        eventDeleted: 'Событие удалено!'
+        eventDeleted: 'Событие удалено!',
+        notStartedYet: 'Матч не начался',
+        scoreUpdated: 'Счёт обновлён!'
     },
 
     // Teams

@@ -240,4 +240,98 @@ router.delete('/teams/:id', async (req, res) => {
     }
 });
 
+// GET /api/admin/tournaments/:id/teams — list teams in a tournament
+router.get('/tournaments/:id/teams', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [teams] = await db.promise().query(`
+            SELECT t.id, t.name,
+                   u.name AS coach_name,
+                   COUNT(DISTINCT tp.player_id) AS players_count
+            FROM tournament_teams tt
+            JOIN teams t ON tt.team_id = t.id
+            LEFT JOIN users u ON t.coach_id = u.id
+            LEFT JOIN team_players tp ON t.id = tp.team_id
+            WHERE tt.tournament_id = ?
+            GROUP BY t.id, t.name, u.name
+            ORDER BY t.name
+        `, [id]);
+        res.json({ success: true, teams });
+    } catch (error) {
+        console.error('Admin get tournament teams error:', error);
+        res.status(500).json({ success: false, message: 'Failed to load tournament teams' });
+    }
+});
+
+// GET /api/admin/teams/:id/players — list players in a team
+router.get('/teams/:id/players', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [players] = await db.promise().query(`
+            SELECT u.id, u.name, u.email, u.is_verified
+            FROM team_players tp
+            JOIN users u ON tp.player_id = u.id
+            WHERE tp.team_id = ?
+            ORDER BY u.name
+        `, [id]);
+        res.json({ success: true, players });
+    } catch (error) {
+        console.error('Admin get team players error:', error);
+        res.status(500).json({ success: false, message: 'Failed to load team players' });
+    }
+});
+
+// Remove team from tournament (respects active tournament rule)
+router.delete('/tournaments/:tournamentId/teams/:teamId', async (req, res) => {
+    try {
+        const { tournamentId, teamId } = req.params;
+
+        const [tournaments] = await db.promise().query(
+            'SELECT status FROM tournaments WHERE id = ?', [tournamentId]
+        );
+        if (tournaments.length === 0) {
+            return res.status(404).json({ success: false, message: 'Tournament not found' });
+        }
+        if (tournaments[0].status === 'active') {
+            return res.status(400).json({ success: false, message: 'Cannot remove team from active tournament' });
+        }
+
+        await db.promise().query(
+            'DELETE FROM tournament_teams WHERE tournament_id = ? AND team_id = ?',
+            [tournamentId, teamId]
+        );
+        res.json({ success: true, message: 'Team removed from tournament' });
+    } catch (error) {
+        console.error('Admin remove team from tournament error:', error);
+        res.status(500).json({ success: false, message: 'Failed to remove team from tournament' });
+    }
+});
+
+// Remove player from team (respects active tournament rule)
+router.delete('/teams/:teamId/players/:playerId', async (req, res) => {
+    try {
+        const { teamId, playerId } = req.params;
+
+        // Check if team is in active tournament
+        const [activeTournament] = await db.promise().query(
+            `SELECT t.id FROM tournaments t
+             INNER JOIN tournament_teams tt ON t.id = tt.tournament_id
+             WHERE tt.team_id = ? AND t.status = 'active'`,
+            [teamId]
+        );
+        if (activeTournament.length > 0) {
+            return res.status(400).json({ success: false, message: 'Cannot remove player while team is in active tournament' });
+        }
+
+        await db.promise().query(
+            'DELETE FROM team_players WHERE team_id = ? AND player_id = ?',
+            [teamId, playerId]
+        );
+        res.json({ success: true, message: 'Player removed from team' });
+    } catch (error) {
+        console.error('Admin remove player from team error:', error);
+        res.status(500).json({ success: false, message: 'Failed to remove player from team' });
+    }
+});
+
 module.exports = router;

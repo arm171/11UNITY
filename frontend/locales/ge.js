@@ -73,7 +73,10 @@ I18n.registerTranslations('ge', {
         currentPassword: 'მიმდინარე პაროლი',
         newPassword: 'ახალი პაროლი',
         currentPasswordRequired: 'მიმდინარე პაროლი საჭიროა მისი შეცვლისთვის',
-        systemOverview: 'System Overview'
+        systemOverview: 'System Overview',
+        leaveTeam: 'გუნდის დატოვება',
+        confirmLeaveTeam: 'დარწმუნებული ხართ, რომ გსურთ გუნდის დატოვება?',
+        leftTeam: 'თქვენ დატოვეთ გუნდი'
     },
 
     // Admin
@@ -135,6 +138,8 @@ I18n.registerTranslations('ge', {
         startDate: 'დაწყების თარიღი',
         maxTeams: 'მაქსიმალური გუნდები',
         minPlayersPerTeam: 'მინ. მოთამაშეები გუნდში',
+        venue: 'სტადიონი / ადგილი',
+        venuePlaceholder: 'სტადიონის ან ადგილის სახელი',
         teamsCount: '{count} გუნდი',
         description: 'აღწერა',
         descriptionPlaceholder: 'ტურნირის დეტალები...',

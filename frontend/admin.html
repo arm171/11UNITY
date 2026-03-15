@@ -102,6 +102,18 @@
         .btn-cancel  { background: #2a2a4a; color: #aaa; }
         .btn-cancel:hover  { background: #333355; color: #fff; }
 
+        /* ── SUB-TABLE ── */
+        .sub-row td { background: #0a0a18 !important; padding: 0 !important; }
+        .sub-table-wrap { padding: 12px 24px 16px; border-top: 1px solid #2a2a4a; }
+        .sub-table-wrap h4 { color: #aaa; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+        .sub-table { width: 100%; border-collapse: collapse; }
+        .sub-table th { background: #111128; padding: 8px 12px; text-align: left; font-size: 11px; color: #666; text-transform: uppercase; }
+        .sub-table td { padding: 9px 12px; border-bottom: 1px solid #111128; font-size: 13px; background: #0d0d1a; }
+        .sub-table tr:last-child td { border-bottom: none; }
+        .btn-expand { background: rgba(52,152,219,0.1); border: 1px solid rgba(52,152,219,0.4); color: #3498db; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .btn-expand:hover { background: #3498db; color: #fff; border-color: #3498db; }
+        .btn-expand.open { background: #3498db; color: #fff; border-color: #3498db; }
+
         /* ── MISC ── */
         .loading { text-align: center; padding: 48px; color: #888; font-size: 15px; }
         .empty   { text-align: center; padding: 32px; color: #555; font-size: 14px; }
@@ -456,7 +468,7 @@ async function loadTournaments() {
         }
 
         const rows = data.tournaments.map(t => `
-            <tr>
+            <tr id="t-row-${t.id}">
                 <td>${t.id}</td>
                 <td>${esc(t.name)}</td>
                 <td><span class="badge ${t.status}">${t.status}</span></td>
@@ -465,10 +477,18 @@ async function loadTournaments() {
                 <td>${t.teams_count}</td>
                 <td>${new Date(t.created_at).toLocaleDateString('ru-RU')}</td>
                 <td>
-                    <button class="btn-action btn-delete" onclick="deleteTournament(${t.id},'${esc(t.name)}')">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
+                    <div class="actions">
+                        <button class="btn-expand" id="t-expand-${t.id}" onclick="toggleTournamentTeams(${t.id},'${esc(t.name)}','${t.status}')">
+                            <i class="fas fa-users"></i> Teams
+                        </button>
+                        <button class="btn-action btn-delete" onclick="deleteTournament(${t.id},'${esc(t.name)}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
                 </td>
+            </tr>
+            <tr class="sub-row" id="t-sub-${t.id}" style="display:none;">
+                <td colspan="8"><div class="sub-table-wrap" id="t-sub-content-${t.id}"></div></td>
             </tr>
         `).join('');
 
@@ -476,7 +496,7 @@ async function loadTournaments() {
             <table>
                 <thead><tr>
                     <th>ID</th><th>Name</th><th>Status</th><th>Type</th>
-                    <th>Organizer</th><th>Teams</th><th>Created</th><th>Action</th>
+                    <th>Organizer</th><th>Teams</th><th>Created</th><th>Actions</th>
                 </tr></thead>
                 <tbody>${rows}</tbody>
             </table>`;
@@ -509,7 +529,7 @@ async function loadTeams() {
         }
 
         const rows = data.teams.map(t => `
-            <tr>
+            <tr id="tm-row-${t.id}">
                 <td>${t.id}</td>
                 <td>${esc(t.name)}</td>
                 <td>${esc(t.coach_name || '—')}</td>
@@ -517,10 +537,18 @@ async function loadTeams() {
                 <td>${t.players_count}</td>
                 <td>${new Date(t.created_at).toLocaleDateString('ru-RU')}</td>
                 <td>
-                    <button class="btn-action btn-delete" onclick="deleteTeam(${t.id},'${esc(t.name)}')">
-                        <i class="fas fa-trash"></i> Delete
-                    </button>
+                    <div class="actions">
+                        <button class="btn-expand" id="tm-expand-${t.id}" onclick="toggleTeamPlayers(${t.id},'${esc(t.name)}')">
+                            <i class="fas fa-user"></i> Players
+                        </button>
+                        <button class="btn-action btn-delete" onclick="deleteTeam(${t.id},'${esc(t.name)}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
                 </td>
+            </tr>
+            <tr class="sub-row" id="tm-sub-${t.id}" style="display:none;">
+                <td colspan="7"><div class="sub-table-wrap" id="tm-sub-content-${t.id}"></div></td>
             </tr>
         `).join('');
 
@@ -528,7 +556,7 @@ async function loadTeams() {
             <table>
                 <thead><tr>
                     <th>ID</th><th>Team Name</th><th>Coach</th><th>Coach Email</th>
-                    <th>Players</th><th>Created</th><th>Action</th>
+                    <th>Players</th><th>Created</th><th>Actions</th>
                 </tr></thead>
                 <tbody>${rows}</tbody>
             </table>`;
@@ -544,6 +572,133 @@ async function deleteTeam(id, name) {
         notify('Team deleted successfully');
         loadTeams();
         loadStats();
+    } catch(e) {
+        notify('Error: ' + e.message, 'error');
+    }
+}
+
+// ── TOURNAMENT TEAMS SUB-TABLE ───────────────────────────────────────────────
+
+async function toggleTournamentTeams(tournamentId, tournamentName, status) {
+    const subRow = document.getElementById('t-sub-' + tournamentId);
+    const btn = document.getElementById('t-expand-' + tournamentId);
+    const content = document.getElementById('t-sub-content-' + tournamentId);
+
+    if (subRow.style.display !== 'none') {
+        subRow.style.display = 'none';
+        btn.classList.remove('open');
+        return;
+    }
+
+    btn.classList.add('open');
+    content.innerHTML = '<div style="color:#888;font-size:13px;padding:8px 0;">Loading...</div>';
+    subRow.style.display = 'table-row';
+
+    try {
+        const data = await api('/admin/tournaments/' + tournamentId + '/teams');
+        if (!data.teams.length) {
+            content.innerHTML = '<h4>Teams in "' + esc(tournamentName) + '"</h4><div style="color:#555;font-size:13px;">No teams registered</div>';
+            return;
+        }
+
+        const isActive = status === 'active';
+        const teamRows = data.teams.map(t => `
+            <tr>
+                <td>${t.id}</td>
+                <td>${esc(t.name)}</td>
+                <td>${esc(t.coach_name || '—')}</td>
+                <td>${t.players_count} players</td>
+                <td>
+                    ${isActive
+                        ? '<span style="color:#888;font-size:12px;"><i class="fas fa-lock"></i> Active tournament</span>'
+                        : `<button class="btn-action btn-delete" onclick="removeTeamFromTournament(${tournamentId},'${esc(tournamentName)}',${t.id},'${esc(t.name)}')">
+                                <i class="fas fa-times"></i> Remove
+                           </button>`
+                    }
+                </td>
+            </tr>
+        `).join('');
+
+        content.innerHTML = `
+            <h4>Teams in "${esc(tournamentName)}"</h4>
+            <table class="sub-table">
+                <thead><tr><th>ID</th><th>Team</th><th>Coach</th><th>Players</th><th>Action</th></tr></thead>
+                <tbody>${teamRows}</tbody>
+            </table>`;
+    } catch(e) {
+        content.innerHTML = '<div style="color:#e74c3c;font-size:13px;">Failed to load teams</div>';
+    }
+}
+
+async function removeTeamFromTournament(tournamentId, tournamentName, teamId, teamName) {
+    if (!confirm(`Remove team "${teamName}" from tournament "${tournamentName}"?`)) return;
+    try {
+        await api(`/admin/tournaments/${tournamentId}/teams/${teamId}`, { method: 'DELETE' });
+        notify(`Team "${teamName}" removed from tournament`);
+        loadTournaments();
+        loadStats();
+    } catch(e) {
+        notify('Error: ' + e.message, 'error');
+    }
+}
+
+// ── TEAM PLAYERS SUB-TABLE ───────────────────────────────────────────────────
+
+async function toggleTeamPlayers(teamId, teamName) {
+    const subRow = document.getElementById('tm-sub-' + teamId);
+    const btn = document.getElementById('tm-expand-' + teamId);
+    const content = document.getElementById('tm-sub-content-' + teamId);
+
+    if (subRow.style.display !== 'none') {
+        subRow.style.display = 'none';
+        btn.classList.remove('open');
+        return;
+    }
+
+    btn.classList.add('open');
+    content.innerHTML = '<div style="color:#888;font-size:13px;padding:8px 0;">Loading...</div>';
+    subRow.style.display = 'table-row';
+
+    try {
+        const data = await api('/admin/teams/' + teamId + '/players');
+        if (!data.players.length) {
+            content.innerHTML = '<h4>Players in "' + esc(teamName) + '"</h4><div style="color:#555;font-size:13px;">No players in this team</div>';
+            return;
+        }
+
+        const playerRows = data.players.map(p => `
+            <tr>
+                <td>${p.id}</td>
+                <td>${esc(p.name)}</td>
+                <td>${esc(p.email)}</td>
+                <td>${p.is_verified
+                    ? '<span class="verified-yes"><i class="fas fa-check-circle"></i> Yes</span>'
+                    : '<span class="verified-no"><i class="fas fa-times-circle"></i> No</span>'}</td>
+                <td>
+                    <button class="btn-action btn-delete" onclick="removePlayerFromTeam(${teamId},'${esc(teamName)}',${p.id},'${esc(p.name)}')">
+                        <i class="fas fa-times"></i> Remove
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+        content.innerHTML = `
+            <h4>Players in "${esc(teamName)}"</h4>
+            <table class="sub-table">
+                <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Verified</th><th>Action</th></tr></thead>
+                <tbody>${playerRows}</tbody>
+            </table>`;
+    } catch(e) {
+        content.innerHTML = '<div style="color:#e74c3c;font-size:13px;">Failed to load players</div>';
+    }
+}
+
+async function removePlayerFromTeam(teamId, teamName, playerId, playerName) {
+    if (!confirm(`Remove player "${playerName}" from team "${teamName}"?`)) return;
+    try {
+        await api(`/admin/teams/${teamId}/players/${playerId}`, { method: 'DELETE' });
+        notify(`Player "${playerName}" removed from team`);
+        loadTeams();
     } catch(e) {
         notify('Error: ' + e.message, 'error');
     }

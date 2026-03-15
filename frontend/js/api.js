@@ -285,6 +285,7 @@ const API = {
         return await this.request(CONFIG.ENDPOINTS.STATISTICS);
     },
 
+    // Tournament team approval
 };
 
 window.API = API;

@@ -95,9 +95,42 @@ const emitStatisticsUpdate = async (tournamentId) => {
     }
 };
 
+/**
+ * Emit team join request to organizer
+ */
+const emitTeamJoinRequest = (tournamentId, data) => {
+    emitToTournament(tournamentId, 'tournament:join-request', {
+        teamId: data.teamId,
+        timestamp: new Date().toISOString()
+    });
+};
+
+/**
+ * Emit team approved to all viewers (so coach sees update)
+ */
+const emitTeamApproved = (tournamentId, data) => {
+    emitToTournament(tournamentId, 'tournament:team-approved', {
+        teamId: data.teamId,
+        timestamp: new Date().toISOString()
+    });
+};
+
+/**
+ * Emit team rejected to all viewers
+ */
+const emitTeamRejected = (tournamentId, data) => {
+    emitToTournament(tournamentId, 'tournament:team-rejected', {
+        teamId: data.teamId,
+        timestamp: new Date().toISOString()
+    });
+};
+
 module.exports = {
     emitScoreUpdate,
     emitMatchEvent,
     emitStandingsUpdate,
-    emitStatisticsUpdate
+    emitStatisticsUpdate,
+    emitTeamJoinRequest,
+    emitTeamApproved,
+    emitTeamRejected
 };

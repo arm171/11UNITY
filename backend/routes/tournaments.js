@@ -82,4 +82,5 @@ router.get('/:id/check-joined',
     tournamentController.checkUserJoined
 );
 
+
 module.exports = router;

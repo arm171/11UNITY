@@ -982,6 +982,20 @@ const Teams = {
         }
     },
 
+    async openTeamModal(teamId) {
+        try {
+            const response = await API.getTeams();
+            const team = (response.teams || []).find(t => t.id == teamId);
+            if (team) {
+                UI.showSection('teams');
+                await this.load();
+                this.openDetailsModal(team);
+            }
+        } catch (e) {
+            console.error('openTeamModal error:', e);
+        }
+    },
+
 };
 
 window.Teams = Teams;

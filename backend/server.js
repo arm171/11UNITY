@@ -115,18 +115,14 @@ app.use((err, req, res, next) => {
  */
 const cron = require('node-cron');
 
-// Every day at midnight: activate tournaments whose first match date has arrived
-cron.schedule('0 0 * * *', async () => {
+async function checkAndActivateTournaments() {
     try {
         const [result] = await db.promise().query(`
-            UPDATE tournaments t
-            SET t.status = 'active'
-            WHERE t.status = 'upcoming'
-              AND EXISTS (
-                  SELECT 1 FROM matches m
-                  WHERE m.tournament_id = t.id
-                    AND DATE(m.match_date) <= CURDATE()
-              )
+            UPDATE tournaments
+            SET status = 'active'
+            WHERE status = 'upcoming'
+              AND start_date IS NOT NULL
+              AND start_date <= CURDATE()
         `);
         if (result.affectedRows > 0) {
             console.log(`[Cron] Activated ${result.affectedRows} tournament(s)`);
@@ -134,7 +130,13 @@ cron.schedule('0 0 * * *', async () => {
     } catch (err) {
         console.error('[Cron] Failed to activate tournaments:', err.message);
     }
-});
+}
+
+// Check on server startup
+checkAndActivateTournaments();
+
+// Every day at midnight
+cron.schedule('0 0 * * *', checkAndActivateTournaments);
 
 /**
  * START SERVER

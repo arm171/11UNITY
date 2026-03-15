@@ -77,7 +77,10 @@ I18n.registerTranslations('en', {
         currentPassword: 'Current Password',
         newPassword: 'New Password',
         currentPasswordRequired: 'Enter current password to change it',
-        systemOverview: 'System Overview'
+        systemOverview: 'System Overview',
+        leaveTeam: 'Leave Team',
+        confirmLeaveTeam: 'Are you sure you want to leave your team?',
+        leftTeam: 'You have left the team'
     },
 
     // Admin
@@ -142,6 +145,8 @@ I18n.registerTranslations('en', {
         startDate: 'Start Date',
         maxTeams: 'Maximum Teams',
         minPlayersPerTeam: 'Min Players Per Team',
+        venue: 'Venue',
+        venuePlaceholder: 'Stadium or location name',
         teamsCount: '{count} teams',
         description: 'Description',
         descriptionPlaceholder: 'Tournament details...',
@@ -160,14 +165,21 @@ I18n.registerTranslations('en', {
         teamParticipating: 'Your team is participating in this tournament',
         needTeamFirst: 'You need to create a team first',
         tournamentFull: 'Tournament is full',
-        joinSuccess: 'Successfully joined the tournament!',
+        joinSuccess: 'Join request sent! Waiting for organizer approval.',
         leaveSuccess: 'Successfully left the tournament!',
+        pendingApproval: 'Waiting for organizer approval...',
+        cancelRequest: 'Cancel Request',
+        registrationClosed: 'Registration closed (fixtures already generated)',
         round: 'Round {num}',
         teamsJoined: '{current}/{max} teams',
         editTournament: 'Edit Tournament',
         saveTournament: 'Save Changes',
         deleteTournament: 'Delete Tournament',
-        deleteTournamentConfirm: 'Are you sure you want to delete this tournament?'
+        deleteTournamentConfirm: 'Are you sure you want to delete this tournament?',
+        bracketFinal: 'Final',
+        bracketSF: 'Semi-Final',
+        bracketQF: 'Quarter-Final',
+        bracketR16: 'Round of 16'
     },
 
     // Fixtures settings
@@ -215,7 +227,9 @@ I18n.registerTranslations('en', {
         matchFinished: 'Match finished!',
         goalAdded: 'Goal added!',
         cardAdded: 'Card added!',
-        eventDeleted: 'Event deleted!'
+        eventDeleted: 'Event deleted!',
+        notStartedYet: 'Not started yet',
+        scoreUpdated: 'Score updated!'
     },
 
     // Teams

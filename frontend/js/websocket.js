@@ -75,6 +75,7 @@ const WebSocketManager = {
         this.socket.on('statistics:update', (data) => {
             this.handleStatisticsUpdate(data);
         });
+
     },
 
     /**

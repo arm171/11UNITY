@@ -489,6 +489,15 @@ const Auth = {
             </div>
         `;
 
+        // Leave team button
+        html += `
+            <div style="margin-top: 16px; text-align: right;">
+                <button class="btn btn-danger btn-sm" onclick="Auth.handleLeaveTeam()">
+                    <i class="fas fa-sign-out-alt"></i> ${t('profile.leaveTeam', 'Leave Team')}
+                </button>
+            </div>
+        `;
+
         // Recent matches section
         if (recentMatches && recentMatches.length > 0) {
             html += `
@@ -994,6 +1003,20 @@ const Auth = {
 
         // Update hero/profile section
         this.updateProfileSection();
+    },
+
+    async handleLeaveTeam() {
+        const t = window.I18n ? (k, fb) => I18n.t(k, fb) : (k, fb) => fb;
+        if (!confirm(t('profile.confirmLeaveTeam', 'Are you sure you want to leave your team?'))) return;
+        try {
+            await API.leaveTeam();
+            UI.showNotification(t('profile.leftTeam', 'You have left the team'), 'success');
+            await this.loadProfile();
+            if (window.Teams) Teams.load();
+            if (window.Statistics) Statistics.load();
+        } catch (error) {
+            UI.showNotification(error.message || t('messages.error.generic', 'Error'), 'error');
+        }
     },
 
 };

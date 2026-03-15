@@ -99,6 +99,18 @@ const Tournaments = {
                         </div>
 
                         <div class="form-group">
+                            <label class="form-label" data-i18n="tournaments.venue">Venue</label>
+                            <input
+                                type="text"
+                                class="form-input"
+                                id="tournament-venue"
+                                data-i18n-placeholder="tournaments.venuePlaceholder"
+                                placeholder="School gym #5, Stadium Ararat..."
+                                maxlength="255"
+                            >
+                        </div>
+
+                        <div class="form-group">
                             <label class="form-label" data-i18n="tournaments.description">Description</label>
                             <textarea
                                 class="form-textarea"
@@ -196,6 +208,18 @@ const Tournaments = {
                         </div>
 
                         <div class="form-group">
+                            <label class="form-label" data-i18n="tournaments.venue">Venue</label>
+                            <input
+                                type="text"
+                                class="form-input"
+                                id="edit-tournament-venue"
+                                data-i18n-placeholder="tournaments.venuePlaceholder"
+                                placeholder="Stadium or location name"
+                                maxlength="255"
+                            >
+                        </div>
+
+                        <div class="form-group">
                             <label class="form-label" data-i18n="tournaments.description">Description</label>
                             <textarea
                                 class="form-textarea"
@@ -247,6 +271,10 @@ const Tournaments = {
                             <i class="fas fa-list"></i>
                             <span id="modal-tournament-type">Type</span>
                         </div>
+                        <div style="display: flex; align-items: center; gap: 8px; color: #b0b0b0;" id="modal-tournament-venue-row">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span id="modal-tournament-venue"></span>
+                        </div>
                     </div>
 
                     <p style="color: #b0b0b0; line-height: 1.6; margin-bottom: 32px;" id="modal-tournament-description">
@@ -276,7 +304,7 @@ const Tournaments = {
                         </div>
                     </div>
 
-                    <div style="text-align: center; margin-bottom: 32px;">
+<div style="text-align: center; margin-bottom: 32px;">
                         <button class="btn btn-primary" id="generate-fixtures-btn" style="display: none;">
                             <i class="fas fa-magic"></i> <span data-i18n="tournaments.generateFixtures">Generate Fixtures</span>
                         </button>
@@ -346,7 +374,7 @@ const Tournaments = {
                     <form id="fixtures-settings-form">
                         <div class="form-group">
                             <label class="form-label" data-i18n="tournaments.startDate">Start Date</label>
-                            <input type="date" class="form-input" id="fixtures-start-date" required>
+                            <input type="date" class="form-input" id="fixtures-start-date" required onchange="Tournaments.updateEstimatedEndDate()">
                         </div>
 
                         <div class="form-group">
@@ -383,12 +411,16 @@ const Tournaments = {
 
                         <div class="form-group">
                             <label class="form-label" data-i18n="fixturesSettings.matchesPerDay">Matches Per Day</label>
-                            <select class="form-select" id="fixtures-matches-per-day" required>
+                            <select class="form-select" id="fixtures-matches-per-day" required onchange="Tournaments.updateEstimatedEndDate()">
                                 <option value="1">1</option>
                                 <option value="2" selected>2</option>
                                 <option value="3">3</option>
-                                <option value="4">4</option>
                             </select>
+                        </div>
+
+                        <div id="estimated-end-date-block" style="display: none; padding: 12px 16px; background: rgba(46,204,113,0.1); border: 1px solid rgba(46,204,113,0.3); border-radius: 8px; color: #2ecc71; font-size: 14px; margin-bottom: 8px;">
+                            <i class="fas fa-calendar-check"></i> <span data-i18n="fixturesSettings.estimatedEnd">Tournament will end approximately:</span>
+                            <strong id="estimated-end-date-value" style="margin-left: 6px;"></strong>
                         </div>
 
                         <div style="display: flex; gap: 16px; margin-top: 24px;">
@@ -828,6 +860,7 @@ const Tournaments = {
         }
 
         document.getElementById('edit-tournament-min-players').value = t.min_players_per_team || 11;
+        document.getElementById('edit-tournament-venue').value = t.location || '';
         document.getElementById('edit-tournament-description').value = t.description || '';
 
         UI.openModal('edit-tournament-modal');
@@ -857,6 +890,7 @@ const Tournaments = {
                 category: document.getElementById('edit-tournament-category').value,
                 type: document.getElementById('edit-tournament-type').value,
                 startDate: document.getElementById('edit-tournament-start-date').value,
+                location: document.getElementById('edit-tournament-venue').value.trim(),
                 description: document.getElementById('edit-tournament-description').value.trim(),
                 maxTeams: parseInt(document.getElementById('edit-tournament-max-teams').value),
                 minPlayersPerTeam: parseInt(document.getElementById('edit-tournament-min-players').value),
@@ -916,6 +950,7 @@ const Tournaments = {
                 category: document.getElementById('tournament-category').value,
                 type: document.getElementById('tournament-type').value,
                 startDate: document.getElementById('tournament-start-date').value,
+                location: document.getElementById('tournament-venue').value.trim(),
                 description: document.getElementById('tournament-description').value.trim(),
                 maxTeams: parseInt(document.getElementById('tournament-max-teams').value),
                 minPlayersPerTeam: parseInt(document.getElementById('tournament-min-players').value),
@@ -958,6 +993,14 @@ const Tournaments = {
         document.getElementById('modal-tournament-category').textContent = this.getCategoryLabel(tournament.category);
         document.getElementById('modal-tournament-teams').textContent = I18n.t('tournaments.teamsJoined', { current: tournament.teams_count || 0, max: tournament.max_teams });
         document.getElementById('modal-tournament-type').textContent = this.getTypeLabel(tournament.type);
+        const venueRow = document.getElementById('modal-tournament-venue-row');
+        const venueEl = document.getElementById('modal-tournament-venue');
+        if (tournament.location) {
+            venueEl.textContent = tournament.location;
+            venueRow.style.display = 'flex';
+        } else {
+            venueRow.style.display = 'none';
+        }
         const descEl = document.getElementById('modal-tournament-description');
         if (tournament.description) {
             descEl.textContent = tournament.description;
@@ -1007,19 +1050,47 @@ const Tournaments = {
 
     async loadStandings(tournamentId) {
         const container = document.getElementById('tournament-standings-container');
-        const table = document.getElementById('tournament-standings-table');
         const noStandings = document.getElementById('tournament-no-standings');
+        const type = this.currentTournament ? this.currentTournament.type : 'league';
 
         try {
+            if (type === 'playoff') {
+                // Bracket view
+                const matchesResp = await API.getTournamentMatches(tournamentId);
+                const matches = matchesResp.matches || [];
+                if (matches.length === 0) {
+                    container.style.display = 'none';
+                    noStandings.style.display = 'flex';
+                } else {
+                    this.renderBracket(matches);
+                }
+                return;
+            }
+
+            if (type === 'group_playoff') {
+                const [standingsResp, matchesResp] = await Promise.all([
+                    API.getStandings(tournamentId),
+                    API.getTournamentMatches(tournamentId)
+                ]);
+                const standings = standingsResp.standings || [];
+                const matches = matchesResp.matches || [];
+                if (standings.length === 0 && matches.length === 0) {
+                    container.style.display = 'none';
+                    noStandings.style.display = 'flex';
+                } else {
+                    this.renderGroupPlayoffStandings(standings, matches);
+                }
+                return;
+            }
+
+            // League: normal standings table
             const response = await API.getStandings(tournamentId);
             const standings = response.standings || [];
-
             if (standings.length === 0) {
                 container.style.display = 'none';
                 noStandings.style.display = 'flex';
                 return;
             }
-
             this.renderStandingsFromData(standings);
 
         } catch (error) {
@@ -1027,6 +1098,242 @@ const Tournaments = {
             container.style.display = 'none';
             noStandings.style.display = 'flex';
         }
+    },
+
+    // ── Playoff Bracket ──────────────────────────────────────────────────────
+
+    renderBracket(matches) {
+        const container = document.getElementById('tournament-standings-container');
+        const table = document.getElementById('tournament-standings-table');
+        const noStandings = document.getElementById('tournament-no-standings');
+
+        // Group matches by round number (1, 2, 3...)
+        const rounds = {};
+        matches.forEach(m => {
+            const r = parseInt(m.round) || m.round;
+            if (!rounds[r]) rounds[r] = [];
+            rounds[r].push(m);
+        });
+
+        const sortedRounds = Object.keys(rounds).sort((a, b) => parseInt(a) - parseInt(b));
+        const totalRounds = sortedRounds.length;
+
+        const getRoundLabel = (idx, total) => {
+            const fromEnd = total - 1 - idx;
+            if (fromEnd === 0) return I18n.t('tournaments.bracketFinal', 'Final');
+            if (fromEnd === 1) return I18n.t('tournaments.bracketSF', 'Semi-Final');
+            if (fromEnd === 2) return I18n.t('tournaments.bracketQF', 'Quarter-Final');
+            if (fromEnd === 3) return I18n.t('tournaments.bracketR16', 'Round of 16');
+            return `Round ${idx + 1}`;
+        };
+
+        const renderTeam = (name, logo, color, score, isWinner) => `
+            <div style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 12px;
+                background: ${isWinner ? 'rgba(46,204,113,0.15)' : 'rgba(255,255,255,0.03)'};
+                border-left: 3px solid ${isWinner ? '#2ecc71' : 'transparent'};
+            ">
+                <div style="
+                    width: 28px; height: 28px;
+                    background: ${color || '#555'};
+                    border-radius: 50%;
+                    display: flex; align-items: center; justify-content: center;
+                    font-weight: bold; font-size: 11px; color: white; flex-shrink: 0;
+                ">${logo || '?'}</div>
+                <span style="color: ${name ? 'white' : '#666'}; font-weight: 600; flex: 1; font-size: 14px;">
+                    ${name ? UI.escapeHtml(name) : 'TBD'}
+                </span>
+                ${score !== null && score !== undefined ? `<span style="color: #2ecc71; font-weight: bold; font-size: 16px;">${score}</span>` : ''}
+            </div>
+        `;
+
+        const renderMatch = (match) => {
+            const isFinished = match.status === 'finished';
+            const t1wins = isFinished && match.team1_score > match.team2_score;
+            const t2wins = isFinished && match.team2_score > match.team1_score;
+            return `
+                <div style="
+                    background: rgba(255,255,255,0.05);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 8px;
+                    overflow: hidden;
+                    margin-bottom: 8px;
+                ">
+                    ${renderTeam(match.team1_name, match.team1_logo, match.team1_color, isFinished ? match.team1_score : null, t1wins)}
+                    <div style="height: 1px; background: rgba(255,255,255,0.08);"></div>
+                    ${renderTeam(match.team2_name, match.team2_logo, match.team2_color, isFinished ? match.team2_score : null, t2wins)}
+                </div>
+            `;
+        };
+
+        table.innerHTML = `
+            <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
+                ${sortedRounds.map((r, idx) => {
+                    const roundMatches = rounds[r].sort((a, b) => (a.bracket_slot || 0) - (b.bracket_slot || 0));
+                    const label = getRoundLabel(idx, totalRounds);
+                    return `
+                        <div style="flex: 1; min-width: 220px;">
+                            <h4 style="color: #2ecc71; text-align: center; margin-bottom: 16px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
+                                ${label}
+                            </h4>
+                            <div style="display: flex; flex-direction: column; justify-content: space-around; height: calc(100% - 40px);">
+                                ${roundMatches.map(m => renderMatch(m)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+
+        container.style.display = 'block';
+        noStandings.style.display = 'none';
+    },
+
+    // ── Group+Playoff Standings ───────────────────────────────────────────────
+
+    renderGroupPlayoffStandings(standings, matches) {
+        const container = document.getElementById('tournament-standings-container');
+        const table = document.getElementById('tournament-standings-table');
+        const noStandings = document.getElementById('tournament-no-standings');
+
+        // Separate group and playoff matches
+        const groupMatches = matches.filter(m => String(m.round).startsWith('Group'));
+        const playoffMatches = matches.filter(m => !String(m.round).startsWith('Group'));
+
+        // Determine groups
+        const groupLetters = [...new Set(groupMatches.map(m => m.round.replace('Group ', '')))].sort();
+
+        let html = '';
+
+        // Render each group standings table
+        groupLetters.forEach(gl => {
+            // Get teams in this group
+            const gTeamIds = new Set();
+            groupMatches.filter(m => m.round === `Group ${gl}`).forEach(m => {
+                if (m.team1_id) gTeamIds.add(m.team1_id);
+                if (m.team2_id) gTeamIds.add(m.team2_id);
+            });
+
+            const groupStandings = standings.filter(s => gTeamIds.has(s.team_id));
+
+            if (groupStandings.length === 0) return;
+
+            html += `
+                <div style="margin-bottom: 24px;">
+                    <h4 style="color: #2ecc71; margin-bottom: 12px;">Group ${gl}</h4>
+                    <table style="width: 100%; border-collapse: collapse; color: white; font-size: 13px;">
+                        <thead>
+                            <tr style="background: rgba(46,204,113,0.15);">
+                                <th style="padding: 8px; text-align: left;">#</th>
+                                <th style="padding: 8px; text-align: left;">${I18n.t('stats.team')}</th>
+                                <th style="padding: 8px; text-align: center;">P</th>
+                                <th style="padding: 8px; text-align: center;">W</th>
+                                <th style="padding: 8px; text-align: center;">D</th>
+                                <th style="padding: 8px; text-align: center;">L</th>
+                                <th style="padding: 8px; text-align: center;">GF</th>
+                                <th style="padding: 8px; text-align: center;">GA</th>
+                                <th style="padding: 8px; text-align: center;">GD</th>
+                                <th style="padding: 8px; text-align: center; font-weight: bold;">Pts</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${groupStandings.map((team, i) => `
+                                <tr style="background: ${i < 2 ? 'rgba(46,204,113,0.05)' : 'transparent'}; border-left: ${i < 2 ? '3px solid #2ecc71' : '3px solid transparent'};">
+                                    <td style="padding: 8px;">${i + 1}</td>
+                                    <td style="padding: 8px;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div style="width:24px;height:24px;background:${team.team_color||'#2ecc71'};border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:10px;">
+                                                ${UI.escapeHtml(team.team_logo || team.team_name.substring(0,3).toUpperCase())}
+                                            </div>
+                                            <span>${UI.escapeHtml(team.team_name)}</span>
+                                            ${i < 2 ? '<span style="color:#2ecc71;font-size:11px;margin-left:4px;">✓</span>' : ''}
+                                        </div>
+                                    </td>
+                                    <td style="padding:8px;text-align:center;">${team.played}</td>
+                                    <td style="padding:8px;text-align:center;color:#2ecc71;">${team.won}</td>
+                                    <td style="padding:8px;text-align:center;color:#f39c12;">${team.drawn}</td>
+                                    <td style="padding:8px;text-align:center;color:#e74c3c;">${team.lost}</td>
+                                    <td style="padding:8px;text-align:center;">${team.goals_for}</td>
+                                    <td style="padding:8px;text-align:center;">${team.goals_against}</td>
+                                    <td style="padding:8px;text-align:center;color:${team.goal_difference>=0?'#2ecc71':'#e74c3c'};">${team.goal_difference>0?'+':''}${team.goal_difference}</td>
+                                    <td style="padding:8px;text-align:center;font-weight:bold;color:#2ecc71;">${team.points}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <p style="color:#b0b0b0;font-size:12px;margin-top:6px;">✓ Top 2 advance to playoff</p>
+                </div>
+            `;
+        });
+
+        // If playoff matches exist and have teams, show playoff bracket too
+        const playoffWithTeams = playoffMatches.filter(m => m.team1_id || m.team2_id);
+        if (playoffWithTeams.length > 0) {
+            html += `<div style="margin-top: 8px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <h4 style="color: #2ecc71; margin-bottom: 16px; text-align: center;">
+                    <i class="fas fa-trophy"></i> Playoff Stage
+                </h4>
+            </div>`;
+            table.innerHTML = html;
+            // Temporarily swap matches to render bracket inline
+            const savedMatches = this._bracketMatchesOverride;
+            this._bracketMatchesOverride = playoffMatches;
+            const bracketHTML = this._buildBracketHTML(playoffMatches);
+            table.innerHTML = html + bracketHTML;
+            this._bracketMatchesOverride = savedMatches;
+        } else {
+            table.innerHTML = html;
+        }
+
+        container.style.display = 'block';
+        noStandings.style.display = 'none';
+    },
+
+    _buildBracketHTML(matches) {
+        const rounds = {};
+        matches.forEach(m => {
+            if (!rounds[m.round]) rounds[m.round] = [];
+            rounds[m.round].push(m);
+        });
+
+        const playoffRoundOrder = ['R16', 'QF', 'SF', 'Final'];
+        const sortedRounds = Object.keys(rounds).sort((a, b) => {
+            const ai = playoffRoundOrder.indexOf(a);
+            const bi = playoffRoundOrder.indexOf(b);
+            return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+        });
+
+        const renderTeam = (name, logo, color, score, isWinner) => `
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:${isWinner?'rgba(46,204,113,0.15)':'rgba(255,255,255,0.03)'};border-left:3px solid ${isWinner?'#2ecc71':'transparent'};">
+                <div style="width:24px;height:24px;background:${color||'#555'};border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:10px;color:white;flex-shrink:0;">${logo||'?'}</div>
+                <span style="color:${name?'white':'#666'};font-weight:600;flex:1;font-size:13px;">${name?UI.escapeHtml(name):'TBD'}</span>
+                ${score!==null&&score!==undefined?`<span style="color:#2ecc71;font-weight:bold;">${score}</span>`:''}
+            </div>
+        `;
+
+        return `<div style="display:flex;gap:16px;overflow-x:auto;padding-bottom:8px;">
+            ${sortedRounds.map(r => {
+                const rMatches = rounds[r].sort((a,b)=>(a.bracket_slot||0)-(b.bracket_slot||0));
+                return `
+                    <div style="flex:1;min-width:200px;">
+                        <h5 style="color:#2ecc71;text-align:center;margin-bottom:12px;font-size:13px;text-transform:uppercase;">${r}</h5>
+                        ${rMatches.map(m => {
+                            const fin = m.status==='finished';
+                            const t1w = fin && m.team1_score > m.team2_score;
+                            const t2w = fin && m.team2_score > m.team1_score;
+                            return `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;overflow:hidden;margin-bottom:8px;">
+                                ${renderTeam(m.team1_name,m.team1_logo,m.team1_color,fin?m.team1_score:null,t1w)}
+                                <div style="height:1px;background:rgba(255,255,255,0.08);"></div>
+                                ${renderTeam(m.team2_name,m.team2_logo,m.team2_color,fin?m.team2_score:null,t2w)}
+                            </div>`;
+                        }).join('')}
+                    </div>
+                `;
+            }).join('')}
+        </div>`;
     },
 
     renderStandingsFromData(standings) {
@@ -1274,9 +1581,10 @@ const Tournaments = {
             const response = await API.checkTournamentJoined(tournament.id);
 
             if (response.joined) {
-                // Coach's team is in this tournament
-                if (tournament.status === 'upcoming') {
-                    // Can leave if tournament hasn't started (no fixtures)
+                // Approved: can leave if fixtures not yet generated
+                const matchesResp = await API.getTournamentMatches(tournament.id);
+                const hasFixtures = matchesResp.matches && matchesResp.matches.length > 0;
+                if (tournament.status === 'upcoming' && !hasFixtures) {
                     leaveBtn.style.display = 'inline-flex';
                     leaveBtn.onclick = () => this.handleLeaveTournament(tournament.id);
                 }
@@ -1286,6 +1594,7 @@ const Tournaments = {
                 joinStatus.style.display = 'block';
                 return;
             }
+
 
             if (!response.hasTeam) {
                 joinStatusText.textContent = I18n.t('tournaments.needTeamFirst');
@@ -1299,8 +1608,20 @@ const Tournaments = {
             console.error('Check join error:', error);
         }
 
-        // Can join if tournament is upcoming and not full
+        // Can join if tournament is upcoming, not full, and no fixtures yet
         if (tournament.status !== 'upcoming') return;
+
+        // Check if fixtures already generated (block join after that)
+        try {
+            const matchesResp = await API.getTournamentMatches(tournament.id);
+            if (matchesResp.matches && matchesResp.matches.length > 0) {
+                joinStatusText.textContent = I18n.t('tournaments.registrationClosed', 'Registration closed');
+                joinStatus.style.color = '#e74c3c';
+                joinStatus.querySelector('i').className = 'fas fa-lock';
+                joinStatus.style.display = 'block';
+                return;
+            }
+        } catch (e) { /* ignore */ }
 
         const currentTeams = tournament.teams_count || 0;
         const maxTeams = tournament.max_teams;
@@ -1330,6 +1651,12 @@ const Tournaments = {
         if (user.role !== 'organizer') return;
         if (tournament.organizer_id !== user.id) return;
         if (tournament.status !== 'upcoming') return;
+
+        // Hide if fixtures already generated
+        try {
+            const matchesResp = await API.getTournamentMatches(tournament.id);
+            if (matchesResp.matches && matchesResp.matches.length > 0) return;
+        } catch (e) { /* ignore */ }
 
         generateBtn.style.display = 'inline-flex';
         generateBtn.onclick = () => this.openGenerateFixturesModal(tournament);
@@ -1389,10 +1716,66 @@ const Tournaments = {
         }
     },
 
+    async openTournamentById(tournamentId) {
+        try {
+            const response = await API.request(`/tournaments`);
+            const tournament = (response.tournaments || []).find(t => t.id == tournamentId);
+            if (tournament) {
+                UI.showSection('tournaments');
+                await this.load();
+                this.openDetailsModal(tournament);
+            }
+        } catch (e) {
+            console.error('openTournamentById error:', e);
+        }
+    },
+
     openGenerateFixturesModal(tournament) {
         this.currentTournament = tournament;
         this.closeDetailsModal();
         UI.openModal('fixtures-settings-modal');
+    },
+
+    updateEstimatedEndDate() {
+        const startDateVal = document.getElementById('fixtures-start-date').value;
+        const matchesPerDay = parseInt(document.getElementById('fixtures-matches-per-day').value) || 2;
+        const matchDays = Array.from(document.querySelectorAll('input[name="match-days"]:checked')).map(cb => parseInt(cb.value));
+        const block = document.getElementById('estimated-end-date-block');
+        const valueEl = document.getElementById('estimated-end-date-value');
+
+        if (!startDateVal || matchDays.length === 0 || !this.currentTournament) {
+            block.style.display = 'none';
+            return;
+        }
+
+        // Calculate total matches needed
+        const teams = this.currentTournament.max_teams;
+        const type = this.currentTournament.type;
+        let totalMatches = 0;
+        if (type === 'league') {
+            totalMatches = (teams * (teams - 1)) / 2;
+        } else if (type === 'playoff') {
+            totalMatches = teams - 1;
+        } else {
+            const groups = teams <= 8 ? 2 : 4;
+            const teamsPerGroup = teams / groups;
+            const groupMatches = groups * (teamsPerGroup * (teamsPerGroup - 1)) / 2;
+            const playoffTeams = groups * 2;
+            totalMatches = groupMatches + (playoffTeams - 1);
+        }
+
+        // Calculate days needed
+        const matchDaysPerWeek = matchDays.length;
+        const totalMatchDays = Math.ceil(totalMatches / matchesPerDay);
+        const weeks = Math.floor(totalMatchDays / matchDaysPerWeek);
+        const extraDays = totalMatchDays % matchDaysPerWeek;
+        const totalDays = weeks * 7 + (extraDays > 0 ? Math.ceil(extraDays * 7 / matchDaysPerWeek) : 0) + (type !== 'league' ? 3 : 0);
+
+        const endDate = new Date(startDateVal);
+        endDate.setDate(endDate.getDate() + totalDays);
+
+        valueEl.textContent = UI.formatDate(endDate.toISOString());
+        block.style.display = 'block';
     },
 
     async handleGenerateFixtures(e) {
@@ -1415,8 +1798,7 @@ const Tournaments = {
                 matchTime: document.getElementById('fixtures-match-time').value,
                 matchDays: matchDays,
                 matchesPerDay: parseInt(document.getElementById('fixtures-matches-per-day').value),
-                daysBetweenRounds: 0,
-                force: true
+                daysBetweenRounds: 0
             };
 
             await API.request(`/tournaments/${this.currentTournament.id}/fixtures/generate`, {
@@ -1463,16 +1845,51 @@ const Tournaments = {
 
             fixturesList.innerHTML = '';
 
-            Object.keys(rounds).sort((a, b) => a - b).forEach(roundNum => {
-                const roundMatches = rounds[roundNum];
+            const type = this.currentTournament ? this.currentTournament.type : 'league';
+            const totalRounds = Object.keys(rounds).length;
+
+            // Sort rounds: groups first (alphabetically), then playoff in order
+            const playoffOrder = ['R16', 'QF', 'SF', 'Final'];
+            const sortedRoundKeys = Object.keys(rounds).sort((a, b) => {
+                const aIsGroup = String(a).startsWith('Group');
+                const bIsGroup = String(b).startsWith('Group');
+                if (aIsGroup && bIsGroup) return String(a).localeCompare(String(b));
+                if (aIsGroup) return -1;
+                if (bIsGroup) return 1;
+                // Both are playoff or numeric rounds
+                const aIdx = playoffOrder.indexOf(a);
+                const bIdx = playoffOrder.indexOf(b);
+                if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+                return parseInt(a) - parseInt(b);
+            });
+
+            sortedRoundKeys.forEach((roundNum, idx) => {
+                const roundMatches = rounds[roundNum].sort((a, b) => (a.bracket_slot || 0) - (b.bracket_slot || 0));
+
+                // Determine label
+                let label;
+                if (String(roundNum).startsWith('Group') || playoffOrder.includes(roundNum)) {
+                    label = roundNum; // Already named: "Group A", "QF", "SF", "Final"
+                } else if (type === 'playoff') {
+                    // For numeric playoff rounds, translate to QF/SF/Final
+                    const numericRounds = sortedRoundKeys.filter(r => !isNaN(parseInt(r)));
+                    const totalNumeric = numericRounds.length;
+                    const myIdx = numericRounds.indexOf(String(roundNum));
+                    const fromEnd = totalNumeric - 1 - myIdx;
+                    if (fromEnd === 0) label = I18n.t('tournaments.bracketFinal', 'Final');
+                    else if (fromEnd === 1) label = I18n.t('tournaments.bracketSF', 'Semi-Final');
+                    else if (fromEnd === 2) label = I18n.t('tournaments.bracketQF', 'Quarter-Final');
+                    else if (fromEnd === 3) label = I18n.t('tournaments.bracketR16', 'Round of 16');
+                    else label = I18n.t('tournaments.round', { num: roundNum });
+                } else {
+                    label = I18n.t('tournaments.round', { num: roundNum });
+                }
 
                 const roundDiv = document.createElement('div');
                 roundDiv.style.marginBottom = '24px';
 
                 roundDiv.innerHTML = `
-                    <h4 style="color: #2ecc71; margin-bottom: 12px;">
-                        ${I18n.t('tournaments.round', { num: roundNum })}
-                    </h4>
+                    <h4 style="color: #2ecc71; margin-bottom: 12px;">${label}</h4>
                     <div style="display: grid; gap: 12px;">
                         ${roundMatches.map(match => this.createFixtureCard(match, tournamentId)).join('')}
                     </div>
@@ -1503,6 +1920,8 @@ const Tournaments = {
         const team1Logo = match.team1_logo || (match.team1_name ? '' : '?');
         const team2Logo = match.team2_logo || (match.team2_name ? '' : '?');
         const isTBD = !match.team1_id || !match.team2_id;
+        const matchTime = match.match_date ? new Date(match.match_date) : null;
+        const matchStarted = matchTime ? new Date() >= matchTime : false;
 
         return `
             <div data-match-id="${match.id}" style="
@@ -1567,8 +1986,10 @@ const Tournaments = {
                         <button
                             class="btn btn-primary btn-sm"
                             onclick="Tournaments.openMatchResultsModal(${tournamentId}, ${match.id}); event.stopPropagation();"
+                            ${!matchStarted ? 'disabled title="Match has not started yet"' : ''}
+                            style="${!matchStarted ? 'opacity: 0.5; cursor: not-allowed;' : ''}"
                         >
-                            <i class="fas fa-edit"></i> ${I18n.t('match.enterResults')}
+                            <i class="fas fa-edit"></i> ${matchStarted ? I18n.t('match.enterResults') : I18n.t('match.notStartedYet', 'Not started yet')}
                         </button>
                     </div>
                 ` : ''}
@@ -1968,20 +2389,36 @@ const Tournaments = {
     },
 
     async handleFinishMatch() {
+        // Validate: number of goal events must match the score
+        const team1Score = this.currentMatch.team1_score || 0;
+        const team2Score = this.currentMatch.team2_score || 0;
+        const events = this.currentMatch.events || [];
+        const goalCount = events.filter(e => e.event_type === 'goal').length;
+        const totalScore = team1Score + team2Score;
+
+        if (goalCount !== totalScore) {
+            UI.showNotification(
+                `Goals entered (${goalCount}) do not match the score (${team1Score + team2Score}). Please add all goal events.`,
+                'error',
+                4000
+            );
+            return;
+        }
+
         const finishBtn = document.getElementById('finish-match-btn');
         finishBtn.disabled = true;
         const originalHTML = finishBtn.innerHTML;
         finishBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
+        let success = false;
         try {
             await API.updateMatchResult(
                 this.currentMatch.tournament_id,
                 this.currentMatch.id,
                 { status: 'finished' }
             );
-
+            success = true;
             UI.showNotification(I18n.t('match.matchFinished') || 'Match finished', 'success');
-
             this.closeMatchResultsModal();
             await this.load();
             if (window.Matches) Matches.load();
@@ -1991,9 +2428,11 @@ const Tournaments = {
         } catch (error) {
             console.error('Finish match error:', error);
             UI.showNotification(error.message || I18n.t('messages.error.finishMatchFailed'), 'error');
-
-            finishBtn.innerHTML = originalHTML;
-            finishBtn.disabled = false;
+        } finally {
+            if (!success) {
+                finishBtn.innerHTML = originalHTML;
+                finishBtn.disabled = false;
+            }
         }
     },
 

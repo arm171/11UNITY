@@ -379,6 +379,30 @@ const joinTournament = async (req, res) => {
             });
         }
 
+        // Block join if fixtures already generated
+        const [existingMatches] = await db.promise().query(
+            'SELECT id FROM matches WHERE tournament_id = ? LIMIT 1',
+            [tournamentId]
+        );
+        if (existingMatches.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot join tournament after fixtures have been generated'
+            });
+        }
+
+        // Check if team is already in this tournament
+        const [alreadyIn] = await db.promise().query(
+            'SELECT id FROM tournament_teams WHERE tournament_id = ? AND team_id = ?',
+            [tournamentId, teamId]
+        );
+        if (alreadyIn.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Your team is already in this tournament'
+            });
+        }
+
         // Check if team is already in another active/upcoming tournament
         const [existingTournament] = await db.promise().query(
             `SELECT tt.id, tn.name FROM tournament_teams tt
@@ -396,7 +420,7 @@ const joinTournament = async (req, res) => {
 
         // Check if tournament is full
         const [currentTeams] = await db.promise().query(
-            'SELECT COUNT(*) as count FROM tournament_teams WHERE tournament_id = ?',
+            `SELECT COUNT(*) as count FROM tournament_teams WHERE tournament_id = ?`,
             [tournamentId]
         );
 
@@ -407,15 +431,15 @@ const joinTournament = async (req, res) => {
             });
         }
 
-        // Join team to tournament
+        // Join tournament directly
         await db.promise().query(
-            'INSERT INTO tournament_teams (tournament_id, team_id) VALUES (?, ?)',
+            `INSERT INTO tournament_teams (tournament_id, team_id) VALUES (?, ?)`,
             [tournamentId, teamId]
         );
 
         res.json({
             success: true,
-            message: 'Team successfully joined the tournament'
+            message: 'Successfully joined the tournament.'
         });
 
     } catch (error) {
@@ -463,16 +487,9 @@ const leaveTournament = async (req, res) => {
             });
         }
 
-        if (tournaments[0].status !== 'upcoming') {
-            return res.status(400).json({
-                success: false,
-                message: 'Cannot leave tournament after fixtures have been generated'
-            });
-        }
-
-        // Check if team is in this tournament
+        // Check if team is in this tournament (pending or approved)
         const [registration] = await db.promise().query(
-            'SELECT id FROM tournament_teams WHERE tournament_id = ? AND team_id = ?',
+            'SELECT id, status FROM tournament_teams WHERE tournament_id = ? AND team_id = ?',
             [tournamentId, teamId]
         );
 
@@ -483,6 +500,28 @@ const leaveTournament = async (req, res) => {
             });
         }
 
+        // Approved teams can only leave before fixtures are generated
+        if (registration[0].status === 'approved' && tournaments[0].status !== 'upcoming') {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot leave tournament after it has started'
+            });
+        }
+
+        // Block leaving approved team if fixtures already generated
+        if (registration[0].status === 'approved') {
+            const [existingMatches] = await db.promise().query(
+                'SELECT id FROM matches WHERE tournament_id = ? LIMIT 1',
+                [tournamentId]
+            );
+            if (existingMatches.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cannot leave tournament after fixtures have been generated'
+                });
+            }
+        }
+
         await db.promise().query(
             'DELETE FROM tournament_teams WHERE tournament_id = ? AND team_id = ?',
             [tournamentId, teamId]
@@ -490,7 +529,9 @@ const leaveTournament = async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Your team has left the tournament'
+            message: registration[0].status === 'pending'
+                ? 'Join request cancelled'
+                : 'Your team has left the tournament'
         });
 
     } catch (error) {
@@ -546,6 +587,108 @@ const checkUserJoined = async (req, res) => {
 };
 
 /**
+ * Get pending team requests for a tournament (organizer only)
+ */
+const getPendingTeams = async (req, res) => {
+    try {
+        const tournamentId = req.params.id;
+        const userId = req.user.id;
+
+        const [tournaments] = await db.promise().query(
+            'SELECT organizer_id FROM tournaments WHERE id = ?',
+            [tournamentId]
+        );
+        if (tournaments.length === 0) return res.status(404).json({ success: false, message: 'Tournament not found' });
+        if (tournaments[0].organizer_id !== userId) return res.status(403).json({ success: false, message: 'Not authorized' });
+
+        const [pending] = await db.promise().query(`
+            SELECT tt.team_id, tt.status, t.name as team_name, t.logo as team_logo, t.color as team_color,
+                   u.name as coach_name,
+                   (SELECT COUNT(*) FROM team_players WHERE team_id = t.id) as player_count
+            FROM tournament_teams tt
+            INNER JOIN teams t ON tt.team_id = t.id
+            INNER JOIN users u ON t.coach_id = u.id
+            WHERE tt.tournament_id = ? AND tt.status = 'pending'
+        `, [tournamentId]);
+
+        res.json({ success: true, teams: pending });
+    } catch (error) {
+        console.error('Get pending teams error:', error);
+        res.status(500).json({ success: false, message: 'Failed to get pending teams' });
+    }
+};
+
+/**
+ * Approve a team's join request (organizer only)
+ */
+const approveTeam = async (req, res) => {
+    try {
+        const { id: tournamentId, teamId } = req.params;
+        const userId = req.user.id;
+
+        const [tournaments] = await db.promise().query(
+            'SELECT organizer_id, max_teams, status FROM tournaments WHERE id = ?',
+            [tournamentId]
+        );
+        if (tournaments.length === 0) return res.status(404).json({ success: false, message: 'Tournament not found' });
+        if (tournaments[0].organizer_id !== userId) return res.status(403).json({ success: false, message: 'Not authorized' });
+        if (tournaments[0].status !== 'upcoming') return res.status(400).json({ success: false, message: 'Tournament is no longer in registration phase' });
+
+        // Check approved slots
+        const [currentApproved] = await db.promise().query(
+            `SELECT COUNT(*) as count FROM tournament_teams WHERE tournament_id = ? AND status = 'approved'`,
+            [tournamentId]
+        );
+        if (currentApproved[0].count >= tournaments[0].max_teams) {
+            return res.status(400).json({ success: false, message: 'Tournament is full' });
+        }
+
+        const [result] = await db.promise().query(
+            `UPDATE tournament_teams SET status = 'approved' WHERE tournament_id = ? AND team_id = ? AND status = 'pending'`,
+            [tournamentId, teamId]
+        );
+        if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Pending request not found' });
+
+        tournamentSocket.emitTeamApproved(tournamentId, { teamId });
+
+        res.json({ success: true, message: 'Team approved successfully' });
+    } catch (error) {
+        console.error('Approve team error:', error);
+        res.status(500).json({ success: false, message: 'Failed to approve team' });
+    }
+};
+
+/**
+ * Reject a team's join request (organizer only)
+ */
+const rejectTeam = async (req, res) => {
+    try {
+        const { id: tournamentId, teamId } = req.params;
+        const userId = req.user.id;
+
+        const [tournaments] = await db.promise().query(
+            'SELECT organizer_id FROM tournaments WHERE id = ?',
+            [tournamentId]
+        );
+        if (tournaments.length === 0) return res.status(404).json({ success: false, message: 'Tournament not found' });
+        if (tournaments[0].organizer_id !== userId) return res.status(403).json({ success: false, message: 'Not authorized' });
+
+        const [result] = await db.promise().query(
+            `DELETE FROM tournament_teams WHERE tournament_id = ? AND team_id = ? AND status = 'pending'`,
+            [tournamentId, teamId]
+        );
+        if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Pending request not found' });
+
+        tournamentSocket.emitTeamRejected(tournamentId, { teamId });
+
+        res.json({ success: true, message: 'Team rejected' });
+    } catch (error) {
+        console.error('Reject team error:', error);
+        res.status(500).json({ success: false, message: 'Failed to reject team' });
+    }
+};
+
+/**
  * Preview fixtures before generating
  */
 const previewFixtures = async (req, res) => {
@@ -580,13 +723,13 @@ const previewFixtures = async (req, res) => {
                    (SELECT COUNT(*) FROM team_players WHERE team_id = t.id) as player_count
             FROM teams t
             INNER JOIN tournament_teams tt ON t.id = tt.team_id
-            WHERE tt.tournament_id = ?
+            WHERE tt.tournament_id = ? AND tt.status = 'approved'
         `, [tournamentId]);
 
         if (teams.length < 2) {
             return res.status(400).json({
                 success: false,
-                message: 'Minimum 2 teams required in tournament'
+                message: 'Minimum 2 approved teams required to generate fixtures'
             });
         }
 
@@ -716,13 +859,13 @@ const generateFixtures = async (req, res) => {
                    (SELECT COUNT(*) FROM team_players WHERE team_id = t.id) as player_count
             FROM teams t
             INNER JOIN tournament_teams tt ON t.id = tt.team_id
-            WHERE tt.tournament_id = ?
+            WHERE tt.tournament_id = ? AND tt.status = 'approved'
         `, [tournamentId]);
 
         if (teams.length < 2) {
             return res.status(400).json({
                 success: false,
-                message: 'Minimum 2 teams required in tournament'
+                message: 'Minimum 2 approved teams required to generate fixtures'
             });
         }
 
@@ -1075,6 +1218,12 @@ const updateMatchResult = async (req, res) => {
 
         // If finishing the match, calculate score from events
         if (status === 'finished') {
+            // Activate tournament if still upcoming (match can go directly scheduled → finished)
+            await db.promise().query(
+                `UPDATE tournaments SET status = 'active' WHERE id = ? AND status = 'upcoming'`,
+                [tournamentId]
+            );
+
             const [goalEvents] = await db.promise().query(`
                 SELECT team_id, is_own_goal FROM match_events
                 WHERE match_id = ? AND event_type = 'goal'
@@ -1177,6 +1326,14 @@ const updateMatchResult = async (req, res) => {
                 `UPDATE matches SET status = ? WHERE id = ?`,
                 [status, matchId]
             );
+
+            // Auto-activate tournament when first match goes in_progress
+            if (status === 'in_progress') {
+                await db.promise().query(
+                    `UPDATE tournaments SET status = 'active' WHERE id = ? AND status = 'upcoming'`,
+                    [tournamentId]
+                );
+            }
         }
 
         res.json({
@@ -1687,6 +1844,9 @@ module.exports = {
     joinTournament,
     leaveTournament,
     checkUserJoined,
+    getPendingTeams,
+    approveTeam,
+    rejectTeam,
     previewFixtures,
     generateFixtures,
     getAllMatches,
