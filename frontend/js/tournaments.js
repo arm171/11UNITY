@@ -1436,114 +1436,47 @@ const Tournaments = {
             return;
         }
 
-        const topScorers = statistics.filter(s => s.goals > 0).sort((a, b) => b.goals - a.goals).slice(0, 10);
-        const topAssists = statistics.filter(s => s.assists > 0).sort((a, b) => b.assists - a.assists).slice(0, 10);
-
-        const rankColors = ['#FFD700', '#C0C0C0', '#CD7F32'];
-        const rankBg = ['rgba(255,215,0,0.12)', 'rgba(192,192,192,0.10)', 'rgba(205,127,50,0.10)'];
-
-        const sectionHeader = (icon, label, color) => `
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid ${color}22;">
-                <span style="width:32px;height:32px;background:${color}22;border-radius:8px;display:flex;align-items:center;justify-content:center;">
-                    <i class="${icon}" style="color:${color};font-size:14px;"></i>
-                </span>
-                <h4 style="color:${color};margin:0;font-size:15px;font-weight:700;">${label}</h4>
-            </div>`;
-
-        const renderPlayerList = (players, valueKey, color, valueSuffix = '') => {
-            if (players.length === 0) return `<p style="color:#808080;font-size:14px;padding:8px 0;">${I18n.t('statistics.noData')}</p>`;
-            return `
-                <div style="display:grid;gap:6px;">
-                    ${players.map((player, index) => {
-                        const isTop3 = index < 3;
-                        const bg = isTop3 ? rankBg[index] : 'rgba(255,255,255,0.04)';
-                        const rankColor = isTop3 ? rankColors[index] : '#606060';
-                        const border = isTop3 ? `1px solid ${rankColors[index]}33` : '1px solid transparent';
-                        return `
-                        <div style="
-                            display:flex;align-items:center;justify-content:space-between;
-                            padding:10px 14px;background:${bg};border-radius:10px;border:${border};
-                            transition:background 0.2s;
-                        ">
-                            <div style="display:flex;align-items:center;gap:12px;">
-                                <span style="
-                                    width:30px;height:30px;min-width:30px;
-                                    background:${isTop3 ? rankColors[index] + '25' : 'rgba(255,255,255,0.06)'};
-                                    border:1.5px solid ${rankColor};
-                                    border-radius:50%;display:flex;align-items:center;justify-content:center;
-                                    font-weight:700;font-size:12px;color:${rankColor};
-                                ">${index + 1}</span>
-                                <div>
-                                    <div style="color:white;font-weight:600;font-size:14px;">${UI.escapeHtml(player.player_name)}</div>
-                                    <div style="color:#808080;font-size:12px;">${UI.escapeHtml(player.team_name)}</div>
-                                </div>
-                            </div>
-                            <div style="
-                                min-width:36px;height:36px;background:${color}18;border-radius:8px;
-                                display:flex;align-items:center;justify-content:center;
-                                font-size:16px;font-weight:700;color:${color};
-                            ">${player[valueKey]}${valueSuffix}</div>
-                        </div>`;
-                    }).join('')}
-                </div>`;
-        };
-
-        const renderCardList = (players, cardKey, color) => {
-            if (players.length === 0) return `<p style="color:#808080;font-size:14px;padding:8px 0;">${cardKey === 'yellow_cards' ? I18n.t('stats.noYellowCards') : I18n.t('stats.noRedCards')}</p>`;
-            return `
-                <div style="display:grid;gap:6px;">
-                    ${players.map((player, index) => {
-                        const isTop3 = index < 3;
-                        const bg = isTop3 ? rankBg[index] : 'rgba(255,255,255,0.04)';
-                        const rankColor = isTop3 ? rankColors[index] : '#606060';
-                        const border = isTop3 ? `1px solid ${rankColors[index]}33` : '1px solid transparent';
-                        return `
-                        <div style="
-                            display:flex;align-items:center;justify-content:space-between;
-                            padding:10px 14px;background:${bg};border-radius:10px;border:${border};
-                        ">
-                            <div style="display:flex;align-items:center;gap:12px;">
-                                <span style="
-                                    width:30px;height:30px;min-width:30px;
-                                    background:${isTop3 ? rankColors[index] + '25' : 'rgba(255,255,255,0.06)'};
-                                    border:1.5px solid ${rankColor};
-                                    border-radius:50%;display:flex;align-items:center;justify-content:center;
-                                    font-weight:700;font-size:12px;color:${rankColor};
-                                ">${index + 1}</span>
-                                <div>
-                                    <div style="color:white;font-weight:600;font-size:14px;">${UI.escapeHtml(player.player_name)}</div>
-                                    <div style="color:#808080;font-size:12px;">${UI.escapeHtml(player.team_name)}</div>
-                                </div>
-                            </div>
-                            <div style="display:flex;align-items:center;gap:6px;">
-                                <i class="fas fa-square" style="color:${color};font-size:13px;"></i>
-                                <span style="font-size:16px;font-weight:700;color:${color};">${player[cardKey]}</span>
-                            </div>
-                        </div>`;
-                    }).join('')}
-                </div>`;
-        };
-
+        const topScorers = statistics.filter(s => s.goals > 0).sort((a, b) => b.goals - a.goals).slice(0, 5);
+        const topAssists = statistics.filter(s => s.assists > 0).sort((a, b) => b.assists - a.assists).slice(0, 5);
         const yellowPlayers = statistics.filter(s => s.yellow_cards > 0).sort((a, b) => b.yellow_cards - a.yellow_cards).slice(0, 5);
         const redPlayers = statistics.filter(s => s.red_cards > 0).sort((a, b) => b.red_cards - a.red_cards).slice(0, 5);
 
+        const renderRankingList = (players, valueKey, iconClass) => {
+            if (players.length === 0) return `<p class="statistics-empty">${I18n.t('statistics.noData')}</p>`;
+            return `
+                <ul class="statistics-ranking">
+                    ${players.map((player, index) => `
+                        <li class="ranking-item">
+                            <span class="ranking-position">${index + 1}</span>
+                            <div class="ranking-info">
+                                <span class="ranking-name">${UI.escapeHtml(player.player_name)}</span>
+                                <span class="ranking-team">${UI.escapeHtml(player.team_name || '')}</span>
+                            </div>
+                            <span class="ranking-value">${player[valueKey]} <i class="${iconClass}"></i></span>
+                        </li>
+                    `).join('')}
+                </ul>`;
+        };
+
         list.innerHTML = `
-            <div style="display:grid;gap:28px;">
-                <div style="background:rgba(255,255,255,0.03);border-radius:14px;padding:20px;">
-                    ${sectionHeader('fas fa-futbol', I18n.t('stats.topScorers'), '#2ecc71')}
-                    ${renderPlayerList(topScorers, 'goals', '#2ecc71')}
+            <div class="statistics-lists">
+                <div class="statistics-list-card">
+                    <h3><i class="fas fa-futbol"></i> ${I18n.t('stats.topScorers')}</h3>
+                    ${renderRankingList(topScorers, 'goals', 'fas fa-futbol')}
                 </div>
-                <div style="background:rgba(255,255,255,0.03);border-radius:14px;padding:20px;">
-                    ${sectionHeader('fas fa-hands-helping', I18n.t('statistics.topAssists') || 'Top Assists', '#3498db')}
-                    ${renderPlayerList(topAssists, 'assists', '#3498db')}
+                <div class="statistics-list-card">
+                    <h3><i class="fas fa-hands-helping"></i> ${I18n.t('statistics.topAssists') || 'Top Assists'}</h3>
+                    ${renderRankingList(topAssists, 'assists', 'fas fa-hands-helping')}
                 </div>
-                <div style="background:rgba(255,255,255,0.03);border-radius:14px;padding:20px;">
-                    ${sectionHeader('fas fa-square', I18n.t('stats.yellowCards'), '#F1C40F')}
-                    ${renderCardList(yellowPlayers, 'yellow_cards', '#F1C40F')}
+            </div>
+            <div class="statistics-lists" style="margin-top:20px;">
+                <div class="statistics-list-card">
+                    <h3 style="border-color:rgba(241,196,15,0.3);"><i class="fas fa-square" style="color:#F1C40F;"></i> ${I18n.t('stats.yellowCards')}</h3>
+                    ${renderRankingList(yellowPlayers, 'yellow_cards', 'fas fa-square')}
                 </div>
-                <div style="background:rgba(255,255,255,0.03);border-radius:14px;padding:20px;">
-                    ${sectionHeader('fas fa-square', I18n.t('stats.redCards'), '#e74c3c')}
-                    ${renderCardList(redPlayers, 'red_cards', '#e74c3c')}
+                <div class="statistics-list-card">
+                    <h3 style="border-color:rgba(231,76,60,0.3);"><i class="fas fa-square" style="color:#e74c3c;"></i> ${I18n.t('stats.redCards')}</h3>
+                    ${renderRankingList(redPlayers, 'red_cards', 'fas fa-square')}
                 </div>
             </div>
         `;
