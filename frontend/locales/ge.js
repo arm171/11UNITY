@@ -25,6 +25,7 @@ I18n.registerTranslations('ge', {
 
     nav: {
         home: 'მთავარი',
+        profile: 'Profile',
         tournaments: 'ტურნირები',
         teams: 'გუნდები',
         matches: 'მატჩები',
@@ -100,6 +101,18 @@ I18n.registerTranslations('ge', {
         passwordPlaceholder: '........',
         namePlaceholder: 'გიორგი გელაშვილი',
         passwordsDoNotMatch: 'პაროლები არ ემთხვევა!',
+        forgotPassword: 'დაგავიწყდათ პაროლი?',
+        checkEmail: 'შეამოწმეთ ელ. ფოსტა!',
+        resetSentTo: 'გავაგზავნეთ აღდგენის ბმული',
+        clickLinkToReset: 'დააჭირეთ ბმულს ახალი პაროლის დასაყენებლად.',
+        openEmail: 'ელ. ფოსტის გახსნა',
+        forgotPasswordHint: 'შეიყვანეთ ელ. ფოსტა და გამოგიგზავნით აღდგენის ბმულს.',
+        sendResetLink: 'ბმულის გაგზავნა',
+        resetLinkSent: 'ბმული გაიგზავნა! შეამოწმეთ ელ. ფოსტა.',
+        newPassword: 'ახალი პაროლი',
+        newPasswordHint: 'შეიყვანეთ ახალი პაროლი.',
+        saveNewPassword: 'პაროლის შენახვა',
+        passwordResetSuccess: 'პაროლი წარმატებით შეიცვალა! შეგიძლიათ შეხვიდეთ.',
         roles: {
             player: 'მოთამაშე',
             coach: 'მწვრთნელი',
@@ -165,7 +178,15 @@ I18n.registerTranslations('ge', {
         editTournament: 'ტურნირის რედაქტირება',
         saveTournament: 'ცვლილებების შენახვა',
         deleteTournament: 'ტურნირის წაშლა',
-        deleteTournamentConfirm: 'დარწმუნებული ხართ, რომ ამ ტურნირის წაშლა გსურთ?'
+        deleteTournamentConfirm: 'დარწმუნებული ხართ, რომ ამ ტურნირის წაშლა გსურთ?',
+        allStatuses: 'ყველა სტატუსი',
+        pendingApproval: 'ელოდება დამტკიცებას...',
+        cancelRequest: 'მოთხოვნის გაუქმება',
+        registrationClosed: 'რეგისტრაცია დახურულია',
+        bracketFinal: 'ფინალი',
+        bracketSF: 'ნახევარფინალი',
+        bracketQF: 'მეოთხედფინალი',
+        bracketR16: 'გამარჯვება 16-დან'
     },
 
     fixturesSettings: {
@@ -177,6 +198,7 @@ I18n.registerTranslations('ge', {
         matchesCount: '{count} მატჩი',
         generate: 'შექმნა',
         selectAtLeastOneDay: 'აირჩიეთ სულ მცირე ერთი მატჩის დღე',
+        estimatedEnd: 'ტურნირი დასრულდება დაახლოებით:',
         days: {
             mon: 'ორშ',
             tue: 'სამ',
@@ -211,7 +233,9 @@ I18n.registerTranslations('ge', {
         matchFinished: 'მატჩი დასრულდა!',
         goalAdded: 'გოლი დაემატა!',
         cardAdded: 'ბარათი დაემატა!',
-        eventDeleted: 'მოვლენა წაიშალა!'
+        eventDeleted: 'მოვლენა წაიშალა!',
+        notStartedYet: 'ჯერ არ დაწყებულა',
+        scoreUpdated: 'ანგარიში განახლდა!'
     },
 
     teams: {
@@ -225,6 +249,7 @@ I18n.registerTranslations('ge', {
         createTeamCta: 'შექმენით თქვენი გუნდი და დაიწყეთ თამაში!',
         teamName: 'გუნდის სახელი',
         teamNamePlaceholder: 'FC Barcelona',
+        descriptionPlaceholder: 'Tell about your team...',
         logoColor: 'გუნდის ფერი',
         playersCount: '{count} მოთამაშე',
         coach: 'მწვრთნელი',
@@ -304,10 +329,16 @@ I18n.registerTranslations('ge', {
         finished: 'დასრულებული',
         all: 'ყველა',
         allTournaments: 'ყველა ტურნირი',
+        allTeams: 'ყველა გუნდი',
         noMatches: 'მატჩები ჯერ არ არის',
         noMatchesSubtitle: 'მატჩები გამოჩნდება აქ, როგორც კი ტურნირები შეადგენენ გრაფიკს!',
         scheduled: 'დაგეგმილია',
-        live: 'პირდაპირ ეთერში'
+        live: 'პირდაპირ ეთერში',
+        today: 'დღეს',
+        tomorrow: 'ხვალ',
+        final: 'ფინალი',
+        semiFinal: 'ნახევარფინალი',
+        quarterFinal: 'მეოთხედფინალი'
     },
 
     statistics: {
@@ -324,7 +355,8 @@ I18n.registerTranslations('ge', {
         gamesPlayed: 'მატჩები',
         error: 'სტატისტიკის ჩატვირთვა ვერ მოხდა',
         errorSubtitle: 'სცადეთ გვერდის განახლება',
-        standings: 'ტაბელი'
+        standings: 'ტაბელი',
+        bracket: 'ბადე'
     },
 
     footer: {

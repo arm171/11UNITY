@@ -840,6 +840,20 @@ section h2 i {
     border-left: 4px solid var(--color-info);
 }
 
+.match-card.in-progress {
+    border-left: 4px solid var(--color-primary);
+}
+
+.match-status.live {
+    color: var(--color-primary);
+    animation: pulse-text 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-text {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
 .match-tournament-badge {
     display: inline-block;
     background: rgba(46, 204, 113, 0.2);

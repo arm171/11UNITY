@@ -33,9 +33,20 @@ const Teams = {
                 <div class="modal-content">
                     <button class="modal-close" id="close-create-team">&times;</button>
 
-                    <h2 style="margin-bottom: 32px; text-align: center; color: white;">
-                        <i class="fas fa-users"></i> <span data-i18n="teams.createTeam">Create Team</span>
-                    </h2>
+                    <!-- Live Preview -->
+                    <div style="text-align:center; margin-bottom:28px;">
+                        <div id="team-logo-preview" style="
+                            width:90px; height:90px; border-radius:50%;
+                            background:#2ecc71; margin:0 auto 12px;
+                            display:flex; align-items:center; justify-content:center;
+                            font-size:28px; font-weight:800; color:white;
+                            box-shadow:0 4px 20px rgba(46,204,113,0.4);
+                            transition:background 0.2s, box-shadow 0.2s;
+                        ">--</div>
+                        <div id="team-name-preview" style="color:white;font-size:18px;font-weight:700;min-height:24px;">
+                            <span data-i18n="teams.createTeam" style="color:#808080;font-size:14px;font-weight:400;">Create Team</span>
+                        </div>
+                    </div>
 
                     <form id="create-team-form">
                         <div class="form-group">
@@ -54,35 +65,34 @@ const Teams = {
 
                         <div class="form-group">
                             <label class="form-label" data-i18n="teams.logoColor">Team Color</label>
-                            <div style="display: flex; align-items: center; gap: 16px;">
-                                <input
-                                    type="color"
-                                    class="form-input"
-                                    id="team-color"
-                                    value="#2ecc71"
-                                    style="width: 60px; height: 40px; padding: 2px; cursor: pointer;"
-                                >
-                                <div id="team-logo-preview" style="
-                                    width: 50px;
-                                    height: 50px;
-                                    border-radius: 50%;
-                                    background: #2ecc71;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    font-size: 20px;
-                                    font-weight: bold;
-                                    color: white;
-                                ">FC</div>
+                            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                    ${['#2ecc71','#3498db','#e74c3c','#f39c12','#9b59b6','#1abc9c','#e91e63','#FF5722'].map(c => `
+                                        <div onclick="Teams.selectColor('${c}')" style="
+                                            width:32px;height:32px;border-radius:50%;background:${c};
+                                            cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;
+                                            border:2px solid transparent;
+                                        " data-color="${c}" title="${c}"></div>
+                                    `).join('')}
+                                </div>
+                                <label style="
+                                    width:32px;height:32px;border-radius:50%;
+                                    border:2px dashed #555;cursor:pointer;
+                                    display:flex;align-items:center;justify-content:center;
+                                    color:#888;font-size:18px;transition:border-color 0.2s;
+                                " title="Custom color">
+                                    +
+                                    <input type="color" id="team-color" value="#2ecc71" style="width:0;height:0;opacity:0;position:absolute;">
+                                </label>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" data-i18n="tournaments.description">Description</label>
+                            <label class="form-label" data-i18n="tournaments.description">Description <span style="color:#606060;font-weight:400;font-size:12px;" data-i18n="common.optional">(optional)</span></label>
                             <textarea
                                 class="form-textarea"
                                 id="team-description"
-                                data-i18n-placeholder="tournaments.descriptionPlaceholder"
+                                data-i18n-placeholder="teams.descriptionPlaceholder"
                                 placeholder="Tell about your team..."
                                 rows="3"
                             ></textarea>
@@ -383,10 +393,30 @@ const Teams = {
         const name = document.getElementById('team-name').value.trim();
         const color = document.getElementById('team-color').value;
         const preview = document.getElementById('team-logo-preview');
+        const namePreview = document.getElementById('team-name-preview');
         if (preview) {
-            preview.textContent = name.length >= 2 ? name.replace(/\s+/g, '').substring(0, 3).toUpperCase() : '--';
+            const abbr = name.length >= 2 ? name.replace(/\s+/g, '').substring(0, 3).toUpperCase() : '--';
+            preview.textContent = abbr;
             preview.style.background = color;
+            preview.style.boxShadow = `0 4px 20px ${color}55`;
         }
+        if (namePreview) {
+            namePreview.textContent = name || '';
+            if (!name) {
+                namePreview.innerHTML = '<span style="color:#606060;font-size:14px;font-weight:400;">Your team name</span>';
+            }
+        }
+        // Update selected swatch highlight
+        document.querySelectorAll('[data-color]').forEach(el => {
+            el.style.border = el.dataset.color === color ? `3px solid white` : '2px solid transparent';
+            el.style.transform = el.dataset.color === color ? 'scale(1.2)' : 'scale(1)';
+        });
+    },
+
+    selectColor(color) {
+        const input = document.getElementById('team-color');
+        if (input) input.value = color;
+        this.updateLogoPreview();
     },
 
     // Coach button: "Create Team" or "My Team"
@@ -528,11 +558,11 @@ const Teams = {
     },
 
     openCreateModal() {
-        // Reset form
         document.getElementById('create-team-form').reset();
         document.getElementById('team-color').value = '#2ecc71';
         this.updateLogoPreview();
         UI.openModal('create-team-modal');
+        setTimeout(() => document.getElementById('team-name')?.focus(), 200);
     },
 
     closeCreateModal() {
@@ -592,7 +622,22 @@ const Teams = {
             const isInActiveTournament = fullTeam.tournament_status === 'active';
 
             const addPlayerBtn = document.getElementById('add-player-btn');
-            addPlayerBtn.style.display = (isCoach && !isInActiveTournament) ? 'inline-flex' : 'none';
+            if (isCoach) {
+                addPlayerBtn.style.display = 'inline-flex';
+                if (isInActiveTournament) {
+                    addPlayerBtn.disabled = true;
+                    addPlayerBtn.title = 'Cannot add players during active tournament';
+                    addPlayerBtn.style.opacity = '0.5';
+                    addPlayerBtn.style.cursor = 'not-allowed';
+                } else {
+                    addPlayerBtn.disabled = false;
+                    addPlayerBtn.title = '';
+                    addPlayerBtn.style.opacity = '1';
+                    addPlayerBtn.style.cursor = '';
+                }
+            } else {
+                addPlayerBtn.style.display = 'none';
+            }
 
             // Team actions: edit (for coach) and delete (only if 0 players and no tournament)
             const actionsContainer = document.getElementById('team-actions-container');
@@ -890,6 +935,7 @@ const Teams = {
         document.getElementById('edit-team-color').value = this.rgbToHex(color);
         document.getElementById('edit-team-description').value = desc;
         this.updateEditLogoPreview();
+        UI.closeModal('team-details-modal');
         UI.openModal('edit-team-modal');
     },
 

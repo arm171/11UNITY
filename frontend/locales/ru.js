@@ -27,6 +27,7 @@ I18n.registerTranslations('ru', {
     // Navigation
     nav: {
         home: 'Главная',
+        profile: 'Профиль',
         tournaments: 'Турниры',
         teams: 'Команды',
         matches: 'Матчи',
@@ -105,6 +106,18 @@ I18n.registerTranslations('ru', {
         passwordPlaceholder: '........',
         namePlaceholder: 'Иван Иванов',
         passwordsDoNotMatch: 'Пароли не совпадают!',
+        forgotPassword: 'Забыли пароль?',
+        checkEmail: 'Проверьте почту!',
+        resetSentTo: 'Мы отправили ссылку для сброса на',
+        clickLinkToReset: 'Нажмите на ссылку в письме, чтобы задать новый пароль.',
+        openEmail: 'Открыть почту',
+        forgotPasswordHint: 'Введите ваш email и мы отправим ссылку для сброса.',
+        sendResetLink: 'Отправить ссылку',
+        resetLinkSent: 'Ссылка отправлена! Проверьте почту.',
+        newPassword: 'Новый пароль',
+        newPasswordHint: 'Введите новый пароль.',
+        saveNewPassword: 'Сохранить пароль',
+        passwordResetSuccess: 'Пароль успешно сброшен! Теперь вы можете войти.',
         roles: {
             player: 'Игрок',
             coach: 'Тренер',
@@ -192,6 +205,7 @@ I18n.registerTranslations('ru', {
         matchesCount: '{count} матчей',
         generate: 'Создать',
         selectAtLeastOneDay: 'Выберите хотя бы один день',
+        estimatedEnd: 'Турнир завершится приблизительно:',
         days: {
             mon: 'Пн',
             tue: 'Вт',
@@ -244,6 +258,7 @@ I18n.registerTranslations('ru', {
         createTeamCta: 'Создайте команду и начните играть!',
         teamName: 'Название команды',
         teamNamePlaceholder: 'ФК Барселона',
+        descriptionPlaceholder: 'Расскажите о вашей команде...',
         logoColor: 'Цвет команды',
         playersCount: '{count} игроков',
         coach: 'Тренер',
@@ -326,10 +341,16 @@ I18n.registerTranslations('ru', {
         finished: 'Завершённые',
         all: 'Все',
         allTournaments: 'Все турниры',
+        allTeams: 'Все команды',
         noMatches: 'Матчей пока нет',
         noMatchesSubtitle: 'Матчи появятся здесь после создания расписания турниров!',
         scheduled: 'Запланирован',
-        live: 'Live'
+        live: 'Live',
+        today: 'Сегодня',
+        tomorrow: 'Завтра',
+        final: 'Финал',
+        semiFinal: 'Полуфинал',
+        quarterFinal: 'Четвертьфинал'
     },
 
     // Statistics section
@@ -347,7 +368,8 @@ I18n.registerTranslations('ru', {
         gamesPlayed: 'игр',
         error: 'Не удалось загрузить статистику',
         errorSubtitle: 'Попробуйте обновить страницу',
-        standings: 'Турнирная таблица'
+        standings: 'Турнирная таблица',
+        bracket: 'Сетка'
     },
 
     // Footer

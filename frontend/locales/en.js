@@ -27,6 +27,7 @@ I18n.registerTranslations('en', {
     // Navigation
     nav: {
         home: 'Home',
+        profile: 'Profile',
         tournaments: 'Tournaments',
         teams: 'Teams',
         matches: 'Matches',
@@ -105,6 +106,18 @@ I18n.registerTranslations('en', {
         passwordPlaceholder: '........',
         namePlaceholder: 'John Doe',
         passwordsDoNotMatch: 'Passwords do not match!',
+        forgotPassword: 'Forgot password?',
+        checkEmail: 'Check your email!',
+        resetSentTo: 'We sent a password reset link to',
+        clickLinkToReset: 'Click the link in the email to set a new password.',
+        openEmail: 'Open Email',
+        forgotPasswordHint: 'Enter your email and we will send you a reset link.',
+        sendResetLink: 'Send Reset Link',
+        resetLinkSent: 'Reset link sent! Check your email.',
+        newPassword: 'New Password',
+        newPasswordHint: 'Enter your new password below.',
+        saveNewPassword: 'Save New Password',
+        passwordResetSuccess: 'Password reset successfully! You can now log in.',
         roles: {
             player: 'Player',
             coach: 'Coach',
@@ -192,6 +205,7 @@ I18n.registerTranslations('en', {
         matchesCount: '{count} matches',
         generate: 'Generate',
         selectAtLeastOneDay: 'Select at least one match day',
+        estimatedEnd: 'Tournament will end approximately:',
         days: {
             mon: 'Mon',
             tue: 'Tue',
@@ -244,6 +258,7 @@ I18n.registerTranslations('en', {
         createTeamCta: 'Create your team and start playing!',
         teamName: 'Team Name',
         teamNamePlaceholder: 'FC Barcelona',
+        descriptionPlaceholder: 'Tell about your team...',
         logoColor: 'Team Color',
         playersCount: '{count} players',
         coach: 'Coach',
@@ -326,10 +341,16 @@ I18n.registerTranslations('en', {
         finished: 'Finished',
         all: 'All',
         allTournaments: 'All Tournaments',
+        allTeams: 'All Teams',
         noMatches: 'No matches yet',
         noMatchesSubtitle: 'Matches will appear here once tournaments generate fixtures!',
         scheduled: 'Scheduled',
-        live: 'Live'
+        live: 'Live',
+        today: 'Today',
+        tomorrow: 'Tomorrow',
+        final: 'Final',
+        semiFinal: 'Semi-Final',
+        quarterFinal: 'Quarter-Final'
     },
 
     // Statistics section
@@ -347,7 +368,8 @@ I18n.registerTranslations('en', {
         gamesPlayed: 'games',
         error: 'Failed to load statistics',
         errorSubtitle: 'Please try refreshing the page',
-        standings: 'Standings'
+        standings: 'Standings',
+        bracket: 'Bracket'
     },
 
     // Footer

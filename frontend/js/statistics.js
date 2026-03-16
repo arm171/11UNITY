@@ -84,8 +84,11 @@ const Statistics = {
         UI.showLoading('statistics-content');
 
         try {
-            const response = await API.request(`/statistics/tournament/${tournamentId}`);
-            this.tournamentData = response;
+            const [statsResponse, matchesResponse] = await Promise.all([
+                API.request(`/statistics/tournament/${tournamentId}`),
+                API.request(`/tournaments/${tournamentId}/matches`)
+            ]);
+            this.tournamentData = { ...statsResponse, matches: matchesResponse.matches || [] };
             this.render();
 
         } catch (error) {
@@ -160,29 +163,143 @@ const Statistics = {
         UI.hideLoading('statistics-content');
 
         const t = (key) => window.I18n ? I18n.t(key) : key;
-        const { tournament, standings, topScorers, topAssists } = this.tournamentData;
+        const { tournament, standings, topScorers, topAssists, matches } = this.tournamentData;
+        const type = tournament.type;
 
-        container.innerHTML = `
-            <!-- Standings Table -->
-            <div class="standings-section">
-                <h3 style="color: white; margin-bottom: 16px;">
-                    <i class="fas fa-table"></i> ${t('statistics.standings')}
-                </h3>
-                ${this.renderStandingsTable(standings)}
-            </div>
-
-            <!-- Top Lists -->
+        const topListsHTML = `
             <div class="statistics-lists" style="margin-top: 32px;">
                 <div class="statistics-list-card">
                     <h3><i class="fas fa-futbol"></i> ${t('statistics.topScorers')}</h3>
-                    ${this.renderTopList(topScorers, 'goals', 'fas fa-futbol')}
+                    ${this.renderTopList((topScorers || []).slice(0, 5), 'goals', 'fas fa-futbol')}
                 </div>
                 <div class="statistics-list-card">
                     <h3><i class="fas fa-hands-helping"></i> ${t('statistics.topAssists')}</h3>
-                    ${this.renderTopList(topAssists, 'assists', 'fas fa-hands-helping')}
+                    ${this.renderTopList((topAssists || []).slice(0, 5), 'assists', 'fas fa-hands-helping')}
                 </div>
-            </div>
-        `;
+            </div>`;
+
+        if (type === 'playoff') {
+            container.innerHTML = `
+                <div class="standings-section">
+                    <h3 style="color:white; margin-bottom:16px;">
+                        <i class="fas fa-sitemap"></i> ${t('statistics.bracket') || 'Bracket'}
+                    </h3>
+                    ${this.renderBracket(matches)}
+                </div>
+                ${topListsHTML}`;
+
+        } else if (type === 'group_playoff') {
+            const groupMatches = matches.filter(m => isNaN(parseInt(m.round)) || this.isGroupRound(m.round, matches));
+            const playoffMatches = matches.filter(m => !isNaN(parseInt(m.round)) && !this.isGroupRound(m.round, matches));
+            container.innerHTML = `
+                <div class="standings-section">
+                    <h3 style="color:white; margin-bottom:16px;">
+                        <i class="fas fa-table"></i> ${t('statistics.standings')}
+                    </h3>
+                    ${this.renderStandingsTable(standings)}
+                </div>
+                ${playoffMatches.length > 0 ? `
+                <div class="standings-section" style="margin-top:32px;">
+                    <h3 style="color:white; margin-bottom:16px;">
+                        <i class="fas fa-sitemap"></i> ${t('statistics.bracket') || 'Bracket'}
+                    </h3>
+                    ${this.renderBracket(playoffMatches)}
+                </div>` : ''}
+                ${topListsHTML}`;
+
+        } else {
+            // league
+            container.innerHTML = `
+                <div class="standings-section">
+                    <h3 style="color:white; margin-bottom:16px;">
+                        <i class="fas fa-table"></i> ${t('statistics.standings')}
+                    </h3>
+                    ${this.renderStandingsTable(standings)}
+                </div>
+                ${topListsHTML}`;
+        }
+    },
+
+    isGroupRound(round, allMatches) {
+        // Group stage rounds are usually strings like 'group_1' or high numbers
+        // compared to playoff rounds. Heuristic: find max numeric round,
+        // group stage = rounds that appear more than twice (multiple matches per round)
+        const roundNum = parseInt(round);
+        if (isNaN(roundNum)) return true;
+        const matchesInRound = allMatches.filter(m => m.round == round).length;
+        return matchesInRound > 2;
+    },
+
+    renderBracket(matches) {
+        const t = (key) => window.I18n ? I18n.t(key) : key;
+        if (!matches || matches.length === 0) {
+            return `<p class="statistics-empty">${t('statistics.noData')}</p>`;
+        }
+
+        const rounds = {};
+        matches.forEach(m => {
+            const r = parseInt(m.round) || m.round;
+            if (!rounds[r]) rounds[r] = [];
+            rounds[r].push(m);
+        });
+
+        const sortedRounds = Object.keys(rounds).sort((a, b) => parseInt(a) - parseInt(b));
+        const totalRounds = sortedRounds.length;
+
+        const getRoundLabel = (idx, total) => {
+            const fromEnd = total - 1 - idx;
+            if (fromEnd === 0) return t('matches.final') || 'Final';
+            if (fromEnd === 1) return t('matches.semiFinal') || 'Semi-Final';
+            if (fromEnd === 2) return t('matches.quarterFinal') || 'Quarter-Final';
+            return `Round of ${Math.pow(2, fromEnd + 1)}`;
+        };
+
+        const renderTeam = (name, logo, color, score, isWinner) => `
+            <div style="
+                display:flex; align-items:center; gap:8px;
+                padding:8px 12px;
+                background:${isWinner ? 'rgba(46,204,113,0.15)' : 'rgba(255,255,255,0.03)'};
+                border-left:3px solid ${isWinner ? '#2ecc71' : 'transparent'};
+            ">
+                <div style="width:28px;height:28px;background:${color||'#555'};border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:white;flex-shrink:0;">
+                    ${UI.escapeHtml(logo || '?')}
+                </div>
+                <span style="color:${name?'white':'#555'};font-weight:600;flex:1;font-size:14px;">
+                    ${name ? UI.escapeHtml(name) : 'TBD'}
+                </span>
+                ${score !== null && score !== undefined ? `<span style="color:#2ecc71;font-weight:700;font-size:16px;">${score}</span>` : ''}
+            </div>`;
+
+        const renderMatch = (match) => {
+            const isFinished = match.status === 'finished';
+            const t1w = isFinished && match.team1_score > match.team2_score;
+            const t2w = isFinished && match.team2_score > match.team1_score;
+            const logo1 = match.team1_logo || (match.team1_name ? match.team1_name.replace(/\s+/g,'').substring(0,3).toUpperCase() : '?');
+            const logo2 = match.team2_logo || (match.team2_name ? match.team2_name.replace(/\s+/g,'').substring(0,3).toUpperCase() : '?');
+            return `
+                <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;overflow:hidden;">
+                    ${renderTeam(match.team1_name, logo1, match.team1_color, isFinished ? match.team1_score : null, t1w)}
+                    <div style="height:1px;background:rgba(255,255,255,0.08);"></div>
+                    ${renderTeam(match.team2_name, logo2, match.team2_color, isFinished ? match.team2_score : null, t2w)}
+                </div>`;
+        };
+
+        return `
+            <div style="display:flex;gap:24px;overflow-x:auto;padding-bottom:8px;align-items:stretch;">
+                ${sortedRounds.map((r, idx) => {
+                    const roundMatches = rounds[r].sort((a, b) => (a.bracket_slot||0) - (b.bracket_slot||0));
+                    const label = getRoundLabel(idx, totalRounds);
+                    return `
+                        <div style="flex:1;min-width:240px;display:flex;flex-direction:column;">
+                            <h4 style="color:#2ecc71;text-align:center;margin-bottom:12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;flex-shrink:0;">
+                                ${label}
+                            </h4>
+                            <div style="flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:8px;">
+                                ${roundMatches.map(m => renderMatch(m)).join('')}
+                            </div>
+                        </div>`;
+                }).join('')}
+            </div>`;
     },
 
     renderStandingsTable(standings) {

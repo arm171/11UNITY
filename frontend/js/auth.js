@@ -47,9 +47,10 @@ const Auth = {
         this.setupFooterYear();
         this.attachEventListeners();
         this.setupLanguageChangeListener();
-        this.handleVerificationRedirect(); // check if returning from email verification
+        this.handleVerificationRedirect();
         this.updateUI();
     },
+
 
     /**
      * After the user clicks the verification link in their email,
@@ -61,6 +62,15 @@ const Auth = {
      */
     handleVerificationRedirect() {
         const params = new URLSearchParams(window.location.search);
+
+        // Handle password reset link
+        const resetToken = params.get('reset_token');
+        if (resetToken) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            setTimeout(() => this.openResetPasswordModal(resetToken), 300);
+            return;
+        }
+
         const token = params.get('auth_token');
         const userRaw = params.get('auth_user');
 
@@ -69,14 +79,11 @@ const Auth = {
         try {
             const user = JSON.parse(decodeURIComponent(userRaw));
 
-            // Save to localStorage — same keys used by API module
             localStorage.setItem(CONFIG.STORAGE.TOKEN, token);
             localStorage.setItem(CONFIG.STORAGE.USER, JSON.stringify(user));
 
-            // Clean the URL so the token is not visible in the address bar
             window.history.replaceState({}, document.title, window.location.pathname);
 
-            // Show welcome notification
             setTimeout(() => {
                 UI.showNotification(`Email verified! Welcome, ${user.name}!`, 'success');
             }, 300);
@@ -132,6 +139,10 @@ const Auth = {
                                 <span class="btn-text" data-i18n="auth.login">Login</span>
                                 <div class="spinner" style="display: none;"></div>
                             </button>
+
+                            <div style="text-align:center; margin-top:16px;">
+                                <a href="#" id="forgot-password-link" style="color:#2ecc71;font-size:14px;text-decoration:none;" data-i18n="auth.forgotPassword">Forgot password?</a>
+                            </div>
                         </form>
                     </div>
 
@@ -295,6 +306,18 @@ const Auth = {
 
         document.getElementById('login-form').addEventListener('submit', (e) => this.handleLogin(e));
         document.getElementById('register-form').addEventListener('submit', (e) => this.handleRegister(e));
+
+        document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            const emailInput = document.getElementById('login-email');
+            const email = emailInput ? emailInput.value.trim() : '';
+            this.closeAuthModal();
+            if (email) {
+                this.sendForgotPasswordRequest(email);
+            } else {
+                this.openForgotPasswordModal();
+            }
+        });
 
         const confirmPassword = document.getElementById('register-confirm-password');
         const password = document.getElementById('register-password');
@@ -949,11 +972,6 @@ const Auth = {
     setupLanguageChangeListener() {
         window.addEventListener('languageChanged', () => {
             if (API.isAuthenticated()) {
-                // applyTranslations() resets the nav link back to "Home" — restore it
-                const homeNavLink = document.querySelector('.nav-link[data-i18n="nav.home"]');
-                if (homeNavLink) {
-                    homeNavLink.innerHTML = '<i class="fas fa-user" style="margin-right:6px;"></i>Profile';
-                }
                 const user = API.getUser();
                 this.updateProfileStats(user);
             }
@@ -972,12 +990,6 @@ const Auth = {
             if (getStartedBtn) getStartedBtn.classList.remove('show');
             if (profileBtn) profileBtn.classList.add('show');
 
-            // Change "Home" nav link to "Profile" when logged in
-            const homeNavLink = document.querySelector('.nav-link[data-i18n="nav.home"]');
-            if (homeNavLink) {
-                homeNavLink.innerHTML = '<i class="fas fa-user" style="margin-right:6px;"></i>Profile';
-            }
-
             if (user.role === 'organizer' && createTournamentBtn) {
                 createTournamentBtn.style.display = 'inline-flex';
             }
@@ -990,12 +1002,6 @@ const Auth = {
         } else {
             if (getStartedBtn) getStartedBtn.classList.add('show');
             if (profileBtn) profileBtn.classList.remove('show');
-
-            // Restore "Home" nav link when logged out
-            const homeNavLink = document.querySelector('.nav-link[data-i18n="nav.home"]');
-            if (homeNavLink) {
-                homeNavLink.innerHTML = window.I18n ? I18n.t('nav.home') : 'Home';
-            }
 
             if (createTournamentBtn) createTournamentBtn.style.display = 'none';
             if (createTeamBtn) createTeamBtn.style.display = 'none';
@@ -1016,6 +1022,174 @@ const Auth = {
             if (window.Statistics) Statistics.load();
         } catch (error) {
             UI.showNotification(error.message || t('messages.error.generic', 'Error'), 'error');
+        }
+    },
+
+    // ─── FORGOT PASSWORD ────────────────────────────────────────────────────────
+
+    openForgotPasswordModal() {
+        // Fallback: shown only when login email field is empty
+        let modal = document.getElementById('forgot-password-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.id = 'forgot-password-modal';
+            modal.innerHTML = `
+                <div class="modal-overlay"></div>
+                <div class="modal-content" style="max-width:420px;">
+                    <button class="modal-close" onclick="Auth.closeForgotPasswordModal()">&times;</button>
+                    <h2 style="margin-bottom:8px;text-align:center;color:white;">
+                        <i class="fas fa-key"></i> ${window.I18n ? I18n.t('auth.forgotPassword') : 'Forgot Password'}
+                    </h2>
+                    <p style="color:#aaa;text-align:center;margin-bottom:24px;font-size:14px;">
+                        ${window.I18n ? I18n.t('auth.forgotPasswordHint') : 'Enter your email and we will send you a reset link.'}
+                    </p>
+                    <form id="forgot-password-form">
+                        <div class="form-group">
+                            <label class="form-label">${window.I18n ? I18n.t('auth.email') : 'Email'}</label>
+                            <input type="email" class="form-input" id="forgot-password-email" placeholder="your@email.com" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:16px;">
+                            <span class="btn-text">${window.I18n ? I18n.t('auth.sendResetLink') : 'Send Reset Link'}</span>
+                            <div class="spinner" style="display:none;"></div>
+                        </button>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.querySelector('.modal-overlay').addEventListener('click', () => this.closeForgotPasswordModal());
+            modal.querySelector('#forgot-password-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = e.target.querySelector('button[type="submit"]');
+                const email = document.getElementById('forgot-password-email').value.trim();
+                UI.showButtonLoading(btn);
+                try {
+                    await this.sendForgotPasswordRequest(email);
+                    this.closeForgotPasswordModal();
+                } catch(err) {
+                    UI.showNotification(err.message || 'Error', 'error');
+                } finally {
+                    UI.hideButtonLoading(btn);
+                }
+            });
+        }
+        UI.openModal('forgot-password-modal');
+    },
+
+    closeForgotPasswordModal() {
+        UI.closeModal('forgot-password-modal');
+    },
+
+    async sendForgotPasswordRequest(email) {
+        try {
+            await API.request('/auth/forgot-password', {
+                method: 'POST',
+                body: JSON.stringify({ email })
+            });
+            this.showResetEmailNotice(email);
+        } catch (error) {
+            UI.showNotification(error.message || 'Failed to send reset link', 'error');
+        }
+    },
+
+    showResetEmailNotice(email) {
+        const t = (key, fallback) => window.I18n ? I18n.t(key) : fallback;
+        const notice = document.createElement('div');
+        notice.style.cssText = `
+            position:fixed;top:24px;left:50%;transform:translateX(-50%);
+            background:#1a1a2e;border:2px solid #2ecc71;border-radius:12px;
+            padding:28px 36px;z-index:9999;text-align:center;max-width:420px;width:90%;
+            color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.6);
+        `;
+        notice.innerHTML = `
+            <div style="font-size:40px;margin-bottom:12px;">🔑</div>
+            <h3 style="color:#2ecc71;margin:0 0 10px;">${t('auth.checkEmail', 'Check your email!')}</h3>
+            <p style="color:#ccc;font-size:14px;line-height:1.7;margin:0 0 20px;">
+                ${t('auth.resetSentTo', 'We sent a password reset link to')}<br>
+                <strong style="color:#fff;">${escapeHtml(email)}</strong><br><br>
+                ${t('auth.clickLinkToReset', 'Click the link in the email to set a new password.')}
+            </p>
+            <button onclick="openMailAndClose(this, '${escapeHtml(email)}')"
+                style="background:#2ecc71;border:none;color:#000;padding:10px 32px;
+                       border-radius:8px;cursor:pointer;font-weight:bold;font-size:14px;">
+                <i class="fas fa-envelope"></i> ${t('auth.openEmail', 'Open Email')}
+            </button>
+        `;
+        document.body.appendChild(notice);
+    },
+
+    // ─── RESET PASSWORD ──────────────────────────────────────────────────────────
+
+    openResetPasswordModal(token) {
+        let modal = document.getElementById('reset-password-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.id = 'reset-password-modal';
+            modal.innerHTML = `
+                <div class="modal-overlay"></div>
+                <div class="modal-content" style="max-width:420px;">
+                    <h2 style="margin-bottom:8px;text-align:center;color:white;">
+                        <i class="fas fa-lock"></i> ${window.I18n ? I18n.t('auth.newPassword') : 'Set New Password'}
+                    </h2>
+                    <p style="color:#aaa;text-align:center;margin-bottom:24px;font-size:14px;">
+                        ${window.I18n ? I18n.t('auth.newPasswordHint') : 'Enter your new password below.'}
+                    </p>
+                    <form id="reset-password-form">
+                        <div class="form-group">
+                            <label class="form-label">${window.I18n ? I18n.t('auth.newPassword') : 'New Password'}</label>
+                            <input type="password" class="form-input" id="reset-password-new" minlength="6" placeholder="........" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">${window.I18n ? I18n.t('auth.confirmPassword') : 'Confirm Password'}</label>
+                            <input type="password" class="form-input" id="reset-password-confirm" minlength="6" placeholder="........" required>
+                        </div>
+                        <p id="reset-password-mismatch" style="color:#e74c3c;font-size:13px;display:none;">
+                            ${window.I18n ? I18n.t('auth.passwordsDoNotMatch') : 'Passwords do not match!'}
+                        </p>
+                        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:16px;">
+                            <span class="btn-text">${window.I18n ? I18n.t('auth.saveNewPassword') : 'Save New Password'}</span>
+                            <div class="spinner" style="display:none;"></div>
+                        </button>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.querySelector('#reset-password-form').addEventListener('submit', (e) => this.handleResetPassword(e, token));
+        }
+        UI.openModal('reset-password-modal');
+    },
+
+    async handleResetPassword(e, token) {
+        e.preventDefault();
+        const form = e.target;
+        const btn = form.querySelector('button[type="submit"]');
+        const password = document.getElementById('reset-password-new').value;
+        const confirm = document.getElementById('reset-password-confirm').value;
+        const mismatch = document.getElementById('reset-password-mismatch');
+
+        if (password !== confirm) {
+            mismatch.style.display = 'block';
+            return;
+        }
+        mismatch.style.display = 'none';
+
+        UI.showButtonLoading(btn);
+        try {
+            await API.request('/auth/reset-password', {
+                method: 'POST',
+                body: JSON.stringify({ token, password })
+            });
+            UI.showNotification(
+                window.I18n ? I18n.t('auth.passwordResetSuccess') : 'Password reset! You can now log in.',
+                'success'
+            );
+            UI.closeModal('reset-password-modal');
+            setTimeout(() => this.openAuthModal('login'), 400);
+        } catch (error) {
+            UI.showNotification(error.message || 'Failed to reset password', 'error');
+        } finally {
+            UI.hideButtonLoading(btn);
         }
     },
 

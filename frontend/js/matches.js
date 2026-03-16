@@ -9,6 +9,7 @@ const Matches = {
     tournaments: [],
     currentFilter: 'all',
     currentStatusFilter: 'all',
+    currentTeamFilter: 'all',
 
     init() {
         this.createDetailsModal();
@@ -67,6 +68,14 @@ const Matches = {
                 this.render();
             });
         }
+
+        const teamFilter = document.getElementById('matches-team-filter');
+        if (teamFilter) {
+            teamFilter.addEventListener('change', (e) => {
+                this.currentTeamFilter = e.target.value;
+                this.render();
+            });
+        }
     },
 
     async load() {
@@ -101,32 +110,46 @@ const Matches = {
         const t = (key) => window.I18n ? I18n.t(key) : key;
 
         filterSelect.innerHTML = `<option value="all">${t('matches.allTournaments')}</option>`;
-
         this.tournaments.forEach(tournament => {
             const option = document.createElement('option');
             option.value = tournament.id;
             option.textContent = tournament.name;
             filterSelect.appendChild(option);
         });
-
         filterSelect.value = this.currentFilter;
+
+        // Team filter
+        const teamSelect = document.getElementById('matches-team-filter');
+        if (!teamSelect) return;
+
+        const teams = new Map();
+        this.matches.forEach(m => {
+            if (!teams.has(m.team1_id)) teams.set(m.team1_id, m.team1_name);
+            if (!teams.has(m.team2_id)) teams.set(m.team2_id, m.team2_name);
+        });
+
+        teamSelect.innerHTML = `<option value="all">${t('matches.allTeams')}</option>`;
+        [...teams.entries()].sort((a, b) => a[1].localeCompare(b[1])).forEach(([id, name]) => {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = name;
+            teamSelect.appendChild(option);
+        });
+        teamSelect.value = this.currentTeamFilter;
     },
 
     updateStats() {
         const total = this.matches.length;
         const finished = this.matches.filter(m => m.status === 'finished').length;
         const upcoming = this.matches.filter(m => m.status === 'scheduled').length;
-        const live = this.matches.filter(m => m.status === 'in_progress').length;
 
         const totalEl = document.getElementById('total-matches');
         const finishedEl = document.getElementById('finished-matches');
         const upcomingEl = document.getElementById('upcoming-matches');
-        const liveEl = document.getElementById('live-matches');
 
         if (totalEl) totalEl.textContent = total;
         if (finishedEl) finishedEl.textContent = finished;
         if (upcomingEl) upcomingEl.textContent = upcoming;
-        if (liveEl) liveEl.textContent = live;
     },
 
     render() {
@@ -141,6 +164,13 @@ const Matches = {
         let filteredMatches = this.matches;
         if (this.currentFilter !== 'all') {
             filteredMatches = filteredMatches.filter(m => m.tournament_id == this.currentFilter);
+        }
+
+        // Filter by team
+        if (this.currentTeamFilter !== 'all') {
+            filteredMatches = filteredMatches.filter(m =>
+                m.team1_id == this.currentTeamFilter || m.team2_id == this.currentTeamFilter
+            );
         }
 
         // Filter by status
@@ -161,13 +191,22 @@ const Matches = {
         container.style.display = 'block';
         if (emptyState) emptyState.style.display = 'none';
 
+        // Sort: scheduled (upcoming) first ascending, finished last descending
+        const upcoming = filteredMatches
+            .filter(m => m.status === 'scheduled')
+            .sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
+        const past = filteredMatches
+            .filter(m => m.status !== 'scheduled')
+            .sort((a, b) => new Date(b.match_date) - new Date(a.match_date));
+        filteredMatches = [...upcoming, ...past];
+
         // Group matches by date
         const matchesByDate = this.groupMatchesByDate(filteredMatches);
 
         container.innerHTML = '';
 
         Object.entries(matchesByDate).forEach(([isoKey, group]) => {
-            const dateSection = this.createDateSection(group.label, group.matches);
+            const dateSection = this.createDateSection(group.label, group.matches, group.isToday);
             container.appendChild(dateSection);
         });
     },
@@ -205,18 +244,22 @@ const Matches = {
     },
 
     groupMatchesByDate(matches) {
-        // Use ISO date (YYYY-MM-DD) as key for stable grouping regardless of language
         const groups = {};
         const lang = window.I18n ? I18n.getCurrentLanguage() : 'en';
+        const todayISO = new Date().toISOString().split('T')[0];
+        const tomorrowISO = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+        const t = (key) => window.I18n ? I18n.t(key) : key;
 
         matches.forEach(match => {
             const isoKey = new Date(match.match_date).toISOString().split('T')[0];
 
             if (!groups[isoKey]) {
-                groups[isoKey] = {
-                    label: this.getDateString(match.match_date, lang),
-                    matches: []
-                };
+                let label;
+                if (isoKey === todayISO) label = t('matches.today') || 'Today';
+                else if (isoKey === tomorrowISO) label = t('matches.tomorrow') || 'Tomorrow';
+                else label = this.getDateString(match.match_date, lang);
+
+                groups[isoKey] = { label, isToday: isoKey === todayISO, matches: [] };
             }
             groups[isoKey].matches.push(match);
         });
@@ -224,13 +267,28 @@ const Matches = {
         return groups;
     },
 
-    createDateSection(date, matches) {
+    getPlayoffRoundName(roundNum, tournamentId) {
+        const tourneyMatches = this.matches.filter(m =>
+            m.tournament_id === tournamentId &&
+            m.tournament_type !== 'league' &&
+            !isNaN(parseInt(m.round))
+        );
+        const maxRound = Math.max(...tourneyMatches.map(m => parseInt(m.round)));
+        const diff = maxRound - roundNum;
+        if (diff === 0) return window.I18n ? I18n.t('matches.final') || 'Final' : 'Final';
+        if (diff === 1) return window.I18n ? I18n.t('matches.semiFinal') || 'Semi-Final' : 'Semi-Final';
+        if (diff === 2) return window.I18n ? I18n.t('matches.quarterFinal') || 'Quarter-Final' : 'Quarter-Final';
+        return window.I18n ? I18n.t('matches.roundOf', {n: Math.pow(2, diff + 1)}) || `Round of ${Math.pow(2, diff + 1)}` : `Round of ${Math.pow(2, diff + 1)}`;
+    },
+
+    createDateSection(date, matches, isToday) {
         const section = document.createElement('div');
         section.className = 'matches-date-section';
 
         section.innerHTML = `
-            <h3 class="matches-date-header">
-                <i class="fas fa-calendar-day"></i> ${date}
+            <h3 class="matches-date-header ${isToday ? 'today' : ''}">
+                <i class="fas fa-${isToday ? 'star' : 'calendar-day'}"></i> ${date}
+                ${isToday ? '<span style="font-size:11px;background:#2ecc71;color:#000;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600;vertical-align:middle;">TODAY</span>' : ''}
             </h3>
             <div class="matches-list-items">
                 ${matches.map(match => this.createMatchCard(match)).join('')}
@@ -248,16 +306,21 @@ const Matches = {
         });
 
         const t = (key) => window.I18n ? I18n.t(key) : key;
+        const team1Score = (isFinished || isLive) ? match.team1_score : null;
+        const team2Score = (isFinished || isLive) ? match.team2_score : null;
+        const c1 = match.team1_color || '#2ecc71';
+        const c2 = match.team2_color || '#3498db';
 
-        const team1Score = (isFinished || isLive) ? match.team1_score : '-';
-        const team2Score = (isFinished || isLive) ? match.team2_score : '-';
-
-        // Round display
+        // Smart round display
         let roundText = '';
         if (match.round) {
             const roundNum = parseInt(match.round);
             if (!isNaN(roundNum)) {
-                roundText = window.I18n ? I18n.t('tournaments.round', {num: roundNum}) : `Round ${roundNum}`;
+                if (match.tournament_type === 'league') {
+                    roundText = window.I18n ? I18n.t('tournaments.round', {num: roundNum}) : `Round ${roundNum}`;
+                } else {
+                    roundText = this.getPlayoffRoundName(roundNum, match.tournament_id);
+                }
             } else {
                 roundText = match.round;
             }
@@ -265,39 +328,49 @@ const Matches = {
 
         const statusClass = isFinished ? 'finished' : isLive ? 'in-progress' : 'scheduled';
 
+        // Winner highlight
+        const t1Won = isFinished && team1Score > team2Score;
+        const t2Won = isFinished && team2Score > team1Score;
+
         return `
             <div class="match-card ${statusClass}"
                  onclick="Matches.openDetailsModal(${match.tournament_id}, ${match.id})"
-                 style="cursor: pointer;">
-                <div class="match-tournament-badge">
-                    <i class="fas fa-trophy"></i> ${UI.escapeHtml(match.tournament_name)}
+                 style="cursor:pointer; background: linear-gradient(to right, ${c1}18 0%, rgba(255,255,255,0.03) 35%, rgba(255,255,255,0.03) 65%, ${c2}18 100%); overflow:hidden;">
+
+                <!-- Top: tournament + round -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <span style="font-size:12px; color:#888; display:flex; align-items:center; gap:6px;">
+                        <i class="fas fa-trophy" style="color:#f39c12; font-size:10px;"></i>
+                        ${UI.escapeHtml(match.tournament_name)}
+                    </span>
+                    ${roundText ? `<span style="font-size:11px; font-weight:600; color:#aaa; background:rgba(255,255,255,0.07); padding:2px 10px; border-radius:20px;">${roundText}</span>` : ''}
                 </div>
 
+                <!-- Main: teams + score -->
                 <div class="match-content">
                     <div class="match-team team1">
-                        <div class="team-logo-small" style="background: ${match.team1_color || '#2ecc71'}">
+                        <div class="team-logo-small" style="background:${c1}; box-shadow: 0 2px 8px ${c1}55;">
                             ${UI.escapeHtml(match.team1_logo || match.team1_name.replace(/\s+/g, '').substring(0, 3).toUpperCase())}
                         </div>
-                        <span class="team-name">${UI.escapeHtml(match.team1_name)}</span>
+                        <span class="team-name" style="${t1Won ? 'color:white; font-weight:700;' : ''}">${UI.escapeHtml(match.team1_name)}</span>
                     </div>
 
                     <div class="match-score-section">
                         ${isFinished ? `
                             <div class="match-score">
-                                <span class="score">${team1Score}</span>
+                                <span class="score" style="${t1Won ? 'color:white;' : 'color:#aaa;'}">${team1Score}</span>
                                 <span class="score-separator">:</span>
-                                <span class="score">${team2Score}</span>
+                                <span class="score" style="${t2Won ? 'color:white;' : 'color:#aaa;'}">${team2Score}</span>
                             </div>
                             <div class="match-status finished">${t('matches.finished')}</div>
                         ` : isLive ? `
-                            <div class="match-score" style="color: #e74c3c;">
+                            <div class="match-score">
                                 <span class="score">${team1Score}</span>
                                 <span class="score-separator">:</span>
                                 <span class="score">${team2Score}</span>
                             </div>
-                            <div class="match-status" style="color: #e74c3c;">
-                                <i class="fas fa-circle" style="font-size: 8px; animation: pulse 1s infinite;"></i>
-                                ${t('matches.live') || 'LIVE'}
+                            <div class="match-status live">
+                                <i class="fas fa-circle" style="font-size:8px;"></i> LIVE
                             </div>
                         ` : `
                             <div class="match-time">${matchTime}</div>
@@ -306,15 +379,11 @@ const Matches = {
                     </div>
 
                     <div class="match-team team2">
-                        <span class="team-name">${UI.escapeHtml(match.team2_name)}</span>
-                        <div class="team-logo-small" style="background: ${match.team2_color || '#3498db'}">
+                        <span class="team-name" style="${t2Won ? 'color:white; font-weight:700;' : ''}">${UI.escapeHtml(match.team2_name)}</span>
+                        <div class="team-logo-small" style="background:${c2}; box-shadow: 0 2px 8px ${c2}55;">
                             ${UI.escapeHtml(match.team2_logo || match.team2_name.replace(/\s+/g, '').substring(0, 3).toUpperCase())}
                         </div>
                     </div>
-                </div>
-
-                <div class="match-footer">
-                    ${roundText ? `<span class="match-round">${roundText}</span>` : ''}
                 </div>
             </div>
         `;
@@ -337,7 +406,15 @@ const Matches = {
             let roundText = '';
             if (match.round) {
                 const roundNum = parseInt(match.round);
-                roundText = !isNaN(roundNum) ? (window.I18n ? I18n.t('tournaments.round', {num: roundNum}) : `Round ${roundNum}`) : match.round;
+                if (!isNaN(roundNum)) {
+                    if (match.tournament_type === 'league') {
+                        roundText = window.I18n ? I18n.t('tournaments.round', {num: roundNum}) : `Round ${roundNum}`;
+                    } else {
+                        roundText = this.getPlayoffRoundName(roundNum, match.tournament_id);
+                    }
+                } else {
+                    roundText = match.round;
+                }
             }
             document.getElementById('match-detail-round').textContent = roundText;
 
