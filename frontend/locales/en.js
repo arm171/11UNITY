@@ -178,6 +178,7 @@ I18n.registerTranslations('en', {
         teamParticipating: 'Your team is participating in this tournament',
         needTeamFirst: 'You need to create a team first',
         tournamentFull: 'Tournament is full',
+        requestPending: 'Join request pending approval',
         joinSuccess: 'Join request sent! Waiting for organizer approval.',
         leaveSuccess: 'Successfully left the tournament!',
         pendingApproval: 'Waiting for organizer approval...',

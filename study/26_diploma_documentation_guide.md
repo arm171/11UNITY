@@ -96,8 +96,8 @@ users ──────── teams (coach_id → users.id)
   │               │
   │               ├── team_players (team_id, player_id)
   │               │
-  │         tournament_teams (team_id, tournament_id)
-  │               │
+  │         tournament_teams (team_id, tournament_id, status)
+  │               │  status: 'pending' → 'approved'
 tournaments ──────┘
   │
   ├── matches (tournament_id, team1_id, team2_id)
@@ -146,7 +146,10 @@ Client (Browser)          Server (Node.js)          Database (MySQL)
 | POST | /api/auth/reset-password | Public | Новый пароль |
 | GET | /api/tournaments | Auth | Список турниров |
 | POST | /api/tournaments | Organizer | Создать турнир |
-| POST | /api/tournaments/:id/join | Coach | Заявка на участие |
+| POST | /api/tournaments/:id/join | Coach | Заявка на участие (статус pending) |
+| GET | /api/tournaments/:id/pending-teams | Organizer | Список заявок на рассмотрении |
+| POST | /api/tournaments/:id/teams/:teamId/approve | Organizer | Принять заявку команды |
+| POST | /api/tournaments/:id/teams/:teamId/reject | Organizer | Отклонить заявку команды |
 | GET | /api/teams | Auth | Список команд |
 | POST | /api/teams | Coach | Создать команду |
 | GET | /api/statistics | Auth | Глобальная статистика |
@@ -193,6 +196,9 @@ Client (Browser)          Server (Node.js)          Database (MySQL)
 | 6 | Изменение счёта обновляет standings | Очки пересчитываются | ✓ |
 | 7 | Смена языка на RU | Весь UI переводится | ✓ |
 | 8 | Сброс пароля с истёкшим токеном | Ошибка "Invalid token" | ✓ |
+| 9 | Тренер подаёт заявку на турнир | Статус pending, команда не в турнире | ✓ |
+| 10 | Организатор принимает заявку | Команда переходит в статус approved, счётчик +1 | ✓ |
+| 11 | Организатор отклоняет заявку | Запись удаляется, тренер может подать снова | ✓ |
 
 ---
 

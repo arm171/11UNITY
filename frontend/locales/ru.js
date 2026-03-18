@@ -178,6 +178,7 @@ I18n.registerTranslations('ru', {
         teamParticipating: 'Ваша команда участвует в этом турнире',
         needTeamFirst: 'Сначала нужно создать команду',
         tournamentFull: 'Турнир заполнен',
+        requestPending: 'Запрос ожидает одобрения',
         joinSuccess: 'Запрос отправлен! Ожидайте одобрения организатора.',
         leaveSuccess: 'Вы покинули турнир!',
         pendingApproval: 'Ожидание одобрения организатора...',

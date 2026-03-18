@@ -147,6 +147,21 @@ const API = {
         });
     },
 
+    async getPendingTeams(tournamentId) {
+        const endpoint = CONFIG.ENDPOINTS.TOURNAMENT_BY_ID.replace(':id', tournamentId) + '/pending-teams';
+        return await this.request(endpoint);
+    },
+
+    async approveTeam(tournamentId, teamId) {
+        const endpoint = CONFIG.ENDPOINTS.TOURNAMENT_BY_ID.replace(':id', tournamentId) + `/teams/${teamId}/approve`;
+        return await this.request(endpoint, { method: 'POST' });
+    },
+
+    async rejectTeam(tournamentId, teamId) {
+        const endpoint = CONFIG.ENDPOINTS.TOURNAMENT_BY_ID.replace(':id', tournamentId) + `/teams/${teamId}/reject`;
+        return await this.request(endpoint, { method: 'POST' });
+    },
+
     async updateTournament(id, tournamentData) {
         const endpoint = CONFIG.ENDPOINTS.TOURNAMENT_BY_ID.replace(':id', id);
         return await this.request(endpoint, {

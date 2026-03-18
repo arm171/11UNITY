@@ -171,6 +171,7 @@ I18n.registerTranslations('ge', {
         teamParticipating: 'თქვენი გუნდი მონაწილეობს ამ ტურნირში',
         needTeamFirst: 'ჯერ გუნდის შექმნა გჭირდებათ',
         tournamentFull: 'ტურნირი სავსეა',
+        requestPending: 'Join request pending approval',
         joinSuccess: 'ტურნირში წარმატებით გაწევრდით!',
         leaveSuccess: 'ტურნირი წარმატებით დატოვეთ!',
         round: '{num} ტური',

@@ -95,7 +95,8 @@ node server.js
 │   │   ├── emailService.js                ← sendVerificationEmail, sendPasswordResetEmail
 │   │   └── fixturesGenerator.js           ← Round-Robin алгоритм
 │   └── scripts/
-│       └── migrate_add_password_reset.js  ← миграция: поля reset_token
+│       ├── migrate_add_password_reset.js  ← миграция: поля reset_token
+│       └── migrate_tournament_teams_status.js ← миграция: поле status в tournament_teams
 │
 └── frontend/
     ├── index.html                         ← ЕДИНСТВЕННЫЙ HTML (SPA)
@@ -507,9 +508,10 @@ Frontend:
 | GET | /:id | JWT | Детали турнира |
 | PUT | /:id | Organizer | Обновить турнир |
 | DELETE | /:id | Organizer | Удалить турнир |
-| POST | /:id/join | Coach | Заявка на участие |
-| POST | /:id/approve/:teamId | Organizer | Подтвердить заявку |
-| POST | /:id/reject/:teamId | Organizer | Отклонить заявку |
+| POST | /:id/join | Coach | Заявка на участие (статус pending) |
+| GET | /:id/pending-teams | Organizer | Список ожидающих заявок |
+| POST | /:id/teams/:teamId/approve | Organizer | Подтвердить заявку |
+| POST | /:id/teams/:teamId/reject | Organizer | Отклонить заявку |
 | POST | /:id/start | Organizer | Запустить турнир |
 | GET | /:id/fixtures | JWT | Расписание матчей |
 | GET | /:id/standings | JWT | Таблица очков |
@@ -682,7 +684,12 @@ PORT=3000
 **Исправление:** \u0576 (4 hex цифры)
 **Файл:** locales/hy.js
 
-### 5. Логотип команды
+### 6. Команда сразу появлялась в турнире без одобрения
+**Проблема:** `tournament_teams` не имела колонки `status` в schema.sql → INSERT без status → DB default = 'approved' → команда сразу в турнире.
+**Исправление:** Миграция добавила `status ENUM('pending','approved')`. INSERT теперь явно указывает `'pending'`. Организатор видит список pending и нажимает Approve/Reject.
+**Файлы:** tournamentController.js, routes/tournaments.js, api.js, tournaments.js, profile.js
+
+### 7. Логотип команды
 **Правило:** Генерируется из `name.substring(0, 3)` (первые 3 буквы).
 **Должно быть везде:** teamController.js (create+update), teams.js, matches.js, statistics.js, tournaments.js
 

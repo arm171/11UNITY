@@ -114,12 +114,12 @@ router.get('/stats', verifyToken, async (req, res) => {
                 `, [team.id]);
                 players = roster;
 
-                // 4. Tournament participation
+                // 4. Tournament participation (only approved)
                 const [tournamentData] = await db.promise().query(`
                     SELECT tn.id, tn.name, tn.status, tn.type, tn.category
                     FROM tournament_teams tt
                     INNER JOIN tournaments tn ON tt.tournament_id = tn.id
-                    WHERE tt.team_id = ?
+                    WHERE tt.team_id = ? AND tt.status = 'approved'
                     ORDER BY tn.start_date DESC
                 `, [team.id]);
                 tournaments = tournamentData;
@@ -159,7 +159,7 @@ router.get('/stats', verifyToken, async (req, res) => {
             const [tournaments] = await db.promise().query(`
                 SELECT t.*, COUNT(DISTINCT tt.team_id) as teams_count
                 FROM tournaments t
-                LEFT JOIN tournament_teams tt ON t.id = tt.tournament_id
+                LEFT JOIN tournament_teams tt ON t.id = tt.tournament_id AND tt.status = 'approved'
                 WHERE t.organizer_id = ?
                 GROUP BY t.id
                 ORDER BY

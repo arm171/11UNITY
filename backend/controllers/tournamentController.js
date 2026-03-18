@@ -28,10 +28,11 @@ const getTournaments = async (req, res) => {
             SELECT
                 t.*,
                 u.name as organizer_name,
-                COUNT(DISTINCT tt.team_id) as teams_count
+                COUNT(DISTINCT tt.team_id) as teams_count,
+                (SELECT COUNT(*) FROM tournament_teams tt2 WHERE tt2.tournament_id = t.id AND tt2.status = 'pending') as pending_count
             FROM tournaments t
             LEFT JOIN users u ON t.organizer_id = u.id
-            LEFT JOIN tournament_teams tt ON t.id = tt.tournament_id
+            LEFT JOIN tournament_teams tt ON t.id = tt.tournament_id AND tt.status = 'approved'
         `;
 
         const params = [];
@@ -431,9 +432,9 @@ const joinTournament = async (req, res) => {
             });
         }
 
-        // Join tournament directly
+        // Join tournament - status pending until organizer approves
         await db.promise().query(
-            `INSERT INTO tournament_teams (tournament_id, team_id) VALUES (?, ?)`,
+            `INSERT INTO tournament_teams (tournament_id, team_id, status) VALUES (?, ?, 'pending')`,
             [tournamentId, teamId]
         );
 
@@ -567,13 +568,17 @@ const checkUserJoined = async (req, res) => {
         const teamId = teams[0].id;
 
         const [joined] = await db.promise().query(
-            'SELECT id FROM tournament_teams WHERE tournament_id = ? AND team_id = ?',
+            'SELECT id, status FROM tournament_teams WHERE tournament_id = ? AND team_id = ?',
             [tournamentId, teamId]
         );
 
+        const isPending = joined.length > 0 && joined[0].status === 'pending';
+        const isApproved = joined.length > 0 && joined[0].status === 'approved';
+
         res.json({
             success: true,
-            joined: joined.length > 0,
+            joined: isApproved,
+            pending: isPending,
             hasTeam: true
         });
 
@@ -602,7 +607,7 @@ const getPendingTeams = async (req, res) => {
         if (tournaments[0].organizer_id !== userId) return res.status(403).json({ success: false, message: 'Not authorized' });
 
         const [pending] = await db.promise().query(`
-            SELECT tt.team_id, tt.status, t.name as team_name, t.logo as team_logo, t.color as team_color,
+            SELECT tt.team_id, tt.status, t.name as team_name, t.logo as team_logo, t.logo_color as team_color,
                    u.name as coach_name,
                    (SELECT COUNT(*) FROM team_players WHERE team_id = t.id) as player_count
             FROM tournament_teams tt

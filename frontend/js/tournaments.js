@@ -304,6 +304,13 @@ const Tournaments = {
                         </div>
                     </div>
 
+                    <div id="pending-teams-section" style="display: none; margin-bottom: 24px;">
+                        <h4 style="color: #f39c12; margin-bottom: 12px; font-size: 15px;">
+                            <i class="fas fa-clock"></i> Pending Join Requests
+                        </h4>
+                        <div id="pending-teams-list"></div>
+                    </div>
+
 <div style="text-align: center; margin-bottom: 32px;">
                         <button class="btn btn-primary" id="generate-fixtures-btn" style="display: none;">
                             <i class="fas fa-magic"></i> <span data-i18n="tournaments.generateFixtures">Generate Fixtures</span>
@@ -744,9 +751,15 @@ const Tournaments = {
         const statusText = I18n.t(`tournaments.${tournament.status}`);
         const categoryText = this.getCategoryLabel(tournament.category);
 
+        const user = API.getUser();
+        const isOwner = user && user.role === 'organizer' && tournament.organizer_id === user.id;
+        const pendingBadge = (isOwner && tournament.pending_count > 0)
+            ? `<span style="background:#f39c12;color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;margin-left:6px;" title="Pending join requests">${tournament.pending_count}</span>`
+            : '';
+
         card.innerHTML = `
             <div class="tournament-header">
-                <h3 class="tournament-title">${UI.escapeHtml(tournament.name)}</h3>
+                <h3 class="tournament-title">${UI.escapeHtml(tournament.name)}${pendingBadge}</h3>
                 <span class="badge ${statusClass}">${statusText}</span>
             </div>
 
@@ -1019,6 +1032,14 @@ const Tournaments = {
         const ownerActions = document.getElementById('tournament-owner-actions');
         if (ownerActions) {
             ownerActions.style.display = (isOwner && tournament.status === 'upcoming') ? 'block' : 'none';
+        }
+
+        // Load pending teams for organizer
+        if (isOwner && tournament.status === 'upcoming') {
+            await this.loadPendingTeams(tournament.id);
+        } else {
+            const pendingSection = document.getElementById('pending-teams-section');
+            if (pendingSection) pendingSection.style.display = 'none';
         }
 
         // Load all tabs data
@@ -1525,6 +1546,20 @@ const Tournaments = {
         try {
             const response = await API.checkTournamentJoined(tournament.id);
 
+            if (response.pending) {
+                // Pending: show waiting message, allow cancel
+                if (tournament.status === 'upcoming') {
+                    leaveBtn.style.display = 'inline-flex';
+                    leaveBtn.innerHTML = `<i class="fas fa-times-circle"></i> ${I18n.t('tournaments.cancelRequest', 'Cancel Request')}`;
+                    leaveBtn.onclick = () => this.handleLeaveTournament(tournament.id);
+                }
+                joinStatusText.textContent = I18n.t('tournaments.requestPending', 'Request pending approval');
+                joinStatus.style.color = '#f39c12';
+                joinStatus.querySelector('i').className = 'fas fa-clock';
+                joinStatus.style.display = 'block';
+                return;
+            }
+
             if (response.joined) {
                 // Approved: can leave if fixtures not yet generated
                 const matchesResp = await API.getTournamentMatches(tournament.id);
@@ -1605,6 +1640,77 @@ const Tournaments = {
 
         generateBtn.style.display = 'inline-flex';
         generateBtn.onclick = () => this.openGenerateFixturesModal(tournament);
+    },
+
+    async loadPendingTeams(tournamentId) {
+        let section = document.getElementById('pending-teams-section');
+        if (!section) return;
+
+        try {
+            const response = await API.getPendingTeams(tournamentId);
+            const teams = response.teams || [];
+
+            if (teams.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            const list = document.getElementById('pending-teams-list');
+            list.innerHTML = teams.map(team => `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:rgba(255,255,255,0.05);border-radius:8px;margin-bottom:8px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div style="width:32px;height:32px;background:${team.team_color||'#2ecc71'};border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:11px;">
+                            ${UI.escapeHtml(team.team_logo || team.team_name.substring(0,3).toUpperCase())}
+                        </div>
+                        <div>
+                            <div style="font-weight:600;">${UI.escapeHtml(team.team_name)}</div>
+                            <div style="font-size:12px;color:#b0b0b0;">${UI.escapeHtml(team.coach_name)} &bull; ${team.player_count} players</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-primary btn-sm" onclick="Tournaments.handleApproveTeam(${tournamentId}, ${team.team_id})">
+                            <i class="fas fa-check"></i> Approve
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="Tournaments.handleRejectTeam(${tournamentId}, ${team.team_id})">
+                            <i class="fas fa-times"></i> Reject
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) {
+            console.error('Load pending teams error:', e);
+        }
+    },
+
+    async handleApproveTeam(tournamentId, teamId) {
+        try {
+            await API.approveTeam(tournamentId, teamId);
+            UI.showNotification('Team approved!', 'success');
+            await this.loadPendingTeams(tournamentId);
+            await this.load();
+            // Update teams count in modal immediately
+            const tournament = this.tournaments.find(t => t.id === tournamentId);
+            if (tournament) {
+                document.getElementById('modal-tournament-teams').textContent =
+                    I18n.t('tournaments.teamsJoined', { current: tournament.teams_count || 0, max: tournament.max_teams });
+            }
+            // Refresh organizer profile stats
+            if (window.Auth) Auth.updateProfileStats(API.getUser());
+        } catch (e) {
+            UI.showNotification(e.message || 'Failed to approve team', 'error');
+        }
+    },
+
+    async handleRejectTeam(tournamentId, teamId) {
+        try {
+            await API.rejectTeam(tournamentId, teamId);
+            UI.showNotification('Team rejected.', 'info');
+            await this.loadPendingTeams(tournamentId);
+            await this.load();
+        } catch (e) {
+            UI.showNotification(e.message || 'Failed to reject team', 'error');
+        }
     },
 
     async handleJoinTournament(tournamentId) {

@@ -82,5 +82,24 @@ router.get('/:id/check-joined',
     tournamentController.checkUserJoined
 );
 
+// Organizer team approval routes
+router.get('/:id/pending-teams',
+    verifyToken,
+    checkRole(['organizer']),
+    tournamentController.getPendingTeams
+);
+
+router.post('/:id/teams/:teamId/approve',
+    verifyToken,
+    checkRole(['organizer']),
+    tournamentController.approveTeam
+);
+
+router.post('/:id/teams/:teamId/reject',
+    verifyToken,
+    checkRole(['organizer']),
+    tournamentController.rejectTeam
+);
+
 
 module.exports = router;
