@@ -404,11 +404,11 @@ const joinTournament = async (req, res) => {
             });
         }
 
-        // Check if team is already in another active/upcoming tournament
+        // Check if team is already APPROVED in another active/upcoming tournament
         const [existingTournament] = await db.promise().query(
             `SELECT tt.id, tn.name FROM tournament_teams tt
              INNER JOIN tournaments tn ON tt.tournament_id = tn.id
-             WHERE tt.team_id = ? AND tn.status IN ('upcoming', 'active')`,
+             WHERE tt.team_id = ? AND tt.status = 'approved' AND tn.status IN ('upcoming', 'active')`,
             [teamId]
         );
 
@@ -1558,7 +1558,7 @@ const getStandings = async (req, res) => {
  */
 const initializeStandings = async (tournamentId) => {
     const [teams] = await db.promise().query(
-        'SELECT team_id FROM tournament_teams WHERE tournament_id = ?',
+        "SELECT team_id FROM tournament_teams WHERE tournament_id = ? AND status = 'approved'",
         [tournamentId]
     );
 

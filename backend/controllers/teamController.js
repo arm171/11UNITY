@@ -33,7 +33,7 @@ const getTeams = async (req, res) => {
             FROM teams t
             LEFT JOIN users u ON t.coach_id = u.id
             LEFT JOIN team_players tp ON t.id = tp.team_id
-            LEFT JOIN tournament_teams tt ON t.id = tt.team_id
+            LEFT JOIN tournament_teams tt ON t.id = tt.team_id AND tt.status = 'approved'
             LEFT JOIN tournaments tn ON tt.tournament_id = tn.id AND tn.status IN ('upcoming', 'active')
             GROUP BY t.id, u.name
             ORDER BY t.created_at DESC
@@ -64,7 +64,7 @@ const getTeamById = async (req, res) => {
             FROM teams t
             LEFT JOIN users u ON t.coach_id = u.id
             LEFT JOIN team_players tp ON t.id = tp.team_id
-            LEFT JOIN tournament_teams tt ON t.id = tt.team_id
+            LEFT JOIN tournament_teams tt ON t.id = tt.team_id AND tt.status = 'approved'
             LEFT JOIN tournaments tn ON tt.tournament_id = tn.id AND tn.status IN ('upcoming', 'active')
             WHERE t.id = ?
             GROUP BY t.id, u.name
@@ -306,11 +306,11 @@ const deleteTeam = async (req, res) => {
             });
         }
 
-        // Check: must not be in any active or upcoming tournament
+        // Check: must not be APPROVED in any active or upcoming tournament
         const [activeTournaments] = await db.promise().query(
             `SELECT COUNT(*) as count FROM tournament_teams tt
              INNER JOIN tournaments t ON tt.tournament_id = t.id
-             WHERE tt.team_id = ? AND t.status IN ('upcoming', 'active')`,
+             WHERE tt.team_id = ? AND tt.status = 'approved' AND t.status IN ('upcoming', 'active')`,
             [id]
         );
 
