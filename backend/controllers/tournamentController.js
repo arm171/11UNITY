@@ -989,6 +989,7 @@ const getAllMatches = async (req, res) => {
                 m.*,
                 t.name as tournament_name,
                 t.type as tournament_type,
+                t.max_teams as tournament_max_teams,
                 t1.name as team1_name,
                 t1.logo as team1_logo,
                 t1.logo_color as team1_color,

@@ -98,7 +98,7 @@ router.get('/tournament/:id', async (req, res) => {
 
         // Get tournament info
         const [tournament] = await db.promise().query(
-            'SELECT id, name, type, status FROM tournaments WHERE id = ?',
+            'SELECT id, name, type, status, max_teams FROM tournaments WHERE id = ?',
             [id]
         );
 

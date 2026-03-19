@@ -273,7 +273,11 @@ const Matches = {
             m.tournament_type !== 'league' &&
             !isNaN(parseInt(m.round))
         );
-        const maxRound = Math.max(...tourneyMatches.map(m => parseInt(m.round)));
+        // Use max_teams to determine the total rounds (e.g. 4 teams = 2 rounds)
+        // This avoids mislabeling SF as Final when Final match has no DB row yet
+        const maxTeams = tourneyMatches[0] && tourneyMatches[0].tournament_max_teams;
+        const expectedMaxRound = maxTeams ? Math.round(Math.log2(maxTeams)) : Math.max(...tourneyMatches.map(m => parseInt(m.round)));
+        const maxRound = Math.max(expectedMaxRound, Math.max(...tourneyMatches.map(m => parseInt(m.round))));
         const diff = maxRound - roundNum;
         if (diff === 0) return window.I18n ? I18n.t('matches.final') || 'Final' : 'Final';
         if (diff === 1) return window.I18n ? I18n.t('matches.semiFinal') || 'Semi-Final' : 'Semi-Final';

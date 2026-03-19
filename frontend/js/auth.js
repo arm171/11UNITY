@@ -155,7 +155,7 @@ const Auth = {
                                     class="form-input"
                                     id="register-name"
                                     data-i18n-placeholder="auth.namePlaceholder"
-                                    placeholder="John Doe"
+                                    placeholder="Henrikh Mkhitaryan"
                                     required
                                 >
                             </div>

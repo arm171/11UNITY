@@ -1136,11 +1136,33 @@ const Tournaments = {
             rounds[r].push(m);
         });
 
-        const sortedRounds = Object.keys(rounds).sort((a, b) => parseInt(a) - parseInt(b));
-        const totalRounds = sortedRounds.length;
+        const playoffOrder = ['R16', 'QF', 'SF', 'Final'];
+        const hasNamedRounds = Object.keys(rounds).some(r => playoffOrder.includes(String(r)));
 
-        const getRoundLabel = (idx, total) => {
-            const fromEnd = total - 1 - idx;
+        let sortedRounds;
+        if (hasNamedRounds) {
+            sortedRounds = Object.keys(rounds).sort((a, b) => {
+                const ai = playoffOrder.indexOf(String(a));
+                const bi = playoffOrder.indexOf(String(b));
+                if (ai !== -1 && bi !== -1) return ai - bi;
+                if (ai !== -1) return 1;
+                if (bi !== -1) return -1;
+                return parseInt(a) - parseInt(b);
+            });
+        } else {
+            sortedRounds = Object.keys(rounds).sort((a, b) => parseInt(a) - parseInt(b));
+        }
+
+        const maxTeams = this.currentTournament && this.currentTournament.max_teams;
+
+        const getRoundLabel = (roundKey, idx) => {
+            if (String(roundKey) === 'Final') return I18n.t('tournaments.bracketFinal', 'Final');
+            if (String(roundKey) === 'SF') return I18n.t('tournaments.bracketSF', 'Semi-Final');
+            if (String(roundKey) === 'QF') return I18n.t('tournaments.bracketQF', 'Quarter-Final');
+            if (String(roundKey) === 'R16') return I18n.t('tournaments.bracketR16', 'Round of 16');
+            const expectedRounds = maxTeams ? Math.round(Math.log2(maxTeams)) : sortedRounds.length;
+            const totalRounds = Math.max(sortedRounds.length, expectedRounds);
+            const fromEnd = totalRounds - 1 - idx;
             if (fromEnd === 0) return I18n.t('tournaments.bracketFinal', 'Final');
             if (fromEnd === 1) return I18n.t('tournaments.bracketSF', 'Semi-Final');
             if (fromEnd === 2) return I18n.t('tournaments.bracketQF', 'Quarter-Final');
@@ -1194,7 +1216,7 @@ const Tournaments = {
             <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
                 ${sortedRounds.map((r, idx) => {
                     const roundMatches = rounds[r].sort((a, b) => (a.bracket_slot || 0) - (b.bracket_slot || 0));
-                    const label = getRoundLabel(idx, totalRounds);
+                    const label = getRoundLabel(r, idx);
                     return `
                         <div style="flex: 1; min-width: 220px;">
                             <h4 style="color: #2ecc71; text-align: center; margin-bottom: 16px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">

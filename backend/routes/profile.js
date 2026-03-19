@@ -21,28 +21,29 @@ router.get('/stats', verifyToken, async (req, res) => {
                 WHERE tp.player_id = ?
             `, [userId]);
 
-            // 2. Personal stats from match_events (more accurate than player_statistics)
+            // 2. Personal stats — sum across all tournaments from player_statistics
             const [stats] = await db.promise().query(`
                 SELECT
-                    COALESCE(SUM(CASE WHEN me.event_type = 'goal' AND me.is_own_goal = 0 THEN 1 ELSE 0 END), 0) as goals,
+                    COALESCE(SUM(ps.goals), 0)   as goals,
+                    COALESCE(SUM(ps.assists), 0) as assists
+                FROM player_statistics ps
+                WHERE ps.player_id = ?
+            `, [userId]);
+
+            // Cards still come from match_events (0 if no live matches recorded)
+            const [cardStats] = await db.promise().query(`
+                SELECT
                     COALESCE(SUM(CASE WHEN me.event_type = 'yellow_card' THEN 1 ELSE 0 END), 0) as yellow_cards,
-                    COALESCE(SUM(CASE WHEN me.event_type = 'red_card' THEN 1 ELSE 0 END), 0) as red_cards
+                    COALESCE(SUM(CASE WHEN me.event_type = 'red_card'    THEN 1 ELSE 0 END), 0) as red_cards
                 FROM match_events me
                 WHERE me.player_id = ?
             `, [userId]);
 
-            // 3. Assists (where this player is the assist provider)
-            const [assistStats] = await db.promise().query(`
-                SELECT COUNT(*) as assists
-                FROM match_events me
-                WHERE me.assist_player_id = ? AND me.event_type = 'goal'
-            `, [userId]);
-
             const playerStats = {
                 goals: stats[0].goals,
-                assists: assistStats[0].assists,
-                yellow_cards: stats[0].yellow_cards,
-                red_cards: stats[0].red_cards
+                assists: stats[0].assists,
+                yellow_cards: cardStats[0].yellow_cards,
+                red_cards: cardStats[0].red_cards
             };
 
             // 4. Recent matches (last 5)

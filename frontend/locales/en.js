@@ -104,7 +104,7 @@ I18n.registerTranslations('en', {
         createAccount: 'Create Account',
         emailPlaceholder: 'your@email.com',
         passwordPlaceholder: '........',
-        namePlaceholder: 'John Doe',
+        namePlaceholder: 'Henrikh Mkhitaryan',
         passwordsDoNotMatch: 'Passwords do not match!',
         forgotPassword: 'Forgot password?',
         checkEmail: 'Check your email!',

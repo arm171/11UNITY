@@ -104,7 +104,7 @@ I18n.registerTranslations('ru', {
         createAccount: 'Создать аккаунт',
         emailPlaceholder: 'your@email.com',
         passwordPlaceholder: '........',
-        namePlaceholder: 'Иван Иванов',
+        namePlaceholder: 'Генрих Мхитарян',
         passwordsDoNotMatch: 'Пароли не совпадают!',
         forgotPassword: 'Забыли пароль?',
         checkEmail: 'Проверьте почту!',
