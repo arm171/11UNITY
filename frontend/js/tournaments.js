@@ -2469,14 +2469,6 @@ const Tournaments = {
         const goalCount = events.filter(e => e.event_type === 'goal').length;
         const totalScore = team1Score + team2Score;
 
-        if (goalCount !== totalScore) {
-            UI.showNotification(
-                `Goals entered (${goalCount}) do not match the score (${team1Score + team2Score}). Please add all goal events.`,
-                'error',
-                4000
-            );
-            return;
-        }
 
         const finishBtn = document.getElementById('finish-match-btn');
         finishBtn.disabled = true;
