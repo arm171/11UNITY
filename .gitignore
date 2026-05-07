@@ -1,14 +1,14 @@
-# Node modules (մի պահիր, շատ մեծ է)
+# Node modules
 node_modules/
 
-# Environment variables (passwords են)
+# Environment variables 
 .env
 _env
 
 # Database dumps (local data)
 *.dump
 
-# OS files (geriakarutyun che)
+# OS files 
 .DS_Store
 Thumbs.db
 desktop.ini
